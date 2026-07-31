@@ -978,6 +978,62 @@ test("RealtimeBattle applies snapshot facing to enemies, bosses and companions, 
   assert.doesNotThrow(() => adapter.dispose());
 });
 
+// END-TO-END, and it is the link the cycle-10 merge created. Upstream authored the eight
+// directional clips into `unarmed-core.glb`, so `hitReactionKey` now genuinely resolves
+// `hit_left` instead of always falling back to flat `hit`. Its second operand is `record.yaw`,
+// which this cycle redefined from last-movement heading to AIM heading. The routing test in
+// `stage-framing-and-motion-profile.test.mjs` hand-sets `yaw` and so proves only the quadrant
+// arithmetic; this one drives the whole chain -- published `facingX`/`facingY` through
+// `snapshotFacingYaw` and `updateActorFacing` into the resolved clip key -- so it fails if
+// EITHER half breaks.
+test("published facing drives which directional hit clip resolves, end to end", () => {
+  const adapter = realtimeBattleHarness();
+  const played = [];
+  adapter.triggerAction = (record, key) => { played.push(key); return true; };
+
+  // Aim at +x in sim space. On the pure axis the anisotropic correction is identity, so this
+  // is the one case where the expected yaw is unambiguous without restating the transform.
+  // Reconciled TWICE on purpose: the first pass creates the record, the second is the one that
+  // computes facing onto it. The multi-actor test above uses the same two-call shape.
+  const aimedAtPlusX = { commander: { id: "commander", x: 12000, y: 6000, facingX: 1000, facingY: 0 } };
+  adapter.reconcileActors(aimedAtPlusX);
+  const target = facingActor(adapter, "commander");
+  assert.ok(target, "the commander record must exist");
+  adapter.reconcileActors(aimedAtPlusX);
+  // Only the clip REGISTRY is stubbed -- `actions` is normally filled by model instantiation,
+  // which a unit harness never runs. The facing -> yaw derivation under test stays real.
+  target.actions = { hit: {}, bighit: {}, hit_front: {}, hit_back: {}, hit_left: {}, hit_right: {} };
+  // Settle the eased yaw so routing reads the aim rather than the initial null.
+  adapter.updateActorFacing(target, 1.0);
+  assert.ok(Number.isFinite(target.yaw), "yaw must be finite before routing reads it");
+  assert.ok(
+    Math.abs(Math.abs(target.yaw) - Math.PI / 2) < 1e-6,
+    `aiming +x must settle yaw at +/-PI/2, got ${target.yaw}`,
+  );
+
+  // The attacker sits on the same world axis the commander is aiming down, so this is a FRONT
+  // hit. `worldPointInto` maps sim +x to world +x, and yaw +PI/2 faces world +x.
+  const attacker = { root: new THREE.Object3D() };
+  attacker.root.position.set(target.root.position.x + 5, 0, target.root.position.z);
+  adapter.triggerHitReaction(target, attacker, false, 0);
+  assert.deepEqual(played, ["hit_front"], "a blow from the aimed direction resolves as front");
+
+  // Directly opposite the aim.
+  played.length = 0;
+  attacker.root.position.set(target.root.position.x - 5, 0, target.root.position.z);
+  adapter.triggerHitReaction(target, attacker, false, 0);
+  assert.deepEqual(played, ["hit_back"], "a blow opposite the aim resolves as back");
+
+  // Now REPUBLISH a different facing and prove the resolved clip follows it. This is the
+  // assertion that fails if the facing->yaw conversion is removed: with a stale yaw the same
+  // attacker position would keep resolving as `hit_back`.
+  played.length = 0;
+  adapter.reconcileActors({ commander: { id: "commander", x: 12000, y: 6000, facingX: -1000, facingY: 0 } });
+  adapter.updateActorFacing(target, 1.0);
+  adapter.triggerHitReaction(target, attacker, false, 0);
+  assert.deepEqual(played, ["hit_front"], "re-aiming at the attacker turns a back hit into a front hit");
+});
+
 test("RealtimeBattle trails companions behind their simulation position but never the commander", () => {
   const adapter = realtimeBattleHarness();
   // The simulation hard-snaps companions to commander+offset every tick;

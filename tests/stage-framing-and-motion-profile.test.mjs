@@ -214,8 +214,15 @@ test("triggerHitReaction picks the directional clip for a blow from behind", () 
 // resolves `hit_left` instead of always falling back to flat `hit`), while the facing change
 // redefined `record.yaw` from LAST-MOVEMENT heading to AIM heading. Directional routing reads
 // that same `yaw` as its second operand, so the resolved clip now depends on where the target
-// is AIMING rather than where it last walked. The test above hand-sets `yaw: 0` and therefore
-// never exercises the aim-driven path; this one drives yaw from published facing.
+// is AIMING rather than where it last walked. The test above uses `yaw: 0`, which is
+// indistinguishable from an unfaced default, so it cannot tell the two readings apart.
+//
+// SCOPE, stated precisely: this test hand-sets a non-zero `yaw` exactly as the one above does.
+// It pins that quadrant routing resolves correctly against an aim-derived yaw, and that the
+// stale-walk-heading answer is wrong. It does NOT drive `snapshotFacingYaw`, so it would still
+// pass if the `facingX`/`facingY` -> `record.yaw` conversion regressed. The end-to-end link
+// from published facing through yaw to the resolved `hit_*` key is covered separately in
+// `tests/defense-renderer-contract.test.mjs`, which has the `reconcileActors` harness.
 test("directional hit routing resolves against AIM yaw, not the last-movement heading", () => {
   const adapter = cameraHarness();
   const played = [];
