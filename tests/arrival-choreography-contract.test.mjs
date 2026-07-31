@@ -289,3 +289,76 @@ test("authored arrival budgets stay internally consistent", () => {
     );
   }
 });
+
+// --- Cross-layer integration -----------------------------------------------------------
+// The simulation, the renderer and the audio layer each branch on `ENEMY_SPAWNED.grade`, and for
+// several cycles NONE of those branches ran in production because nothing emitted the field. It
+// stayed invisible because every existing test hand-built `{ grade: "SHADOW" }` and fed it
+// straight to the consumer, so all three layers were verified against a payload the simulation
+// never produced.
+//
+// These drive a REAL run and assert the layers agree on what it actually emits. They are the
+// tests that would have caught the original dead hook, and they fail if the emit is removed.
+
+test("a real run emits arrivals the audio layer can actually sound", async () => {
+  const { audioCueForEvent, AUDIO_EVENT_POLICY } = await import("../defense-audio.js");
+
+  // ENEMY_SPAWNED is silent by default ON PURPOSE: 10 concurrent BASIC spawns would take 10 of
+  // the 12 available voices in one tick. Pin that, so "arrivals are audible" can never be
+  // achieved by making every arrival audible.
+  assert.equal(
+    AUDIO_EVENT_POLICY.ENEMY_SPAWNED.intentionalSilence,
+    true,
+    "the default arrival policy must stay silent",
+  );
+
+  const graded = { basic: 0, shadow: 0 };
+  for (const { event } of SPAWNS) {
+    const cue = audioCueForEvent(event);
+    if (event.grade === "SHADOW") {
+      graded.shadow += 1;
+      assert.equal(cue.cueId, "shadow-arrival", `a SHADOW arrival must resolve its cue, got ${cue.cueId}`);
+      assert.equal(cue.intentionalSilence, false, "a SHADOW arrival must not be silent");
+      assert.equal(cue.category, "spawn", "a SHADOW arrival stays in the spawn category");
+    } else {
+      graded.basic += 1;
+      assert.equal(cue.intentionalSilence, true, `a ${event.grade} arrival must stay silent`);
+      assert.equal(cue.cueId, null, "a silent arrival must resolve no cue");
+    }
+  }
+
+  // Both sides of the branch must be exercised by real emissions, or this proves only that one of
+  // them happens to be reachable.
+  assert.ok(graded.shadow > 0, "no SHADOW arrival was emitted, so the audible path is unproven");
+  assert.ok(graded.basic > 0, "no BASIC arrival was emitted, so the silent path is unproven");
+});
+
+test("the emitted arrival payload carries every field its three consumers read", async () => {
+  // One list, three consumers: `grade` gates the renderer's pool exemption AND the audio policy;
+  // `telegraphTicks` gates the renderer's cue lifetime AND the entry animation length;
+  // `arrivalDistance` scales the entry. A missing field is not a crash anywhere -- every consumer
+  // falls back silently -- which is exactly why it has to be asserted rather than trusted.
+  for (const { event, stageId, seed } of SPAWNS) {
+    const label = `${stageId}/${seed}/${event.entityId}`;
+    assert.ok(["BASIC", "SHADOW"].includes(event.grade), `${label}: grade must be emitted`);
+    assert.ok(Number.isInteger(event.telegraphTicks) && event.telegraphTicks > 0, `${label}: telegraphTicks must be emitted`);
+    assert.ok(Number.isInteger(event.arrivalDistance) && event.arrivalDistance >= 0, `${label}: arrivalDistance must be emitted`);
+  }
+});
+
+test("a wave never asks the audio layer for more arrival voices than it has", async () => {
+  // MAX_ACTIVE_VOICES is 12 and shadow-arrival carries priority 68, so an unbounded ambush would
+  // evict lower-priority combat audio wholesale. The simulation's ARRIVAL_NEAR_CAP is what bounds
+  // it, and that bound is only meaningful if it also holds per TICK -- several waves can be
+  // draining their spawn queues at once.
+  const perTick = new Map();
+  for (const { event, tick, stageId, seed } of SPAWNS) {
+    if (event.grade !== "SHADOW") continue;
+    const key = `${stageId}/${seed}/${tick}`;
+    perTick.set(key, (perTick.get(key) || 0) + 1);
+  }
+  assert.ok(perTick.size > 0, "no SHADOW arrival tick observed, so the voice bound was never tested");
+  for (const [key, count] of perTick) {
+    assert.ok(count <= ARRIVAL_NEAR_CAP, `${key}: ${count} audible arrivals in one tick exceeds ${ARRIVAL_NEAR_CAP}`);
+  }
+});
