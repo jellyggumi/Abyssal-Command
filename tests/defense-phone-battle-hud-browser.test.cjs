@@ -521,7 +521,24 @@ test("stable combat control IDs remain unique and their native keyboard activati
       assert.equal(await run.page.locator(selector).count(), 1, `${selector} must remain a unique public control hook`);
     }
 
+    // Sibling of the fix in progression-mobile-ui-browser.cjs. Answer any pending level-up growth
+    // offer before driving a control. The offer is genuinely modal --
+    // defense-run-simulation.js:4263 is `if (run.growthOffer) return;`, so the simulation HALTS
+    // while one is open, and app.js:3908 correctly focuses its button. Both consequences break
+    // this helper: the focus assertion can see the offer's <button> instead of the control, and
+    // `data-defense-input-seq` can then never increment, burning the full timeout -- which is
+    // exactly how test 3 failed with `waitForFunction: Timeout 90000ms exceeded`.
+    //
+    // Per activation, not once up front: each Enter moves the commander and accrues XP, so a
+    // level-up can cross its threshold between calls.
+    const dismissGrowthOffer = async () => {
+      const pick = run.page.locator("#defense-growth-offer [data-pick]").first();
+      if (await pick.isVisible().catch(() => false)) await pick.click();
+      await run.page.locator("#defense-growth-offer").waitFor({ state: "hidden" }).catch(() => {});
+    };
+
     const activateAndWaitForInput = async (selector, key) => {
+      await dismissGrowthOffer();
       const control = run.page.locator(selector);
       await control.focus();
       assert.equal(await control.evaluate((node) => document.activeElement === node), true, `${selector} must accept keyboard focus`);
