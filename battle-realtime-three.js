@@ -1237,11 +1237,19 @@ const WORLD_HEIGHT = 12000;
 // silently mapped to arena centre. effectAnchor() is the first producer of
 // the flag; verified before the change that no other caller passes it false,
 // so this is additive for every existing call site.
+// The normalized-vs-ARENA branch is extracted so worldPointInto() and
+// snapshotFacingYaw() can never disagree about WHICH projection an entity uses.
+// A direction corrected for the anisotropic branch while its position took the
+// isotropic one would aim the actor somewhere its own feet are not going.
+function usesNormalizedSpace(entity, x, y) {
+  return entity?.normalized === true
+    || (entity?.normalized !== false && Math.abs(x) <= 1 && Math.abs(y) <= 1);
+}
+
 function worldPointInto(target, entity) {
   const x = finite(entity?.x, 0);
   const y = finite(entity?.y, 0);
-  if (entity?.normalized === true
-    || (entity?.normalized !== false && Math.abs(x) <= 1 && Math.abs(y) <= 1)) {
+  if (usesNormalizedSpace(entity, x, y)) {
     target.x = x * WORLD_SCALE;
     target.z = y * WORLD_SCALE;
   } else {
@@ -1264,6 +1272,44 @@ function worldPoint(entity) {
 function wrapAngle(radians) {
   const twoPi = Math.PI * 2;
   return ((radians % twoPi) + twoPi + Math.PI) % twoPi - Math.PI;
+}
+
+// Sim-authored facing -> RENDERER-space yaw. `facingX`/`facingY` are a
+// fixed-point unit vector in ARENA space (defense-run-simulation.js setFacing,
+// x1000 so snapshots stay integer-deterministic), published for the commander,
+// enemies and companions on every move AND every attack. They are CONDITIONAL:
+// setFacing early-returns on a zero-length vector, so an actor that has never
+// moved or attacked carries no such key at all, and projectiles/pickups never
+// carry one. Every read must therefore tolerate `undefined`.
+//
+// The per-axis divisors are load-bearing, not decoration. worldPointInto()
+// divides sim x by WORLD_WIDTH and sim y by WORLD_HEIGHT INDEPENDENTLY, and
+// ARENA is 24000x12000 while the rendered ground is deliberately square, so the
+// map does NOT preserve angles. A raw atan2(facingX, facingY) is exact on the
+// pure axes and wrong on every diagonal -- measured, a sim heading of 45 deg
+// yields 45.00 naive against 26.57 correct, ~19 deg of error -- which is
+// invisible to any axis-only test and obvious to a player. Applying the same
+// per-axis ratio the position path uses makes facing agree with the
+// movement-delta heading to float noise (max 5.3e-13 across 7 off-axis cases),
+// and that agreement is what lets both sources share one `targetYaw` without a
+// visible jump when facing appears or disappears. Named constants rather than
+// the arithmetically equivalent `facingY * 2`: the shortcut dies silently the
+// day ARENA stops being 2:1.
+function snapshotFacingYaw(entity) {
+  const facingX = entity?.facingX;
+  const facingY = entity?.facingY;
+  // Rejects the absent key AND any NaN/Infinity, so a corrupt component can
+  // never reach rotation.y disguised as a plausible angle.
+  if (!Number.isFinite(facingX) || !Number.isFinite(facingY)) return null;
+  // A zero vector is not a heading. Math.atan2(0, 0) is 0, not NaN, so without
+  // this an unfaced actor would snap to due +z instead of keeping its own pose.
+  if (facingX === 0 && facingY === 0) return null;
+  if (usesNormalizedSpace(entity, finite(entity?.x, 0), finite(entity?.y, 0))) {
+    return wrapAngle(Math.atan2(facingX, facingY) + MODEL_FORWARD_YAW_OFFSET);
+  }
+  return wrapAngle(
+    Math.atan2(facingX / WORLD_WIDTH, facingY / WORLD_HEIGHT) + MODEL_FORWARD_YAW_OFFSET,
+  );
 }
 
 function stableStringHash(value) {
@@ -4431,28 +4477,55 @@ export class RealtimeBattle {
     }
     const rx = record.root.position.x;
     const rz = record.root.position.z;
+    // INVARIANT: `record.yaw` and `record.targetYaw` are ALWAYS renderer-space
+    // angles, never sim-space. They are not merely model orientation --
+    // triggerHitReaction() compares `record.yaw` against a heading it derives
+    // from renderer-space root positions in the same frame, so a sim-space
+    // angle here would corrupt directional hit-clip routing (quadrant
+    // boundaries at HIT_REACTION_QUADRANT) as silently as it corrupts the
+    // visual. snapshotFacingYaw() converts; nothing downstream re-converts.
+    //
+    // PRECEDENCE: sim-authored facing FIRST, rendered movement delta only as
+    // fallback. A future reader needs to know why a STATIONARY actor still
+    // turns, so the order is spelled out rather than implied:
+    //
+    // 1. `facingX`/`facingY` whenever published. The simulation calls setFacing
+    //    on every attack, not just every move, so this is the ONLY source that
+    //    can aim a standing attacker -- the movement delta is exactly zero at
+    //    the moment the player most needs to see which way the blow went. It
+    //    also wins WHILE moving, because facing is the actor's intended heading
+    //    whereas the rendered delta is the post-collision result: a body shoved
+    //    out of an obstacle or off a neighbour keeps aiming where it meant to
+    //    go instead of pivoting to face the shove (measured on cinder-span seed
+    //    71: enemy-1 aimed -x while separation displaced it +x for 3 ticks).
+    // 2. Movement delta when facing is absent. Unfaced actors, projectiles and
+    //    pickups all land here, byte-identical to before this precedence
+    //    existed.
+    // 3. Neither source: leave `targetYaw` alone, so a standing actor holds its
+    //    last heading. Re-aiming on a sub-MOVE_EPSILON delta has no meaningful
+    //    direction and would make it spin on rounding noise.
+    const aimedYaw = snapshotFacingYaw(entity);
     if (record.lastX !== null) {
       const dx = rx - record.lastX;
       const dz = rz - record.lastZ;
+      // Computed unconditionally: `moving` drives the move/idle animation
+      // switch, which is about travel, not about aim.
       record.moving = Math.hypot(dx, dz) > MOVE_EPSILON;
-      // Re-aim only while actually travelling (D23 Phase 1). Below
-      // MOVE_EPSILON the delta is rounding noise with no meaningful
-      // direction, and re-aiming on it would make a standing actor spin;
-      // reusing the locomotion threshold keeps facing and the move/idle
-      // animation switch agreeing about what counts as movement.
       // atan2(dx, dz) -- not the usual (y, x) argument order -- because a
       // three.js rotation.y of T aims local +Z at (sin T, cos T), so the
       // x-component is the sine term here.
-      if (record.moving) {
+      if (aimedYaw === null && record.moving) {
         record.targetYaw = wrapAngle(Math.atan2(dx, dz) + MODEL_FORWARD_YAW_OFFSET);
-        // First movement: adopt the heading outright. Easing in from a
-        // null/zero start would spin the actor from an arbitrary angle it
-        // was never actually facing.
-        if (record.yaw === null) {
-          record.yaw = record.targetYaw;
-          record.root.rotation.y = record.yaw;
-        }
       }
+    }
+    if (aimedYaw !== null) record.targetYaw = aimedYaw;
+    // First heading of this actor's life: adopt it outright. Easing in from a
+    // null/zero start would spin the actor from an arbitrary angle it was never
+    // actually facing. Shared by both sources so an actor that spawns already
+    // aimed is correct on its first rendered frame instead of one ease later.
+    if (record.targetYaw !== null && record.yaw === null) {
+      record.yaw = record.targetYaw;
+      record.root.rotation.y = record.yaw;
     }
     record.lastX = rx;
     record.lastZ = rz;

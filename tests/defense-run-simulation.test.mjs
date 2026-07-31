@@ -1323,9 +1323,38 @@ const sha256 = (value) => crypto.createHash("sha256").update(value).digest("hex"
  * §9 check 1 requires the zero-buff digest to be byte-identical to "the pre-change digest at
  * the same seed", captured BEFORE the feature landed. These are that capture: each hash is
  * `sha256(getRunDigest(run))` produced by the simulation module at commit `033877ad` — the last
- * commit before the drop/buff layer existed — run against the current catalog, whose diff over
- * the same range is +173/-0 (pure addition, so the pre-feature module loads unchanged against
- * it). Recover the baseline with `git show 033877ad:defense-run-simulation.js`.
+ * commit before the drop/buff layer existed — run against the current catalog. Recover the
+ * baseline module with `git show 033877ad:defense-run-simulation.js`.
+ *
+ * PROVENANCE — TWO catalogs, and only one of them is pure addition.
+ *
+ * This comment previously cited a single figure, "+173/-0 (pure addition, so the pre-feature
+ * module loads unchanged against it)". That figure is correct, but it is `defense-catalog.js`
+ * (923 lines at base, `git diff --numstat 033877ad..HEAD -- defense-catalog.js` = **+173/-0**)
+ * and it was never the whole story, because the module loads against `stage-world-catalog.js`
+ * too. Measured: `git diff --numstat 033877ad -- stage-world-catalog.js` = **+20/-16** (576
+ * lines at base). It was already +17/-16 before the cinder obstacle promotion, because cycle
+ * 10's route commit `87915ded` rewrote waypoints and corridor widths in place.
+ *
+ * So the justification splits:
+ *
+ *  - `defense-catalog.js` +173/-0 — genuinely pure addition. `BUFF_ITEMS` and friends are new
+ *    exports the pre-feature module never reads, so nothing it does read moved.
+ *  - `stage-world-catalog.js` +20/-16 — NOT pure addition, and obstacle geometry genuinely
+ *    differs: cinder-span went 3 -> 6 obstacles (three already-visible frozen props promoted to
+ *    collision). What holds here is narrower: the catalog's *exported shape* is unchanged. Every
+ *    edit is a value edit or a row added inside an existing array; no export, field or helper
+ *    the pre-feature module reads was renamed or removed, and it reaches obstacles only through
+ *    `world.gameplay.obstacles`, which still exists with the same element shape.
+ *
+ * The four hashes below were re-measured against the 6-obstacle catalog after that promotion and
+ * are UNCHANGED — the pinned values are the re-capture, not a stale carry-over. Obstacles do
+ * displace entities, but these four windows never reach the three added circles: the closest any
+ * body or projectile comes is +2494.53 (`relay-debris-south`, cinder/71/500 bare), with
+ * `relay-debris-north` +3320.81 and `east-ash-wall` +3075.79. Control for the null result — the
+ * same window run with one extra obstacle injected on the commander's start moves the hash to
+ * `d4086a62…`, so this harness is demonstrably sensitive to an obstacle change and the
+ * invariance above is a measurement, not an unwired no-op.
  *
  * A hash rather than a 19KB string because the digest is not the artifact under test — its
  * INVARIANCE is. Any byte that moves flips the hash.

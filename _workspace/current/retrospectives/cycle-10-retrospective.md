@@ -157,6 +157,11 @@ These were latent before this cycle and would not have surfaced without the spec
 | 9 | **A runtime asset must be registered in FIVE lists, and nothing enforces that they move together.** `defense-runtime-assets.mjs`, `tests/pages-artifact-smoke.cjs`, `static.yml` `PAGES_RUNTIME_PATHS`, the `release-closure.test.mjs` literal, and the generated `assets/defense-asset-manifest.json`. I moved four and missed the fifth. It was **CI-blocking**, not cosmetic: `pr-guard.yml:144` and `static.yml:117` both run `defense-asset-manifest.test.mjs` in their gate sets, so a push would have failed the PR guard. `release-closure` compares two of the five with an order-sensitive `assert.deepEqual`, so position matters as well as membership. Found by the full-suite run, not by reasoning. | `tests/defense-asset-manifest.test.mjs:50` |
 | 10 | `dev.sh --verify` execs `tests/playtest-browser-3stage.cjs`, which exists in no tree and not at HEAD. That flag has been dead since it was written. | `dev.sh:50-53` |
 | 11 | **The `gateMaxIntegrity` buff makes the published snapshot self-inconsistent — a cycle-10 regression, withdrawn rather than shipped.** `bulwark-echo` composes an effective gate cap without writing `gate.maxIntegrity`, but `getRunSnapshot` publishes `gate: run.gate` verbatim, so while the buff is live the snapshot reports `integrity 1920` against `maxIntegrity 1600`. Three consumers assume that cannot happen: the Stage1b pressure runner's `to > max` invariant (**G7 evidence tooling**), the `low-hp-focus` enemy policy's `gateRatio = integrity / maxIntegrity` (a gate buff pushes it above 1 and flips targeting to the commander — **live behaviour, not display**), and any HUD ratio. The spec's own §4 predicted the HUD half and `reconcileGateCap` answered only the *post-removal* half. **Attribution measured, not assumed:** the failing file passes 8/8 at base `033877ad` in a detached worktree, so it is ours. Item withdrawn; spec check 11 PARKED; `effectiveGateMax` keeps coverage via a synthetic entry. Re-enabling requires publishing the composed cap and rerouting all three consumers. | `stage1b-pressure: invalid gate integrity state at tick 1496: from=1600, to=1601, max=1600`; `defense-run-simulation.js:3921`, `:2705`; commit `64974d3d` |
+| 12 | **A standing attacker faced the wrong way, and the simulation was already right.** `playerAttack` writes `setFacing(source, aim.x, aim.y)` on every attack (`defense-run-simulation.js:1953`), and `getRunSnapshot` publishes `commander: run.commander` verbatim (`:3924`) so `facingX`/`facingY` already reached the renderer for commander, enemies AND companions (measured 1/1, 3/3, 2/2 at seed 7 tick 900). The renderer read them **zero times** and derived yaw solely from the position delta, so with no delta there was no re-aim. Proven before/after over the same frames: enemy-6 ticks 432–438, step exactly 0.0, `targetYaw` frozen at `-1.989021` for 12 consecutive ticks while sim facing swung `(-534,845)→(-410,912)`. Fixed renderer-only in `d0355723`. | `battle-realtime-three.js:3687` |
+| 13 | **`Math.atan2(facingX, facingY)` is wrong, and the suite could not have caught it.** `worldPointInto` divides sim x by `WORLD_WIDTH` and sim y by `WORLD_HEIGHT` independently while the rendered ground is deliberately square, so a sim-space direction does not preserve its angle. Error is exactly **0 on the pure axes** and **18.43° at 45°, 19.11° at 30°**. The pinned assertions exercise only `+z` and `+x` — both pure axes — so the naive form passes green while every diagonal attack ships ~19° off. Worse, `record.yaw` is the second operand of `hitReactionDirection`, whose quadrant boundaries sit at 45°/135°, so the same error silently mis-routes `hit_right` where `hit_front` is correct. Two bugs from one wrong `atan2`. | `battle-realtime-three.js:1093-1103`, `:3602-3614`, `tests/defense-renderer-contract.test.mjs:750-759` |
+| 14 | **`die` was a synthetic slump, not a death — finding stands, fix REVERTED in favour of upstream.** Measured on `guard::die::v01` at the time: spine rotates 64.01° while thighs and shins move **0.00°** — static legs. It was an authored fallback (`FALLBACK_ACTIONS = ("die",)`) even though three real death motions sat unused in the bench. My fix retargeted it from `Defeated.fbx` (spine 79.54°, thighs 35.48°, shins 14.17°) in `51a2c175`, which `d70d81e6` **reverted** because the concurrent session shipped a wider 21-clip roster to `main` first. **What ships now is `ClipSpec("die", "Dying.fbx")`** — also a real retarget, so the synthetic slump is genuinely gone, but not by my clip. The angles above describe a build that no longer exists; see open question 17 for the part that is still live. | `scripts/retarget-ingame-motion-blender.py:112` |
+| 15 | **The retarget script cannot run unmodified: its default target rig was deleted.** `assets/images/battle/glb/` no longer exists, so `DEFAULT_TARGET_RIG` points at a missing `dusk-warden.glb`. The original rig survives inside `unarmed-core.glb` (the armature is still named `dusk-warden_armature`) and substituting it is faithful — the 6 unchanged clips reproduce to within 0.043° — but the stale default is a latent trap for the next run. | `scripts/retarget-ingame-motion-blender.py` `DEFAULT_TARGET_RIG` |
+| 16 | **The motion audit report covered 42 of 66 bench files, and its two halves used non-comparable metrics — finding stands, repair REVERTED.** Legacy rows recorded hips as signed end-minus-start; current rows as max-minus-min range, so choosing a source by comparing across that boundary compares two different quantities. All 66 were re-measured under one metric and the missing 24 merged in `51a2c175`, which `d70d81e6` reverted with the rest of that lane. **The report in the tree is upstream's again, so the 42-of-66 coverage gap and the metric split are both back.** It still matters for the same reason: `tests/ingame-motion-pack.test.mjs:218` builds `auditByFile` from `audit.files`, so any future source choice is made against the mixed-metric report. | `_workspace/current/engineering/asset-pipeline/motion-bench/fbx-audit-report-FULL-OBSERVED.json` |
 
 ---
 
@@ -303,10 +308,49 @@ existing test would have detected it.** Registry now closed at four constants:
 7. **Four files need a real merge with the concurrent session**: `defense-catalog.js`
    (923 vs 1025), `defense-run-simulation.js` (3570 vs 4002), `app.js`,
    `battle-realtime-three.js`. Planned, not a surprise.
-8. **Slab layouts are promoted but the catalog still carries the old routes and
-   obstacles.** The floor geometry matches `DungeonLevelDesign`'s 12 slabs; the gameplay
-   route/obstacle rewrite from the same spec is not applied. The floor is correct and the
-   old routes still validate, so this is incomplete rather than broken.
+8. **Slab layouts — cinder-span CLOSED, chancel and throne scoped and measured.**
+   `[OBSERVED]` Cinder's authored layout is now applied: routes in `87915ded`
+   (corridorWidth 1200→1400 / 700→900, five waypoints moved) and obstacles in `eb434315`
+   (3→6, promoting three already-visible frozen props to collision). Margins recomputed with
+   the validator's own rule: critical +213.87, detour +49.86 — the detour figure reproduces
+   the spec's stated tightest margin to the hundredth.
+
+   Two measurements made this landable in two commits instead of one risky one. First,
+   `defense-run-simulation.js` has **zero reads of `gameplay.routes`** (it reads `bounds`,
+   `surfaces`, `obstacles`, `meshColliders`), so the route commit is digest-neutral and
+   `defense-run-simulation.test.mjs` stayed 40/40 with **zero hash re-pins** — that green is
+   the evidence rather than an assumption. Second, obstacles **are** read
+   (`resolveTerrainPlacement`, `firstObstacleHit`) and do displace entities, yet the four
+   pinned windows still did not move, because none of them reaches the three added circles
+   (closest approach +2494.53). That null result carries a positive control: injecting one
+   obstacle on the commander's start moves the hash to `d4086a62`, so the harness is
+   demonstrably sensitive and the invariance is measured, not an unwired no-op. **Do not
+   generalise "obstacles are digest-neutral" from it.**
+
+   **Chancel and throne are deliberately not applied, and the reason is arithmetic.** The
+   spec's routes were authored against its own re-authored prop layout, so against today's
+   props they are illegal — chancel critical **−532.23** (`oath-relic`), chancel detour
+   **−967.36** (`east-colonnade-prop`), throne detour **−883.20**
+   (`east-fractured-wing-prop`); all three throw `Prop blocks authored route` at import.
+   Throne's critical passes at +310.00, so it is not uniformly broken — it is coupled.
+   The spec's own layout is self-consistent (its claimed +301.24 / +200.00 reproduce
+   exactly), so this is an **ordering** finding, not a spec defect.
+
+   The atomic unit there is far wider than "routes and obstacles", measured:
+
+   | stage | props exact / moved / absent / dropped | landmarks orphaned | anchors that must move |
+   |---|---|---|---|
+   | abyss-chancel | 3 / 5 / 5 / 4 | 1 (`landmark.west-colonnade`) | 2 (`apse-light-anchor`, `nave-light-anchor`) |
+   | echo-throne | 3 / 7 / 3 / 2 | 1 (`landmark.echo-court-crescent`) | 2 (`dais-light-anchor`, `aisle-light-anchor`) |
+
+   Plus the spec renames all 12 landmark ids, and `fractured-dais-prop` changes **radius**
+   900→700 as well as position — which is load-bearing, not cosmetic: keep r900 at the new
+   (19200, 7600) and throne's critical route fails by −700. So landing it means props +
+   landmarks + anchors + obstacles + routes in one commit, **deleting six currently visible
+   props** across two stages. That is a presentation content decision, not the
+   route/obstacle gap this item was opened for. Chancel/throne props are generic
+   relic/blade instances with **no `modelNode` at all** (0/12 on both, vs cinder's 12/12
+   from stage-specific packs), so no unauthored art blocks it — only the content call does.
 9. **Tiling reads repetitively** at `uvRepeat` 3–5 per axis on the chancel and throne
    floors. Seams are mathematically invisible; the *pattern period* is visible. A
    per-slab rotation or a second variant tile would break it up.
@@ -397,6 +441,94 @@ existing test would have detected it.** Registry now closed at four constants:
     (`git worktree add --detach /tmp/as-<sha> <sha>`, symlink `node_modules`, run the one
     file, ~90 s each). A three-way split that separates inherited drift from two distinct
     cycle-10 increments cost four single-file runs and no guessing.
+13. **UniRig was requested, investigated, and REJECTED on evidence — the rigs already exist.**
+    `[OBSERVED]` The ask was "apply UniRig to overhaul boss/character/enemy animation".
+    UniRig generates a skeleton and skinning weights for an **unrigged** mesh. Measured:
+    all 29 GLBs under `assets/mesh/{boss,character,enemy}` are indeed 0-skin/0-joint/0-anim
+    raw art — but they are **authoring inputs, not runtime actors** (contract §0 says so
+    explicitly). The 11 runtime models under `assets/motion/ingame/characters/` each carry
+    1 skin, **24 `DEF-*` Rigify joints**, and 11 clips, all `runtimeEligible: true`, and all
+    11 share one identical joint-name set. So UniRig's problem was already solved, by hand,
+    better than a generator would.
+
+    It also **cannot run on this machine**: arm64 Apple Silicon with no CUDA toolchain, while
+    UniRig requires `spconv-{cuda}`, CUDA wheels for `torch_scatter`/`torch_cluster`,
+    `flash_attn`, and `accelerator: gpu` with `bf16-mixed`. The equivalent local capability
+    already exists — `scripts/rig-character-asset-blender.py` plus Blender 5.1.2 — and the
+    Mixamo→DEF retarget mapping is already written (22 `MappingRow`s).
+
+    The real bottleneck was different and is what actually got fixed: of 66 Mixamo bench FBX,
+    only **9 are reachable** at runtime, and every combat action was sourced from unarmed
+    brawling while weapon and creature motion sat unused. Defects 12–16 are what the
+    investigation surfaced instead.
+
+14. **Per-character motion variety is real, dormant, and currently paid for with no return.**
+    `[OBSERVED]` Hashing keyframe bytes per state across all 11 models gives **11 distinct
+    signatures** for each of `bighit`, `critical`, `attack`, `die`, `show` — every character
+    carries its own proportion-adapted retarget, not a shared copy. But
+    `battle-realtime-three.js:1698` is `if (!key || actions[key]) continue` (first-wins) and
+    `:1835` is `allEntries = [...adapted, ...baseEntries]` (overlay first), so the
+    `unarmed-core.glb` overlay **overrides 9 of those 11 states on every character**. Only
+    `die` and `show` reach the mixer from base — which is also why fixing `die` required
+    rebuilding all 11 models rather than just the overlay.
+
+    So the project pays per-character retargeting cost for 11 states and gets visible return
+    on 2. Either the overlay should be narrowed to the states that genuinely need a shared
+    baseline, or the per-character retarget for the other 9 is wasted work. Not a defect in
+    anything changed this cycle — the override mechanism is untouched — but a real decision
+    someone owes.
+
+15. **The retarget path is not byte-reproducible — measured on a build that was then reverted,
+    but the property belongs to the pipeline, not to my clip choice.** Rebuilding drifts every
+    retargeted clip **0.02–0.047°** and changes all 11 `modelSha256` values; an authored bake
+    drifts **0.0000**. My rebuild is gone with `d70d81e6`, so no hash in the tree moved in the
+    end — but the drift is a property of `build-character-motion-library-blender.py`, which is
+    unchanged, so the next person who rebuilds will see the same thing. No test pins
+    `modelSha256`, so it is not gate-blocking. This is the answer to a future "why did every
+    hash move when I changed one clip".
+
+16. **11 tracked `review.blend` intermediates, 138M on disk, zero consumers — a checkout cost,
+    not a history cost.** `[OBSERVED]` `grep -rl review.blend` across `tests/`, `scripts/` and
+    `.github/` returns nothing; they are Blender working files regenerable from the tracked
+    `build-character-motion-library-blender.py`. Untracking them would cut 138M from every
+    future clone's working tree and reclaim **nothing** from history, since those blobs are
+    already permanent.
+
+    Recorded at that width deliberately, because a first pass at this claim was wrong in a way
+    worth remembering: `du` sizes were read as commit cost and the item was nearly filed as
+    "266M of churn per rebuild". Measured properly, `51a2c175` costs **122.6 MB** of on-disk
+    objects (`git rev-list --objects <c> --not <c>^ | git cat-file --batch-check='%(objectsize:disk)'`),
+    essentially all of it the 11 genuinely-new shipped GLB blobs — irreducible. The
+    `review.blend` diffs are **2 insertions / 2 deletions each**, so git deltas them almost
+    perfectly, and the `character-motion-library/<id>/model.glb` mirror is a **byte-identical
+    blob** to the shipped copy (same `git hash-object` SHA), so that apparent duplication is
+    free. There is no waste to remove; acting on the original claim would have been pointless
+    surgery on a 12G repo. Working-tree size is the only true cost, and it is a preference,
+    not a defect.
+
+
+17. **OPEN QUESTION, and it is about the asset that actually ships: does `Dying.fbx` satisfy
+    the in-place contract?** `[OBSERVED]` Both death candidates measured from one uniform
+    66-file audit pass, hips displacement on the xz ground plane:
+
+    | source | frames | xz ground travel |
+    |---|---|---|
+    | `Dying.fbx` — **ships on `main`** | 139 | **80.85** |
+    | `Defeated.fbx` — measured, not shipped | 163 | **6.55** |
+
+    `RUNTIME_ANIMATION_CONTRACT.md:29` requires every promoted clip to be in-place
+    (`inPlaceRootMotion: true`, restated at `:572`): "animation may articulate joints but may
+    not displace the gameplay root". Export is rotation-only
+    (`strip_non_rotation_channels`), so root translation is DELETED rather than scaled — which
+    means a motion whose meaning lived in 80 cm of travel does not move the root, it reads as
+    the feet sliding while the body performs a walk-and-fall in place.
+
+    This was measured while choosing between the two and is the one number worth carrying past
+    the revert: it is now a question about `main`'s asset, not a defence of mine. It is NOT a
+    proven defect — 12.3× more travel than the alternative is a strong signal, not a verdict,
+    and the visual result may still read acceptably. Whoever owns motion next should look at
+    the shipped `die` on a live actor and decide. Deliberately left as a question rather than
+    filed as a defect or silently dropped.
 
 ---
 
@@ -410,8 +542,15 @@ play adjudication for G4/G7/G8.
 Sequence, in dependency order:
 
 1. Land the pacing doctrine deltas and the two `measure-stage-playtime.mjs` constants.
-2. Run the full suite once, alone, in the worktree. Record the real baseline.
-3. Apply the route/obstacle layout from the dungeon spec, whose floor is already in place.
+2. ~~Run the full suite once, alone, in the worktree. Record the real baseline.~~ **DONE this
+   cycle** — 57 files, 566 pass, 1 fail, the failure reproduced at base. See unresolved item 1.
+   What is still owed is the G7 persistence digest re-pin described in item 12.
+3. Chancel and throne layout — **not** "apply the spec", which is what this looked like from
+   the outside. Cinder is done (`87915ded`, `eb434315`). Those two need props + landmarks +
+   anchors + obstacles + routes in ONE commit, and it deletes six visible props. Decide the
+   content question first: is the spec's re-authored prop layout the one we want, given it
+   drops `oath-apse-prop` (r880) and `court-crescent-prop` and renames all 12 landmarks?
+   Applying routes alone throws at import — measured, see unresolved item 8.
 4. Author the three VFX GLBs and register them in all four allowlists in one commit.
 5. Merge with the concurrent session's cycle-9 branch deliberately, file by file.
 6. Only then seek human-play adjudication.
