@@ -1064,6 +1064,40 @@ const IMPACT_KNOCKBACK_MS = 160;
 const IMPACT_KNOCKBACK_HEAVY_MS = 260;
 const IMPACT_KNOCKBACK_DISTANCE = 0.12;
 const IMPACT_KNOCKBACK_HEAVY_DISTANCE = 0.26;
+
+/* --- Arrival entry ---------------------------------------------------------
+ * A `skydrop` body falls in; an `emerge` body erupts out of the floor.
+ *
+ * Both are RENDER-SPACE offsets on the actor root, exactly like knockback above: the actor sync
+ * commits the authoritative position every frame, so the offset decays on its own and can never
+ * desync a body from its snapshot. Nothing here writes back, and nothing here touches
+ * getRunDigest() inputs.
+ *
+ * Safe to occupy the arming window because the SIMULATION already guarantees the body cannot act
+ * during it -- spawnEnemy writes the full `telegraphTicks` into both `attackCooldown` and
+ * `rangedCooldown` for a near-player arrival. The entry is therefore presentation for a lockout
+ * that already exists, not a lockout invented by the renderer.
+ *
+ * Durations are capped by the emitted `telegraphTicks` (see registerArrivalEntry): a body must be
+ * standing and readable BEFORE it is allowed to strike, so the entry may never outlast the window
+ * that promise is made in.
+ */
+const ARRIVAL_FALL_MS = 520;
+const ARRIVAL_RISE_MS = 620;
+// Expressed in silhouettes of the body's own fitted height rather than in world units, so a 4.5u
+// boss drops from proportionally higher than a 1.7u grunt and the weight reads without a per-kind
+// table -- the same reasoning motionProfileFor() uses for playback rate.
+const ARRIVAL_FALL_SILHOUETTES = 4.5;
+const ARRIVAL_RISE_SILHOUETTES = 1.15;
+/**
+ * Only the two formations that have a vertical story. `encircle` arrives on the ground already,
+ * and `lane` / `abreast` walk in from an arena edge, so neither has an entry offset -- an
+ * unmapped formation is silently and correctly a no-op.
+ */
+const ARRIVAL_ENTRY_STYLES = Object.freeze({
+  skydrop: Object.freeze({ durationMs: ARRIVAL_FALL_MS, silhouettes: ARRIVAL_FALL_SILHOUETTES, rising: false }),
+  emerge: Object.freeze({ durationMs: ARRIVAL_RISE_MS, silhouettes: ARRIVAL_RISE_SILHOUETTES, rising: true }),
+});
 // Camera impulse is admitted only for heavy, critical, or boss contacts and
 // is bounded so it cannot disturb the authored orbit framing.
 const IMPACT_SHAKE_MS = 220;
@@ -3397,6 +3431,9 @@ export class RealtimeBattle {
     // snapshot, so getRunDigest() inputs stay untouched.
     this.hitFlashes = new Map(); // entityId -> { startMs, untilMs, color, peak }
     this.knockbacks = new Map(); // entityId -> { startMs, untilMs, dx, dz, distance }
+    // entityId -> { startMs, durationMs, silhouettes, rising }. Render-space arrival entry,
+    // cleared by every path that clears knockbacks above.
+    this.arrivalEntries = new Map();
     this.cameraShake = null; // { startMs, untilMs, amplitude, seed }
     this.cameraShakeOffset = new THREE.Vector3();
     this.rendererSize = new THREE.Vector2();
@@ -5016,6 +5053,7 @@ export class RealtimeBattle {
     if (this.reducedMotion) {
       this.stageIntro = null;
       this.knockbacks.clear();
+      this.arrivalEntries.clear();
       this.clearCameraShakeOffset();
       this.cameraShake = null;
     }
@@ -5081,6 +5119,7 @@ export class RealtimeBattle {
     }
     this.hitFlashes.clear();
     this.knockbacks.clear();
+    this.arrivalEntries.clear();
     this.clearCameraShakeOffset();
     this.cameraShake = null;
     // Area presentation is transient by contract: a reset leaves no ring and no
@@ -6182,6 +6221,63 @@ export class RealtimeBattle {
     }
   }
 
+  /**
+   * Admits a `skydrop` fall or an `emerge` rise for a body that just arrived.
+   *
+   * Reads only the ENEMY_SPAWNED payload. The body's own record may not exist yet -- actor models
+   * load asynchronously -- so the height is resolved per frame in applyArrivalEntries() from
+   * `record.targetHeight` rather than captured here, and an entry whose actor never materialises
+   * is dropped by that same loop.
+   */
+  registerArrivalEntry(event, nowMs) {
+    // Reduced motion resolves an arrival instantly at its authoritative position: the body IS
+    // there, and the entry is the only part that was ever decorative.
+    if (this.reducedMotion) return;
+    const style = ARRIVAL_ENTRY_STYLES[event?.arrivalFormation];
+    if (!style || !Number.isFinite(nowMs)) return;
+    // Never outlast the arming window. `telegraphTicks` is the simulation's promise that the body
+    // is readable before it can strike; an entry still playing past it would be animating a body
+    // that is already allowed to attack. A missing or invalid field falls back to the authored
+    // duration rather than to an unbounded one.
+    const telegraphMs = Number.isInteger(event?.telegraphTicks) && event.telegraphTicks > 0
+      ? (event.telegraphTicks / SIM_TICK_RATE) * 1000
+      : style.durationMs;
+    this.arrivalEntries.set(event.entityId, {
+      startMs: nowMs,
+      durationMs: Math.max(1, Math.min(style.durationMs, telegraphMs)),
+      silhouettes: style.silhouettes,
+      rising: style.rising,
+    });
+  }
+
+  /**
+   * Applies the arrival offset on top of the committed actor placement, exactly like
+   * applyKnockbacks() below, and for the same reason: the authoritative position is written every
+   * frame, so this decays to nothing on its own.
+   */
+  applyArrivalEntries(nowMs) {
+    for (const [entityId, entry] of this.arrivalEntries) {
+      const record = this.actors.get(entityId);
+      if (!record?.root) {
+        this.arrivalEntries.delete(entityId);
+        continue;
+      }
+      const progress = THREE.MathUtils.clamp((nowMs - entry.startMs) / entry.durationMs, 0, 1);
+      if (progress >= 1) {
+        this.arrivalEntries.delete(entityId);
+        continue;
+      }
+      const span = entry.silhouettes * (record.targetHeight ?? TARGET_HEIGHT.enemy);
+      // A fall holds height early and loses it late, which is what gravity looks like. A rise
+      // clears the floor immediately and then settles, which is what bursting out looks like.
+      // Both reach exactly 0 at progress 1, so neither leaves a residual offset behind.
+      const remaining = entry.rising
+        ? (1 - progress) * (1 - progress)
+        : 1 - progress * progress;
+      record.root.position.y += (entry.rising ? -span : span) * remaining;
+    }
+  }
+
   // Render-only displacement. updateActorFollow() re-lerps the root toward the
   // authoritative goal every frame, so this offset decays on its own and can
   // never desync the actor from its snapshot position.
@@ -6242,6 +6338,7 @@ export class RealtimeBattle {
       this.updateAreaRings(nowMs);
       if (this.reducedMotion) {
         this.knockbacks.clear();
+        this.arrivalEntries.clear();
         this.cameraShake = null;
         return;
       }
@@ -6251,6 +6348,7 @@ export class RealtimeBattle {
       // Impact feel is cosmetic; never let it break the render loop.
       this.hitFlashes.clear();
       this.knockbacks.clear();
+      this.arrivalEntries.clear();
       this.cameraShake = null;
       this.clearAreaRings();
       this.bossIntro = null;
@@ -6274,6 +6372,9 @@ export class RealtimeBattle {
         this.triggerAction(actor("commander"), "show", nowMs);
         break;
       case "ENEMY_SPAWNED":
+        // Registered BEFORE the `show` beat so a dropped body is already offset on the first
+        // frame its clip plays, instead of popping to the floor and then falling.
+        this.registerArrivalEntry(event, nowMs);
         this.triggerAction(actor(event.entityId), "show", nowMs);
         break;
       case "BOSS_SPAWNED":
@@ -6447,8 +6548,10 @@ export class RealtimeBattle {
     const nowMs = performance.now();
     this.updateCamera(snapshot, nowMs);
     this.updateAnimations(nowMs, snapshot?.tick, startsStageAtTickZero);
-    // Impact feel runs last: the flash/knockback/shake it applies must land on
-    // top of the camera and actor placement committed above.
+    // Arrival entry and impact feel both run last: the offsets they apply must land on top of the
+    // camera and actor placement committed above. Entry first, so a body that is knocked back
+    // mid-fall carries both offsets rather than having one overwrite the other.
+    if (!this.reducedMotion) this.applyArrivalEntries(nowMs);
     this.updateImpactFeedback(nowMs);
 
     this.renderer.render(this.scene, this.camera);
@@ -6473,6 +6576,7 @@ export class RealtimeBattle {
     this.actors.clear();
     this.hitFlashes.clear();
     this.knockbacks.clear();
+    this.arrivalEntries.clear();
     this.cameraShake = null;
     this.clearAreaRings();
     this.areaRingGeometry?.dispose();
