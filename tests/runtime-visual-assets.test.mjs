@@ -112,11 +112,11 @@ test("Cinder Span publishes twelve frozen, independently placed nodes across its
     "cinder-span:forge-relic": { x: 15400, y: 7400, elevation: 0, yawRadians: 1.5708 },
     "cinder-span:gate-beacon-prop": { x: 22500, y: 10100, elevation: 0, yawRadians: 2.8 },
     "cinder-span:ingress-beacon-prop": { x: 3000, y: 1700, elevation: 0, yawRadians: -0.35 },
-    "cinder-span:north-ash-talon-prop": { x: 2400, y: 10100, elevation: 0, yawRadians: 0.35 },
+    "cinder-span:ash-gatehouse-north-prop": { x: 7800, y: 3000, elevation: 0, yawRadians: 1.5708 },
+    "cinder-span:ash-gatehouse-south-prop": { x: 7600, y: 8000, elevation: 0, yawRadians: 1.5708 },
     "cinder-span:relay-debris-north-prop": { x: 5000, y: 10400, elevation: 0, yawRadians: 0.5 },
     "cinder-span:relay-debris-south-prop": { x: 15000, y: 1500, elevation: 0, yawRadians: -0.4 },
     "cinder-span:seal-brand": { x: 17600, y: 7400, elevation: 0, yawRadians: 0 },
-    "cinder-span:south-forge-teeth-prop": { x: 9000, y: 1700, elevation: 0, yawRadians: 1.5708 },
     "cinder-span:west-ash-wall-prop": { x: 19000, y: 4400, elevation: 0, yawRadians: 1.5708 },
   };
   assert.deepEqual(
