@@ -1065,6 +1065,39 @@ const IMPACT_KNOCKBACK_HEAVY_MS = 260;
 const IMPACT_KNOCKBACK_DISTANCE = 0.12;
 const IMPACT_KNOCKBACK_HEAVY_DISTANCE = 0.26;
 
+/**
+ * Knockback scales inversely with the STRUCK body's silhouette.
+ *
+ * Before this, a 4.5u boss and a 1.45u companion were displaced by the identical 0.12 / 0.26, so
+ * weight did not read: the heaviest body in the game recoiled exactly as far as the lightest.
+ * Same reasoning `motionProfileFor()` already uses for playback rate, against the same
+ * `MOTION_PROFILE_REFERENCE_HEIGHT` reference, so silhouette means one thing across the renderer.
+ *
+ * Bounds are the whole safety argument. The floor keeps a boss from becoming immovable — zero
+ * displacement reads as a MISSED hit, which is worse than a small one — and the ceiling keeps the
+ * lightest body inside the render-space budget: 0.26 * 1.15 = 0.299 world units against a 1.45u
+ * companion is ~21% of its own height, still far under one actor width, which is what lets
+ * updateActorFollow() pull the body back every frame without the offset ever reading as a position.
+ */
+const KNOCKBACK_MASS_BOUNDS = Object.freeze({ min: 0.45, max: 1.15 });
+const KNOCKBACK_MASS_EXPONENT = -0.65;
+
+/**
+ * Displacement multiplier for a body of `targetHeight`, relative to the reference silhouette.
+ *
+ * Exported so the contract test asserts the authored curve instead of restating it — a copied
+ * constant stops checking anything the moment the authored one moves.
+ */
+export function knockbackMassScale(targetHeight) {
+  const height = Math.max(0.1, finite(targetHeight, MOTION_PROFILE_REFERENCE_HEIGHT));
+  const ratio = height / MOTION_PROFILE_REFERENCE_HEIGHT;
+  return THREE.MathUtils.clamp(
+    Math.pow(ratio, KNOCKBACK_MASS_EXPONENT),
+    KNOCKBACK_MASS_BOUNDS.min,
+    KNOCKBACK_MASS_BOUNDS.max,
+  );
+}
+
 /* --- Arrival entry ---------------------------------------------------------
  * A `skydrop` body falls in; an `emerge` body erupts out of the floor.
  *
@@ -6127,7 +6160,10 @@ export class RealtimeBattle {
         untilMs: startMs + (heavy ? IMPACT_KNOCKBACK_HEAVY_MS : IMPACT_KNOCKBACK_MS),
         dx: dx / length,
         dz: dz / length,
-        distance: heavy ? IMPACT_KNOCKBACK_HEAVY_DISTANCE : IMPACT_KNOCKBACK_DISTANCE,
+        // Scaled by the struck body's own silhouette, so a boss shrugs off what visibly moves
+        // a companion. `targetHeight` is the fitted render height the actor was built at.
+        distance: (heavy ? IMPACT_KNOCKBACK_HEAVY_DISTANCE : IMPACT_KNOCKBACK_DISTANCE)
+          * knockbackMassScale(targetRecord.targetHeight),
       });
     }
     if (!heavy && !bossContact) return;

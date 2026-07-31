@@ -3100,3 +3100,117 @@ test("dispose clears arrival entries so a retired body cannot leak an offset", a
   adapter.dispose();
   assert.equal(adapter.arrivalEntries.size, 0, "dispose must clear every tracked entry");
 });
+
+// --- Knockback weight ----------------------------------------------------------------
+// Knockback was a flat 0.12 / 0.26 for every body, so a 4.5u boss recoiled exactly as far as a
+// 1.45u companion and weight did not read at all. It now scales by the STRUCK body's silhouette
+// through the same reference `motionProfileFor()` uses. These assert the curve, its bounds, and
+// that the offset stays a render-space nudge rather than becoming a position.
+
+async function knockbackHarness(RealtimeBattle) {
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  const snapshot = {
+    tick: 1,
+    enemies: [
+      { id: "attacker", kind: "rusher", x: 10000, y: 6000, elevation: 0 },
+      { id: "grunt", kind: "rusher", x: 12000, y: 6000, elevation: 0 },
+      // actorModelPath only starts a boss load for a catalog-backed id, so this fixture stays on
+      // the same public boss lookup path production uses.
+      { id: "warden", class: "boss", bossId: "s1-cinder-warden", x: 12000, y: 7000, elevation: 0 },
+    ],
+  };
+  adapter.reconcileActors(snapshot);
+  await settleLoadedActors(adapter, ["attacker", "grunt", "warden"]);
+  // Models load asynchronously, so the FIRST reconcile had no root to place. Without this second
+  // pass every body sits at the world origin, the attacker-to-target axis has zero length, and
+  // registerImpactFeedback declines to register any knockback -- the test would then be asserting
+  // against an impact that never happened.
+  adapter.reconcileActors(snapshot);
+  return adapter;
+}
+
+function strike(adapter, targetId, nowMs) {
+  adapter.registerImpactFeedback(
+    { type: "MELEE_IMPACT", sourceId: "attacker", targetId, heavy: true },
+    nowMs,
+    [],
+  );
+  return adapter.knockbacks.get(targetId) ?? null;
+}
+
+test("knockback distance is scaled by the struck body's own silhouette", async () => {
+  const { RealtimeBattle, knockbackMassScale } = await rendererModule;
+  const adapter = await knockbackHarness(RealtimeBattle);
+
+  const grunt = strike(adapter, "grunt", 0);
+  const warden = strike(adapter, "warden", 0);
+  assert.ok(grunt, "a struck grunt must register a knockback");
+  assert.ok(warden, "a struck boss must register a knockback");
+
+  // The whole point: the heaviest body in the game must visibly resist what moves a grunt.
+  assert.ok(
+    warden.distance < grunt.distance * 0.7,
+    `a boss must resist: boss ${warden.distance} vs grunt ${grunt.distance}`,
+  );
+  // A boss must still MOVE. Zero displacement reads as a missed hit, which is a worse defect
+  // than a small one -- that is what the lower bound exists to prevent.
+  assert.ok(warden.distance > 0, "a boss must still register a visible recoil");
+
+  assertNear(
+    grunt.distance,
+    0.26 * knockbackMassScale(1.7),
+    "the reference silhouette keeps the authored heavy distance",
+  );
+  assertNear(
+    warden.distance,
+    0.26 * knockbackMassScale(4.5),
+    "a boss consumes the authored mass curve",
+  );
+  adapter.dispose();
+});
+
+test("the reference silhouette is an exact identity, so the common body is unchanged", async () => {
+  const { knockbackMassScale, MOTION_PROFILE_REFERENCE_HEIGHT } = await rendererModule;
+  // 1.7 is TARGET_HEIGHT.enemy and the reference the curve is written against. Anything other
+  // than exactly 1 here would silently re-tune every ordinary enemy in the game.
+  assert.equal(knockbackMassScale(MOTION_PROFILE_REFERENCE_HEIGHT), 1);
+});
+
+test("the mass curve is monotonic, bounded, and total", async () => {
+  const { knockbackMassScale } = await rendererModule;
+  const heights = [0.7, 1.45, 1.55, 1.7, 1.8, 2.2, 4.5];
+  const scales = heights.map((height) => knockbackMassScale(height));
+  for (let index = 1; index < scales.length; index += 1) {
+    assert.ok(
+      scales[index] <= scales[index - 1],
+      `heavier bodies must never recoil further: ${heights[index]} scored ${scales[index]}`,
+    );
+  }
+  // Bounded at both extremes, including inputs no catalog body has.
+  for (const height of [0.0001, 1e6, Number.NaN, undefined, null]) {
+    const scale = knockbackMassScale(height);
+    assert.ok(Number.isFinite(scale) && scale >= 0.45 && scale <= 1.15, `unbounded scale for ${height}: ${scale}`);
+  }
+});
+
+test("the heaviest possible recoil stays a render nudge rather than a position", async () => {
+  const { knockbackMassScale } = await rendererModule;
+  // The lightest knockable body takes the largest multiplier, so this is the worst case in the
+  // game. updateActorFollow() re-commits the authoritative position every frame; the offset only
+  // stays legible as "recoil" while it is small against the body it is applied to.
+  const lightest = 1.45;
+  const worstCase = 0.26 * knockbackMassScale(lightest);
+  assert.ok(
+    worstCase / lightest < 0.25,
+    `worst-case recoil ${worstCase} is ${(worstCase / lightest * 100).toFixed(1)}% of a ${lightest}u body`,
+  );
+});
+
+test("reduced motion registers no knockback at all", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = await knockbackHarness(RealtimeBattle);
+  adapter.reducedMotion = true;
+  assert.equal(strike(adapter, "grunt", 0), null, "reduced motion must not displace a struck body");
+  assert.equal(adapter.knockbacks.size, 0, "no knockback record may survive under reduced motion");
+  adapter.dispose();
+});
