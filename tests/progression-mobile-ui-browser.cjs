@@ -195,6 +195,22 @@ async function launch(run) {
   await run.page.locator('#defense-cutscene-overlay[data-cutscene-event="STAGE_STARTED"]').waitFor({ state: "visible" });
 }
 
+/**
+ * Clears the opening cutscene and waits for the overlay to actually leave.
+ *
+ * The overlay is a modal that owns focus and advances on its own relay timers. A control test
+ * that asserts `document.activeElement` while it is still on screen is racing that timer: on a
+ * fast machine the loop over the five movement buttons finishes first, and on a ~6x slower CI
+ * runner a relay beat lands mid-loop and takes focus back, which is correct modal behaviour and
+ * a false failure for the control under test. Dismissing first is also what a player does before
+ * touching the controls, so this asserts the state the assertion was always about.
+ */
+async function dismissOpeningCutscene(run) {
+  const dismiss = run.page.locator("#defense-cutscene-overlay [data-cutscene-dismiss]");
+  if (await dismiss.isVisible().catch(() => false)) await dismiss.click();
+  await run.page.locator("#defense-cutscene-overlay").waitFor({ state: "hidden" }).catch(() => {});
+}
+
 async function readStoredStoryProgress(page) {
   return page.evaluate((key) => JSON.parse(localStorage.getItem(key)).payload.storyProgress, STORAGE_KEY);
 }
@@ -325,6 +341,7 @@ test("coarse-landscape joystick resolves eight octants and every cancellation pa
   const run = await openPage({ hasTouch: true, viewport: COARSE_LANDSCAPE });
   try {
     await launch(run);
+    await dismissOpeningCutscene(run);
     const movement = run.page.locator("#movement-actions");
     const joystick = run.page.locator("[data-joystick]");
     assert.equal(await joystick.evaluate((node) => getComputedStyle(node).display), "grid", "coarse landscape must expose the drag joystick");
@@ -434,6 +451,7 @@ test("the joystick is the primary movement control at every viewport", async () 
     const run = await openPage(options);
     try {
       await launch(run);
+      await dismissOpeningCutscene(run);
       const joystick = run.page.locator("[data-joystick]");
       // 1. present and laid out -- the inverted assertion.
       assert.equal(await joystick.evaluate((node) => getComputedStyle(node).display), "grid",
