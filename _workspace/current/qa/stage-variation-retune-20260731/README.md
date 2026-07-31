@@ -48,16 +48,16 @@ arrival work in `defense-run-simulation.js`.
 | AC-1 소유권 대조 | PASS | `git status --short` 대조 후 명시 pathspec만 스테이징, 상대 세션 파일 0건 포함 |
 | AC-2 1차 커밋 | PASS | 55 files / +71154 |
 | AC-3 워크트리 격리 | PASS | 원 트리 상대 세션 6파일 잔존 확인 |
-| AC-4 커밋 3단계 | 부분 | 브랜치 신규 커밋 3개(①리튠+래칫+문서 ②계측 ③증거). Phase D 산출물 없음 |
+| AC-4 커밋 단계 | PASS | 브랜치 신규 커밋 4개(①리튠+래칫+문서 ②계측 ③증거 ④브라우저 캡처 도구+증거) |
 | AC-5 저비용 3수트 | 부분 | **63 tests / 62 pass / 1 fail / 119961 ms**. 실패 1건은 `stage1b-persistence`의 exporter 시맨틱 digest 불일치 — **깨끗한 HEAD 워크트리에서도 동일 실패(10/11)** 로 사전 존재 결함임을 격리 증명 |
 | AC-6 verdict 생성 | PASS | `qa/evidence/gates/stage1b-verdict.json`, `overallDisposition: BLOCKED` |
 | AC-7 G7/G8 BLOCKED 명시 | PASS | `--g7/--g8-*` 미공급 → `artifact path was not supplied` → 자동 BLOCKED |
 | AC-8 계측 확장 | PASS | `--depth`, `--seed-list`, `minGateIntegrity` 추가(커밋 ②) |
 | AC-9 20런 | PASS | cinder-span × 시드 401-405 × depth 0/1/2/3, `depth/playtime-depth{0..3}.json` |
 | AC-10 뎁스 순서 검증 | **FAIL → 발견으로 기록** | 아래 §심연 뎁스 참조 |
-| AC-11 브라우저 증거 | 미착수 | 아래 §Phase D 참조 |
+| AC-11 브라우저 증거 | **PASS** | `midboss-evidence.json` + `.png` — `MIDBOSS_SPAWNED(enemyType="ranged")` @ tick 981, hp 22073, 방향 SW, 브랜치·sha 동봉, 콘솔/페이지 에러 0 |
 | AC-12 exporters | 미실행(사유 기록) | `git log -1 -- defense-run-simulation.js` = `9ba2aa39` ≠ HEAD `c139b508` → 상대 세션 변경이 아직 미커밋이므로 트리거 미충족 |
-| AC-13 푸시 | 보류 | Phase D 미완이므로 푸시 전 단계에서 정지 |
+| AC-13 푸시 | PASS | origin/main 위로 재정렬 후 푸시, `@{upstream}..HEAD` 검사 |
 | AC-14 증거 집약 | PASS | 이 문서 |
 
 ## 발견 1 — 아키타입 밸런스가 실측상 붕괴 (신규, 리튠과 무관)
@@ -114,14 +114,34 @@ cinder-span × 시드 401-405, 봇 기준(바닥 커맨더):
 → "기존 입력으로 verdict를 만들 수 있다"는 전제는 symmetric뿐 아니라 pressure/persistence 아티팩트에도
 성립하지 않는다. 이들은 고비용 exporters 영역이므로 AC-12 트리거(상대 세션 커밋) 이후로 이월.
 
-## Phase D — 브라우저 미드보스 증거: 미착수
+## Phase D — 브라우저 미드보스 증거: PASS
 
-착수 지점과 미착수 사유를 남긴다.
-- 사실(이번에 확인): `app.js`에 `midboss`/`bossSpawned` 문자열이 **없다**. 미드보스 스폰은 UI에 아무 신호도
-  남기지 않고 렌더러(`battle-realtime-three.js:1315`)만 소비한다. 따라서 DOM 셀렉터 대기로는 감지 불가.
-- 따라서 자동 판정에는 `tests/stage-runtime-proof-browser.test.mjs:96`의 `INSTALL_RUNTIME_PROBE`(+68행 정적 서버)
-  재사용이 필수이며, 이를 신규 캡처 스크립트로 옮기는 작업이 선행되어야 한다.
-- 검증되지 않은 스크립트를 커밋하지 않기 위해 이번 실행에서는 착수하지 않았다.
+`scripts/capture-midboss-evidence.mjs` (신규). 왜 스크립트인가: `app.js`에 `midboss`/`bossSpawned`
+문자열이 **없다** — 미드보스 스폰은 DOM에 아무 신호도 남기지 않고 렌더러만 소비한다. 따라서 유일하게
+정직한 자동 판정은 렌더러가 실제로 건네받는 스냅샷을 관측하는 것이며,
+`RealtimeBattle.prototype.renderSnapshot`을 후킹한다(`tests/stage-runtime-proof-browser.test.mjs:96`과 동일 훅).
+
+측정 중 발견한 함정: 첫 시도는 120초 타임아웃으로 실패했고 진단 결과 `GROWTH_OFFER` 이벤트 3020회에
+`WAVE_VARIANT_STARTED` 1회 — **성장 오퍼("성장 선택 · 전투 일시 정지")가 런을 멈춰 세워** 미드웨이브
+틱(981)에 도달하지 못했다. 캡처 루프가 `#defense-growth-offer [data-pick]`을 응답하도록 고쳐 해소.
+
+결과:
+
+| 필드 | 값 |
+|---|---|
+| `pass` | true |
+| 이벤트 | `MIDBOSS_SPAWNED`, `enemyType: "ranged"` |
+| tick / frame | 981 / 340 (관측 최대 틱 1046) |
+| hp / 방향 | 22073 / SW |
+| midbossId | `echo-throne-midboss-1` |
+| 프레임 수 | 362 |
+| 성장 오퍼 응답 | 1회 |
+| 스크린샷 | `midboss-evidence.png` 983421 B, `sha256:6333020665b7306b…` |
+| provenance | branch `retune/echo-throne-response-types`, commit `39c09e78` |
+| 콘솔/페이지 에러 | 0 / 0 |
+
+이로써 리튠이 바꾼 `midbossEnemy: guardian → ranged`가 시뮬레이션 데이터가 아니라 **실제 렌더된 화면에서**
+확인됐다. hp 22073은 카탈로그가 유도한 값(cadence 16.35 s × 2250 dps × 0.6)과 정확히 일치한다.
 
 ## 재현 커맨드
 
@@ -139,4 +159,5 @@ node scripts/evaluate-stage1b-gates.mjs --symmetric qa/evidence/gates/G2/stage1b
 for d in 0 1 2 3; do node scripts/measure-stage-playtime.mjs --stages cinder-span \
   --seed-list 401,402,403,404,405 --depth $d \
   --output _workspace/current/qa/stage-variation-retune-20260731/depth/playtime-depth$d.json; done
+node scripts/capture-midboss-evidence.mjs --timeout 180000
 ```
