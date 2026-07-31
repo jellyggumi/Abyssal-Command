@@ -1323,9 +1323,38 @@ const sha256 = (value) => crypto.createHash("sha256").update(value).digest("hex"
  * §9 check 1 requires the zero-buff digest to be byte-identical to "the pre-change digest at
  * the same seed", captured BEFORE the feature landed. These are that capture: each hash is
  * `sha256(getRunDigest(run))` produced by the simulation module at commit `033877ad` — the last
- * commit before the drop/buff layer existed — run against the current catalog, whose diff over
- * the same range is +173/-0 (pure addition, so the pre-feature module loads unchanged against
- * it). Recover the baseline with `git show 033877ad:defense-run-simulation.js`.
+ * commit before the drop/buff layer existed — run against the current catalog. Recover the
+ * baseline module with `git show 033877ad:defense-run-simulation.js`.
+ *
+ * PROVENANCE — TWO catalogs, and only one of them is pure addition.
+ *
+ * This comment previously cited a single figure, "+173/-0 (pure addition, so the pre-feature
+ * module loads unchanged against it)". That figure is correct, but it is `defense-catalog.js`
+ * (923 lines at base, `git diff --numstat 033877ad..HEAD -- defense-catalog.js` = **+173/-0**)
+ * and it was never the whole story, because the module loads against `stage-world-catalog.js`
+ * too. Measured: `git diff --numstat 033877ad -- stage-world-catalog.js` = **+20/-16** (576
+ * lines at base). It was already +17/-16 before the cinder obstacle promotion, because cycle
+ * 10's route commit `87915ded` rewrote waypoints and corridor widths in place.
+ *
+ * So the justification splits:
+ *
+ *  - `defense-catalog.js` +173/-0 — genuinely pure addition. `BUFF_ITEMS` and friends are new
+ *    exports the pre-feature module never reads, so nothing it does read moved.
+ *  - `stage-world-catalog.js` +20/-16 — NOT pure addition, and obstacle geometry genuinely
+ *    differs: cinder-span went 3 -> 6 obstacles (three already-visible frozen props promoted to
+ *    collision). What holds here is narrower: the catalog's *exported shape* is unchanged. Every
+ *    edit is a value edit or a row added inside an existing array; no export, field or helper
+ *    the pre-feature module reads was renamed or removed, and it reaches obstacles only through
+ *    `world.gameplay.obstacles`, which still exists with the same element shape.
+ *
+ * The four hashes below were re-measured against the 6-obstacle catalog after that promotion and
+ * are UNCHANGED — the pinned values are the re-capture, not a stale carry-over. Obstacles do
+ * displace entities, but these four windows never reach the three added circles: the closest any
+ * body or projectile comes is +2494.53 (`relay-debris-south`, cinder/71/500 bare), with
+ * `relay-debris-north` +3320.81 and `east-ash-wall` +3075.79. Control for the null result — the
+ * same window run with one extra obstacle injected on the commander's start moves the hash to
+ * `d4086a62…`, so this harness is demonstrably sensitive to an obstacle change and the
+ * invariance above is a measurement, not an unwired no-op.
  *
  * A hash rather than a 19KB string because the digest is not the artifact under test — its
  * INVARIANCE is. Any byte that moves flips the hash.
@@ -1361,9 +1390,19 @@ const sha256 = (value) => crypto.createHash("sha256").update(value).digest("hex"
  * really executed), and absent `buffs`/`buffStats` keys at SNAPSHOT_VERSION 7. Only the bytes
  * are new; every precondition below was re-verified, not assumed.
  */
+/*
+ * REBASELINED 2026-07-31, cinder-span only: the ash gatehouse added two obstacles at the ingress
+ * band of `cinder-span`, which changes what a cinder-span tick DOES (collision and the paths
+ * enemies take through the doorway) and therefore moves these two windows. Scope was measured,
+ * not assumed: `abyss-chancel/71/1000` and `echo-throne/12/500` re-measured to their existing SHAs
+ * byte-for-byte, and all three rng-at-3000 fixtures below kept their pinned values, so nothing
+ * outside stage 1 moved. Preconditions re-measured for both repinned windows: zero DROP_SPAWNED,
+ * zero BUFF_APPLIED, window ran to completion, advanced dropRng, absent buffs/buffStats at
+ * SNAPSHOT_VERSION 7.
+ */
 const PRE_FEATURE_DIGEST_SHA256 = Object.freeze([
-  { label: "cinder-span/71/500 +ember-cohort", options: { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] }, steps: 500, sha: "50860301b64464b00cbac792a661f18574f3cf6e65599e624433ead49db5abdf" },
-  { label: "cinder-span/71/500 bare", options: { stageId: "cinder-span", seed: 71, companionLoadout: [] }, steps: 500, sha: "c250e10ff1c0d1e70280646dbde592ba3d7bb6e29693161a5d067064dff6c57b" },
+  { label: "cinder-span/71/500 +ember-cohort", options: { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] }, steps: 500, sha: "396a06a49febbbb9d0995d1ee121ebad8f59a84aa6984f2ce2aeb769878c6550" },
+  { label: "cinder-span/71/500 bare", options: { stageId: "cinder-span", seed: 71, companionLoadout: [] }, steps: 500, sha: "980f019efc762928222acc3dbf91d837684e7e2dc262977f7a5f079098222521" },
   { label: "abyss-chancel/71/1000 bare", options: { stageId: "abyss-chancel", seed: 71, companionLoadout: [] }, steps: 1000, sha: "ade3e989e89d3a3037ada50b5bebaa6a2f073cc395545d58efcb89313717805b" },
   // Re-baselined 2026-07-31 (echo-throne wave-doctrine retune: four-class rotation, the
   // normal/mid/normal/big/normal rhythm and a ranged mid-boss). The stage's schedule changed, so its

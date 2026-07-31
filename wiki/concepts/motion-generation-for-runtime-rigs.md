@@ -114,3 +114,8 @@ explicit audit (CLAUDE.md §3). Nothing generated goes straight into `assets/mot
   the output must go through the provenance/audit gate before it can be referenced at runtime.
 - The pack is rotation-only. Any beat that genuinely needs root translation (a lunge that covers
   ground) has to be expressed as simulation movement plus an in-place clip, not as baked hips travel.
+
+## 7. Related
+
+- [[wiki/reports/2026-07-29-natural-rest-pose-motion-library]] — the 11-asset natural bind-pose
+  cutover this pipeline produced, with its evidence and focused regression gates.

@@ -96,7 +96,6 @@ export const RETAINED_ASSET_PATHS = Object.freeze([
   "assets/audio/elevenlabs/sfx/terminal--final-completion.mp3",
   "assets/audio/elevenlabs/sfx/terminal--reward-selected.mp3",
   "assets/audio/elevenlabs/sfx/impact-hit--pickup-denied.mp3",
-  "assets/audio/elevenlabs/sfx/impact-hit--pickup-denied.mp3",
   "assets/audio/elevenlabs/sfx/input-accepted.mp3",
   "assets/audio/elevenlabs/sfx/input-rejected.mp3",
   "assets/audio/elevenlabs/sfx/attack-windup.mp3",

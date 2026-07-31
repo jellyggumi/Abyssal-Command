@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-30T15:35:33.757Z",
+  "generatedAt": "2026-07-31T04:23:28.111Z",
   "canonicalStageIds": [
     "cinder-span",
     "abyss-chancel",
@@ -17,6 +17,14 @@
         "terrainSourceCandidatePath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
         "terrainSource": "promoted-glb",
         "propRecords": [
+          {
+            "id": "cinder-span:ash-gatehouse-north-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb"
+          },
+          {
+            "id": "cinder-span:ash-gatehouse-south-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
+          },
           {
             "id": "cinder-span:collapsed-parapet-prop",
             "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb"
@@ -42,10 +50,6 @@
             "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
           },
           {
-            "id": "cinder-span:north-ash-talon-prop",
-            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
-          },
-          {
             "id": "cinder-span:relay-debris-north-prop",
             "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
           },
@@ -56,10 +60,6 @@
           {
             "id": "cinder-span:seal-brand",
             "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
-          },
-          {
-            "id": "cinder-span:south-forge-teeth-prop",
-            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb"
           },
           {
             "id": "cinder-span:west-ash-wall-prop",
@@ -99,7 +99,7 @@
         "surfaceStageId": "cinder-span",
         "loadedStageId": "cinder-span",
         "renderer": "webgl",
-        "renderedFrames": 682,
+        "renderedFrames": 367,
         "terrainLoaded": true,
         "terrainGlbPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb",
         "terrainSource": "promoted-glb",
@@ -174,7 +174,7 @@
             }
           },
           {
-            "id": "cinder-span:north-ash-talon-prop",
+            "id": "cinder-span:ash-gatehouse-south-prop",
             "groundedMinY": 0,
             "meshIntegrity": {
               "meshCount": 1,
@@ -246,7 +246,7 @@
             }
           },
           {
-            "id": "cinder-span:south-forge-teeth-prop",
+            "id": "cinder-span:ash-gatehouse-north-prop",
             "groundedMinY": 0,
             "meshIntegrity": {
               "meshCount": 1,
@@ -267,6 +267,14 @@
           "clearAlpha": 0
         },
         "propRecords": [
+          {
+            "id": "cinder-span:ash-gatehouse-north-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb"
+          },
+          {
+            "id": "cinder-span:ash-gatehouse-south-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
+          },
           {
             "id": "cinder-span:collapsed-parapet-prop",
             "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb"
@@ -292,10 +300,6 @@
             "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
           },
           {
-            "id": "cinder-span:north-ash-talon-prop",
-            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
-          },
-          {
             "id": "cinder-span:relay-debris-north-prop",
             "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
           },
@@ -308,10 +312,6 @@
             "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
           },
           {
-            "id": "cinder-span:south-forge-teeth-prop",
-            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb"
-          },
-          {
             "id": "cinder-span:west-ash-wall-prop",
             "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb"
           }
@@ -322,7 +322,7 @@
             "modelPath": "assets/motion/ingame/characters/lantern-reaver/model.glb",
             "sourceModelPath": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb",
             "hasMixer": true,
-            "actionCount": 11,
+            "actionCount": 21,
             "activeActionKey": "idle"
           }
         ],
@@ -500,7 +500,7 @@
         "surfaceStageId": "abyss-chancel",
         "loadedStageId": "abyss-chancel",
         "renderer": "webgl",
-        "renderedFrames": 684,
+        "renderedFrames": 358,
         "terrainLoaded": true,
         "terrainGlbPath": "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb",
         "terrainSource": "promoted-glb",
@@ -515,12 +515,36 @@
         },
         "propGrounding": [
           {
+            "id": "abyss-chancel:oath-relic",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
             "id": "abyss-chancel:nave-blade",
             "groundedMinY": 0,
             "meshIntegrity": {
               "meshCount": 1,
               "vertexCount": 24925,
               "triangleCount": 39495,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "abyss-chancel:oath-apse-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
               "invalidVertexCount": 0,
               "invalidIndexCount": 0,
               "finiteBounds": true
@@ -563,54 +587,6 @@
             }
           },
           {
-            "id": "abyss-chancel:south-nave-screen-prop",
-            "groundedMinY": 0,
-            "meshIntegrity": {
-              "meshCount": 1,
-              "vertexCount": 24925,
-              "triangleCount": 39495,
-              "invalidVertexCount": 0,
-              "invalidIndexCount": 0,
-              "finiteBounds": true
-            }
-          },
-          {
-            "id": "abyss-chancel:vestry-screen-prop",
-            "groundedMinY": 0,
-            "meshIntegrity": {
-              "meshCount": 1,
-              "vertexCount": 24925,
-              "triangleCount": 39495,
-              "invalidVertexCount": 0,
-              "invalidIndexCount": 0,
-              "finiteBounds": true
-            }
-          },
-          {
-            "id": "abyss-chancel:oath-relic",
-            "groundedMinY": 0,
-            "meshIntegrity": {
-              "meshCount": 1,
-              "vertexCount": 23895,
-              "triangleCount": 38536,
-              "invalidVertexCount": 0,
-              "invalidIndexCount": 0,
-              "finiteBounds": true
-            }
-          },
-          {
-            "id": "abyss-chancel:oath-apse-prop",
-            "groundedMinY": 0,
-            "meshIntegrity": {
-              "meshCount": 1,
-              "vertexCount": 23895,
-              "triangleCount": 38536,
-              "invalidVertexCount": 0,
-              "invalidIndexCount": 0,
-              "finiteBounds": true
-            }
-          },
-          {
             "id": "abyss-chancel:vestry-debris-prop",
             "groundedMinY": 0,
             "meshIntegrity": {
@@ -647,12 +623,36 @@
             }
           },
           {
+            "id": "abyss-chancel:south-nave-screen-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
             "id": "abyss-chancel:east-processional-lamp-prop",
             "groundedMinY": 0,
             "meshIntegrity": {
               "meshCount": 1,
               "vertexCount": 23895,
               "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "abyss-chancel:vestry-screen-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
               "invalidVertexCount": 0,
               "invalidIndexCount": 0,
               "finiteBounds": true
@@ -723,7 +723,7 @@
             "modelPath": "assets/motion/ingame/characters/lantern-reaver/model.glb",
             "sourceModelPath": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb",
             "hasMixer": true,
-            "actionCount": 11,
+            "actionCount": 21,
             "activeActionKey": "idle"
           }
         ],
@@ -785,10 +785,6 @@
           },
           {
             "path": "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
-            "status": 200
-          },
-          {
-            "path": "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
             "status": 200
           },
           {
@@ -893,7 +889,7 @@
         "surfaceStageId": "echo-throne",
         "loadedStageId": "echo-throne",
         "renderer": "webgl",
-        "renderedFrames": 670,
+        "renderedFrames": 353,
         "terrainLoaded": true,
         "terrainGlbPath": "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
         "terrainSource": "promoted-glb",
@@ -1116,7 +1112,7 @@
             "modelPath": "assets/motion/ingame/characters/lantern-reaver/model.glb",
             "sourceModelPath": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb",
             "hasMixer": true,
-            "actionCount": 11,
+            "actionCount": 21,
             "activeActionKey": "idle"
           }
         ],
@@ -1190,5 +1186,5 @@
     }
   ],
   "pass": true,
-  "finishedAt": "2026-07-30T15:36:16.721Z"
+  "finishedAt": "2026-07-31T04:23:50.280Z"
 }

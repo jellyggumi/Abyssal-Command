@@ -129,9 +129,14 @@ const profiles = [
     gameplay: {
       bounds: bounds(600, 23400, 800, 11200),
       obstacles: [
+        obstacle("cinder-span:relay-debris-north", 5000, 10400, 500, "cinder-span:relay-debris-north-prop"),
+        obstacle("cinder-span:ash-gatehouse-south", 7600, 8000, 740, "cinder-span:ash-gatehouse-south-prop"),
+        obstacle("cinder-span:ash-gatehouse-north", 7800, 3000, 840, "cinder-span:ash-gatehouse-north-prop"),
         obstacle("cinder-span:drowned-forge-arch", 12600, 2800, 850, "cinder-span:forge-arch"),
         obstacle("cinder-span:collapsed-parapet", 13200, 9300, 900, "cinder-span:collapsed-parapet-prop"),
+        obstacle("cinder-span:relay-debris-south", 15000, 1500, 540, "cinder-span:relay-debris-south-prop"),
         obstacle("cinder-span:west-ash-wall", 19000, 4400, 940, "cinder-span:west-ash-wall-prop"),
+        obstacle("cinder-span:east-ash-wall", 20800, 9900, 700, "cinder-span:east-ash-wall-prop"),
       ],
       surfaces: [],
       meshColliders: [meshCollider("cinder-span:walkable-support", [
@@ -165,6 +170,7 @@ const profiles = [
         landmark("landmark.ash-wall", "Ash Wall", 19000, 4400, 0, "cinder-span:west-ash-wall-prop"),
         landmark("landmark.cinder-ingress-beacon", "Cinder Ingress Beacon", 3000, 1700, 0, "cinder-span:ingress-beacon-prop"),
         landmark("landmark.cinder-gate-beacon", "Cinder Gate Beacon", 22500, 10100, 0, "cinder-span:gate-beacon-prop"),
+        landmark("landmark.cinder-ash-gatehouse", "Ash Gatehouse", 7800, 3000, 0, "cinder-span:ash-gatehouse-north-prop"),
       ],
       props: [
         prop("cinder-span:seal-brand", CINDER_RESOURCES.props, "objective-beacon", 17600, 7400, 0, 0, 180, "terrain-cinder-span-prop-006"),
@@ -176,8 +182,8 @@ const profiles = [
         prop("cinder-span:relay-debris-north-prop", CINDER_RESOURCES.props, "debris", 5000, 10400, 0, 0.5, 500, "terrain-cinder-span-prop-033"),
         prop("cinder-span:relay-debris-south-prop", CINDER_RESOURCES.props, "debris", 15000, 1500, 0, -0.4, 540, "terrain-cinder-span-prop-044"),
         prop("cinder-span:ingress-beacon-prop", CINDER_RESOURCES.props, "route-edge-lantern", 3000, 1700, 0, -0.35, 140, "terrain-cinder-span-prop-012"),
-        prop("cinder-span:south-forge-teeth-prop", CINDER_RESOURCES.features, "background-forge-teeth", 9000, 1700, 0, 1.5708, 360, "terrain-cinder-span-feature-039"),
-        prop("cinder-span:north-ash-talon-prop", CINDER_RESOURCES.props, "background-parapet-talon", 2400, 10100, 0, 0.35, 260, "terrain-cinder-span-prop-030"),
+        prop("cinder-span:ash-gatehouse-north-prop", CINDER_RESOURCES.features, "wall", 7800, 3000, 0, 1.5708, 840, "terrain-cinder-span-feature-039"),
+        prop("cinder-span:ash-gatehouse-south-prop", CINDER_RESOURCES.props, "wall", 7600, 8000, 0, 1.5708, 740, "terrain-cinder-span-prop-030"),
         prop("cinder-span:gate-beacon-prop", CINDER_RESOURCES.props, "route-edge-lantern", 22500, 10100, 0, 2.8, 140, "terrain-cinder-span-prop-014"),
       ],
       visibilityAnchors: [

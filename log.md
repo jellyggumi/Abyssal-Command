@@ -33,6 +33,26 @@ Each entry should list the files touched, the reason for the change, and any fol
   case where a beat is missing from `assets/motion/bench`, and any output must clear the
   provenance/audit gate in `CLAUDE.md` §3 before it can be referenced at runtime.
 
+## [2026-07-31] report | Stage 1 cinder-span ash gatehouse (phase 1)
+
+- Ran `prompts/approved/00` → `03` → `02` → `01` → `06` for `cinder-span` on top of the cycle-10
+  layout pass (`origin/main` @ `012ea15d`), with every bound coordinate frozen.
+- Collision detour: an earlier draft of this work re-placed three props into a full doorway lattice
+  before cycle 10 landed the same idea by promoting frozen props in place. That draft was dropped
+  rather than merged over another session's work; the shipped change is additive to it.
+- `stage-world-catalog.js`: obstacles 6 → 8. Two background props (`south-forge-teeth-prop`,
+  `north-ash-talon-prop`) become the ash gatehouse pillars at (7800, 3000) r840 and (7600, 8000)
+  r740, the one doorway the promoted debris does not provide (gap 3424). Prop count stays 12 and the
+  pinned pack-node list is unchanged. One landmark added.
+- `defense-catalog.js`: `mapVariant` v1 → v2 listing the `ash-gatehouse` module. No balance value
+  changed — the measurement showed identical bot pacing, so nothing motivated a retune.
+- Added `scripts/search-stage-dungeon-layout.mjs` (seeded module search, flood fill, five clearance
+  filters; 11/12 seeds survived, seed 42 curated) and `scripts/measure-stage-pacing.mjs`.
+- Evidence: focused suites 101/101; full `node --test 'tests/**/*.test.mjs'` 607 tests, 577 pass,
+  5 fail — all five reproduced red on a pristine `origin/main` worktree, so this branch adds no
+  failure. Browser proof green on all three stages, 12 props each, zero console errors.
+- Digest gates repinned for cinder-span only; `abyss-chancel`, `echo-throne` and all three
+  rng-at-3000 fixtures re-measured unchanged.
 ## [2026-07-31] ingest | Stage map / 3D dungeon / stage composition skill catalog
 
 - Added `raw/sources/2026-07-31-stage-map-composition-skill-catalog.md` (immutable capture of the
