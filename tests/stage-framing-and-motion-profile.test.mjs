@@ -208,3 +208,50 @@ test("triggerHitReaction picks the directional clip for a blow from behind", () 
   // A missing target record is a no-op, never a thrown frame.
   assert.equal(adapter.triggerHitReaction(undefined, attacker, false, 0), false);
 });
+
+// The combination neither side of the cycle-10 merge tested. Upstream authored the eight
+// directional clips into `unarmed-core.glb` (21 clips, so `hitReactionKey` now genuinely
+// resolves `hit_left` instead of always falling back to flat `hit`), while the facing change
+// redefined `record.yaw` from LAST-MOVEMENT heading to AIM heading. Directional routing reads
+// that same `yaw` as its second operand, so the resolved clip now depends on where the target
+// is AIMING rather than where it last walked. The test above hand-sets `yaw: 0` and therefore
+// never exercises the aim-driven path; this one drives yaw from published facing.
+test("directional hit routing resolves against AIM yaw, not the last-movement heading", () => {
+  const adapter = cameraHarness();
+  const played = [];
+  adapter.triggerAction = (record, key) => { played.push(key); return true; };
+
+  // A target that walked toward +Z, then turned to aim at +X without moving. Under the old
+  // movement-only yaw these are indistinguishable -- both leave yaw at the +Z walk heading.
+  const target = {
+    root: new THREE.Object3D(),
+    yaw: Math.PI / 2, // aiming +X
+    actions: { hit: {}, bighit: {}, hit_front: {}, hit_back: {}, hit_left: {}, hit_right: {} },
+  };
+  const attacker = { root: new THREE.Object3D() };
+
+  // Blow arrives from +X -- the exact direction the target is aiming, so it is a FRONT hit.
+  // Against the stale +Z walk heading the same blow would have resolved as `hit_right`.
+  attacker.root.position.set(5, 0, 0);
+  adapter.triggerHitReaction(target, attacker, false, 0);
+  assert.deepEqual(played, ["hit_front"], "a blow from the aim direction is a front hit");
+
+  // Blow from -X, directly behind the aim.
+  played.length = 0;
+  attacker.root.position.set(-5, 0, 0);
+  adapter.triggerHitReaction(target, attacker, false, 0);
+  assert.deepEqual(played, ["hit_back"], "a blow opposite the aim is a back hit");
+
+  // Blow from +Z, which is 90 degrees off the aim. This is the row that proves the routing
+  // follows aim: +Z is where the target USED to be heading, and a movement-driven yaw would
+  // have called this `hit_front`.
+  played.length = 0;
+  attacker.root.position.set(0, 0, 5);
+  adapter.triggerHitReaction(target, attacker, false, 0);
+  assert.equal(played.length, 1);
+  assert.notEqual(played[0], "hit_front", "the old walk heading must not resolve as front");
+  assert.ok(
+    played[0] === "hit_left" || played[0] === "hit_right",
+    `a blow 90 degrees off the aim is lateral, got ${played[0]}`,
+  );
+});
