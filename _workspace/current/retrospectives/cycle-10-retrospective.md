@@ -159,9 +159,9 @@ These were latent before this cycle and would not have surfaced without the spec
 | 11 | **The `gateMaxIntegrity` buff makes the published snapshot self-inconsistent — a cycle-10 regression, withdrawn rather than shipped.** `bulwark-echo` composes an effective gate cap without writing `gate.maxIntegrity`, but `getRunSnapshot` publishes `gate: run.gate` verbatim, so while the buff is live the snapshot reports `integrity 1920` against `maxIntegrity 1600`. Three consumers assume that cannot happen: the Stage1b pressure runner's `to > max` invariant (**G7 evidence tooling**), the `low-hp-focus` enemy policy's `gateRatio = integrity / maxIntegrity` (a gate buff pushes it above 1 and flips targeting to the commander — **live behaviour, not display**), and any HUD ratio. The spec's own §4 predicted the HUD half and `reconcileGateCap` answered only the *post-removal* half. **Attribution measured, not assumed:** the failing file passes 8/8 at base `033877ad` in a detached worktree, so it is ours. Item withdrawn; spec check 11 PARKED; `effectiveGateMax` keeps coverage via a synthetic entry. Re-enabling requires publishing the composed cap and rerouting all three consumers. | `stage1b-pressure: invalid gate integrity state at tick 1496: from=1600, to=1601, max=1600`; `defense-run-simulation.js:3921`, `:2705`; commit `64974d3d` |
 | 12 | **A standing attacker faced the wrong way, and the simulation was already right.** `playerAttack` writes `setFacing(source, aim.x, aim.y)` on every attack (`defense-run-simulation.js:1953`), and `getRunSnapshot` publishes `commander: run.commander` verbatim (`:3924`) so `facingX`/`facingY` already reached the renderer for commander, enemies AND companions (measured 1/1, 3/3, 2/2 at seed 7 tick 900). The renderer read them **zero times** and derived yaw solely from the position delta, so with no delta there was no re-aim. Proven before/after over the same frames: enemy-6 ticks 432–438, step exactly 0.0, `targetYaw` frozen at `-1.989021` for 12 consecutive ticks while sim facing swung `(-534,845)→(-410,912)`. Fixed renderer-only in `d0355723`. | `battle-realtime-three.js:3687` |
 | 13 | **`Math.atan2(facingX, facingY)` is wrong, and the suite could not have caught it.** `worldPointInto` divides sim x by `WORLD_WIDTH` and sim y by `WORLD_HEIGHT` independently while the rendered ground is deliberately square, so a sim-space direction does not preserve its angle. Error is exactly **0 on the pure axes** and **18.43° at 45°, 19.11° at 30°**. The pinned assertions exercise only `+z` and `+x` — both pure axes — so the naive form passes green while every diagonal attack ships ~19° off. Worse, `record.yaw` is the second operand of `hitReactionDirection`, whose quadrant boundaries sit at 45°/135°, so the same error silently mis-routes `hit_right` where `hit_front` is correct. Two bugs from one wrong `atan2`. | `battle-realtime-three.js:1093-1103`, `:3602-3614`, `tests/defense-renderer-contract.test.mjs:750-759` |
-| 14 | **`die` was a synthetic slump, not a death.** Measured on `guard::die::v01` before the fix: spine rotates 64.01° while thighs and shins move **0.00°** — static legs. It was an authored fallback (`FALLBACK_ACTIONS = ("die",)`) even though three real death motions sat unused in the bench. Retargeted from `Defeated.fbx` in `51a2c175`: spine 79.54°, thighs 35.48°, shins 14.17°. | measured from the GLB animation channels |
+| 14 | **`die` was a synthetic slump, not a death — finding stands, fix REVERTED in favour of upstream.** Measured on `guard::die::v01` at the time: spine rotates 64.01° while thighs and shins move **0.00°** — static legs. It was an authored fallback (`FALLBACK_ACTIONS = ("die",)`) even though three real death motions sat unused in the bench. My fix retargeted it from `Defeated.fbx` (spine 79.54°, thighs 35.48°, shins 14.17°) in `51a2c175`, which `d70d81e6` **reverted** because the concurrent session shipped a wider 21-clip roster to `main` first. **What ships now is `ClipSpec("die", "Dying.fbx")`** — also a real retarget, so the synthetic slump is genuinely gone, but not by my clip. The angles above describe a build that no longer exists; see open question 17 for the part that is still live. | `scripts/retarget-ingame-motion-blender.py:112` |
 | 15 | **The retarget script cannot run unmodified: its default target rig was deleted.** `assets/images/battle/glb/` no longer exists, so `DEFAULT_TARGET_RIG` points at a missing `dusk-warden.glb`. The original rig survives inside `unarmed-core.glb` (the armature is still named `dusk-warden_armature`) and substituting it is faithful — the 6 unchanged clips reproduce to within 0.043° — but the stale default is a latent trap for the next run. | `scripts/retarget-ingame-motion-blender.py` `DEFAULT_TARGET_RIG` |
-| 16 | **The motion audit report covered 42 of 66 bench files, and its two halves used non-comparable metrics.** Legacy rows recorded hips as signed end-minus-start; current rows as max-minus-min range. Choosing a source by comparing across that boundary compares two different quantities. All 66 were re-measured under one metric and the missing 24 merged, which matters because `tests/ingame-motion-pack.test.mjs:218` builds `auditByFile` from `audit.files` and every chosen source must appear there. | `_workspace/current/engineering/asset-pipeline/motion-bench/fbx-audit-report-FULL-OBSERVED.json` |
+| 16 | **The motion audit report covered 42 of 66 bench files, and its two halves used non-comparable metrics — finding stands, repair REVERTED.** Legacy rows recorded hips as signed end-minus-start; current rows as max-minus-min range, so choosing a source by comparing across that boundary compares two different quantities. All 66 were re-measured under one metric and the missing 24 merged in `51a2c175`, which `d70d81e6` reverted with the rest of that lane. **The report in the tree is upstream's again, so the 42-of-66 coverage gap and the metric split are both back.** It still matters for the same reason: `tests/ingame-motion-pack.test.mjs:218` builds `auditByFile` from `audit.files`, so any future source choice is made against the mixed-metric report. | `_workspace/current/engineering/asset-pipeline/motion-bench/fbx-audit-report-FULL-OBSERVED.json` |
 
 ---
 
@@ -478,11 +478,14 @@ existing test would have detected it.** Registry now closed at four constants:
     anything changed this cycle — the override mechanism is untouched — but a real decision
     someone owes.
 
-15. **The retarget path is not byte-reproducible.** Rebuilding drifts every retargeted clip
-    **0.02–0.047°** and changes all 11 `modelSha256` values. `die` alone drifts **0.0000**
-    because it is an authored bake rather than a retarget — that asymmetry is what makes the
-    churn explainable rather than unexplained noise. No test pins `modelSha256`, so it is not
-    gate-blocking, but a future "why did every hash move" question has its answer here.
+15. **The retarget path is not byte-reproducible — measured on a build that was then reverted,
+    but the property belongs to the pipeline, not to my clip choice.** Rebuilding drifts every
+    retargeted clip **0.02–0.047°** and changes all 11 `modelSha256` values; an authored bake
+    drifts **0.0000**. My rebuild is gone with `d70d81e6`, so no hash in the tree moved in the
+    end — but the drift is a property of `build-character-motion-library-blender.py`, which is
+    unchanged, so the next person who rebuilds will see the same thing. No test pins
+    `modelSha256`, so it is not gate-blocking. This is the answer to a future "why did every
+    hash move when I changed one clip".
 
 16. **11 tracked `review.blend` intermediates, 138M on disk, zero consumers — a checkout cost,
     not a history cost.** `[OBSERVED]` `grep -rl review.blend` across `tests/`, `scripts/` and
@@ -503,6 +506,29 @@ existing test would have detected it.** Registry now closed at four constants:
     surgery on a 12G repo. Working-tree size is the only true cost, and it is a preference,
     not a defect.
 
+
+17. **OPEN QUESTION, and it is about the asset that actually ships: does `Dying.fbx` satisfy
+    the in-place contract?** `[OBSERVED]` Both death candidates measured from one uniform
+    66-file audit pass, hips displacement on the xz ground plane:
+
+    | source | frames | xz ground travel |
+    |---|---|---|
+    | `Dying.fbx` — **ships on `main`** | 139 | **80.85** |
+    | `Defeated.fbx` — measured, not shipped | 163 | **6.55** |
+
+    `RUNTIME_ANIMATION_CONTRACT.md:29` requires every promoted clip to be in-place
+    (`inPlaceRootMotion: true`, restated at `:572`): "animation may articulate joints but may
+    not displace the gameplay root". Export is rotation-only
+    (`strip_non_rotation_channels`), so root translation is DELETED rather than scaled — which
+    means a motion whose meaning lived in 80 cm of travel does not move the root, it reads as
+    the feet sliding while the body performs a walk-and-fall in place.
+
+    This was measured while choosing between the two and is the one number worth carrying past
+    the revert: it is now a question about `main`'s asset, not a defence of mine. It is NOT a
+    proven defect — 12.3× more travel than the alternative is a strong signal, not a verdict,
+    and the visual result may still read acceptably. Whoever owns motion next should look at
+    the shipped `die` on a live actor and decide. Deliberately left as a question rather than
+    filed as a defect or silently dropped.
 
 ---
 
