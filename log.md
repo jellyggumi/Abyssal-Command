@@ -118,3 +118,25 @@ Each entry should list the files touched, the reason for the change, and any fol
   slabs plus one apron per stage.
 - Not included: gimmicks (spec §4), seam inlay geometry (R11), per-slab material merge.
   `materialId` is authored but unread — recorded so the renderer has a source of truth later.
+
+## [2026-07-31] report | Gimmick catalog: the spatial half lands with its gates
+
+- Authored `gameplay.gimmicks[]` for all three stages (4 / 4 / 5 = 13) exactly per spec §4.2-4.4,
+  ids frozen because `EncounterPacing`, `VfxCueDesign` and `AudioFeedbackDesign` already address
+  them verbatim. Multi-point gimmicks keep the ruled single-`placement` shape and carry their extra
+  footprints in `satellitePlacements`.
+- Additive validator clauses: `claimId` on every gimmick, class enum, per-class telegraph tier
+  (deformation 180 / gate 120 or 90 / mirror 90 / hazard 60), `slabId` naming a real terrain tile
+  **and the footprint sitting inside that tile's rect**, `objectiveId` naming a real objective,
+  a declared narrowing never widening, every objective covered, and **V17**: any corridor change
+  must leave >= 900, since COMMANDER.radius 360 means the commander's diameter is 720 while the
+  generic corridor floor is only 600.
+- Added `tests/stage-gimmick-catalog.test.mjs` (5 tests): coverage and ordering, the V17 floor read
+  from `COMMANDER.radius` rather than hardcoded, per-slab containment, ring gimmicks matching their
+  occupation geometry, and four negative controls importing mutated copies of the real catalog.
+- Nothing at runtime reads the new field yet, and the report says so: the simulation half (arming,
+  the `gimmickRng` stream, the GIMMICK_* events, the R12 `event.type` dispatch discipline) is owned
+  by the lane currently working `defense-run-simulation.js`.
+- Evidence: new suite 5/5; stage suites 50/50; gate checks 11/11 with no digest movement; full
+  `node --test 'tests/**/*.test.mjs'` 616 tests, 586 pass, 5 fail -- the same five pre-existing
+  failures.

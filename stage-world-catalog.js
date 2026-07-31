@@ -78,6 +78,27 @@ const visibilityAnchor = (id, kind, x, y, radius, sourcePropId = null) => ({
   occlusionSafe: true,
   ...(sourcePropId ? { sourcePropId } : {}),
 });
+/**
+ * One authored stage gimmick: the spatial half of a two-lane feature. Timing, arming and state live
+ * in the simulation; this catalog owns only where a gimmick is, which chamber it belongs to, which
+ * objective it answers, and what it does to the corridor. Ids are frozen -- other lanes address them
+ * verbatim. `satellitePlacements` carries the extra footprints of the two multi-point gimmicks
+ * (Cinder's three pressure vents, Throne's two gallery shutters) without changing the ruled shape.
+ */
+const gimmick = (stageId, name, gimmickClass, slabId, objectiveId, order, telegraphTicks,
+  x, y, corridorWidthBefore = 0, corridorWidthAfter = 0, radius = 0, satellites = []) => ({
+  id: `${stageId}:gimmick-${name}`,
+  gimmickClass,
+  slabId: `${stageId}:${slabId}`,
+  objectiveId,
+  order,
+  telegraphTicks,
+  placement: { x, y, elevation: 0 },
+  satellitePlacements: satellites.map(([satelliteX, satelliteY]) => ({ x: satelliteX, y: satelliteY, elevation: 0 })),
+  radius,
+  corridorWidthBefore,
+  corridorWidthAfter,
+});
 const vfxCue = (stageId, id, effectId, x, y, elevation, yawRadians) => ({
   id,
   effectId,
@@ -169,6 +190,12 @@ const profiles = [
         ...slabTriangles(8600, 17000, 800, 11200),
         ...slabTriangles(17000, 23400, 800, 11200),
       ])],
+      gimmicks: [
+        gimmick("cinder-span", "ash-causeway-collapse", "deformation", "slab-02", "cinder-relay-crossing", 1, 180, 11400, 5400, 1400, 900),
+        gimmick("cinder-span", "forge-pressure-vents", "hazard", "slab-03", "cinder-forge-stand", 2, 60, 17600, 5000, 0, 0, 0, [[18500, 6500], [17500, 7000]]),
+        gimmick("cinder-span", "seal-oath-ring", "gate", "slab-03", "cinder-seal", 3, 90, 17600, 6000, 0, 0, 900),
+        gimmick("cinder-span", "warden-chain-fall", "deformation", "slab-03", "boss-kill", 4, 180, 19700, 6200, 1400, 1000),
+      ],
       routes: [
         route("cinder-span:critical-route", "critical", 1400, [
           waypoint("cinder-span:ingress", "ingress", 1800, 6000),
@@ -261,6 +288,12 @@ const profiles = [
         ...slabTriangles(16400, 23400, 700, 7200),
         ...slabTriangles(16400, 23400, 7200, 11300),
       ])],
+      gimmicks: [
+        gimmick("abyss-chancel", "mirror-answer-aisle", "mirror", "slab-02", "chancel-nave-advance", 1, 90, 12000, 6000, 1400, 1400),
+        gimmick("abyss-chancel", "transept-three-way-lock", "gate", "slab-04", "chancel-transept-lock", 2, 120, 17600, 8200, 1400, 900, 0, [[16800, 8200], [17600, 9800], [18400, 7600]]),
+        gimmick("abyss-chancel", "oath-ring-shortcut", "gate", "slab-03", "chancel-oath", 3, 90, 18000, 7200, 0, 900),
+        gimmick("abyss-chancel", "classification-craze", "deformation", "slab-03", "boss-kill", 4, 180, 20600, 6000, 1400, 900),
+      ],
       routes: [
         // The critical route now threads all four authored slabs and puts its two intermediate
         // waypoints exactly on the encounter objective points, so the route the player walks and
@@ -366,6 +399,13 @@ const profiles = [
         ...slabTriangles(6800, 16600, 8000, 11400),
         ...slabTriangles(16600, 23400, 600, 11400),
       ])],
+      gimmicks: [
+        gimmick("echo-throne", "returning-aisle", "mirror", "slab-03", "throne-aisle-break", 1, 90, 15200, 6000, 1400, 1400),
+        gimmick("echo-throne", "dais-command-echo", "hazard", "slab-05", "throne-dais-stand", 2, 60, 18000, 6000),
+        gimmick("echo-throne", "crescent-gallery-shutters", "gate", "slab-05", "throne-dais-stand", 3, 120, 16600, 3000, 1400, 900, 0, [[16600, 9600]]),
+        gimmick("echo-throne", "domain-command-ring", "gate", "slab-05", "throne-domain", 4, 90, 18400, 6000, 0, 0, 800),
+        gimmick("echo-throne", "sovereign-command-shear", "deformation", "slab-05", "boss-kill", 5, 180, 20800, 6000, 1400, 900),
+      ],
       routes: [
         // Critical thread: narthex -> sovereign aisle -> crescent court, with both intermediate
         // waypoints sitting exactly on the encounter objective points.
@@ -544,6 +584,45 @@ const validateProfile = (profile) => {
       ?.every(({ x, y }) => x >= rect.minX && x <= rect.maxX && y >= rect.minY && y <= rect.maxY));
     if (!covered) throw new Error(`Terrain tile does not own its support triangles: ${tile.id}`);
   });
+
+  // Gimmicks are authored spatial data whose runtime half lives in the simulation. What this
+  // catalog can prove is the part that is geometry: a gimmick belongs to a real chamber, sits
+  // inside it, answers a real objective, and never narrows a corridor below what the commander
+  // physically fits through (COMMANDER.radius 360, so diameter 720; the authored floor is 900).
+  const gimmicks = profile.gameplay.gimmicks ?? [];
+  const tileIds = new Set(tiles.map(({ id }) => id));
+  const tileById = new Map(tiles.map((tile) => [tile.id, tile]));
+  const encounterObjectiveIds = (STAGE_ENCOUNTER_ROUTES[profile.stageId]?.objectives ?? []).map(({ id }) => id);
+  const gimmickTargets = new Set([
+    ...encounterObjectiveIds,
+    STAGE_TACTICS[profile.stageId]?.occupation?.id,
+    "boss-kill",
+  ].filter(Boolean));
+  const telegraphTiers = { deformation: [180], gate: [120, 90], mirror: [90], hazard: [60] };
+  gimmicks.forEach((entry, index) => {
+    claimId(entry);
+    const tier = telegraphTiers[entry.gimmickClass];
+    if (!tier) throw new Error(`Unknown gimmick class: ${entry.id}`);
+    if (!tier.includes(entry.telegraphTicks)) throw new Error(`Gimmick telegraph is off its class tier: ${entry.id}`);
+    if (entry.order !== index + 1) throw new Error(`Gimmick order must follow authored sequence: ${entry.id}`);
+    if (!tileIds.has(entry.slabId)) throw new Error(`Gimmick names an unknown slab: ${entry.id}`);
+    if (!gimmickTargets.has(entry.objectiveId)) throw new Error(`Gimmick answers no authored objective: ${entry.id}`);
+    if (!(entry.radius >= 0)) throw new Error(`Invalid gimmick radius: ${entry.id}`);
+    const rect = tileById.get(entry.slabId).rect;
+    for (const placement of [entry.placement, ...entry.satellitePlacements]) {
+      if (!(placement.elevation === 0 && pointInside(placement)
+        && placement.x >= rect.minX && placement.x <= rect.maxX
+        && placement.y >= rect.minY && placement.y <= rect.maxY)) throw new Error(`Gimmick footprint leaves its own slab: ${entry.id}`);
+    }
+    // V17: a narrowing that leaves less than 900 is a skill check the commander cannot pass.
+    const narrows = entry.corridorWidthBefore !== 0 || entry.corridorWidthAfter !== 0;
+    if (narrows && !(entry.corridorWidthAfter >= 900)) throw new Error(`Gimmick narrows below the commander floor: ${entry.id}`);
+    if (entry.corridorWidthBefore !== 0 && entry.corridorWidthAfter > entry.corridorWidthBefore) throw new Error(`Gimmick widens a corridor it declares narrowing: ${entry.id}`);
+  });
+  if (gimmicks.length) {
+    if (new Set(gimmicks.map(({ objectiveId }) => objectiveId)).size !== gimmickTargets.size) throw new Error(`Every authored objective needs a bound gimmick: ${profile.stageId}`);
+    if (gimmicks.filter(({ gimmickClass }) => gimmickClass === "deformation").length < 1) throw new Error(`Stage requires a deformation gimmick on its boss block: ${profile.stageId}`);
+  }
 
   const routes = profile.gameplay.routes ?? [];
   if (!Array.isArray(routes) || routes.filter(({ kind }) => kind === "critical").length !== 1
