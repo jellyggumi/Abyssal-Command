@@ -554,3 +554,95 @@ Sequence, in dependency order:
 4. Author the three VFX GLBs and register them in all four allowlists in one commit.
 5. Merge with the concurrent session's cycle-9 branch deliberately, file by file.
 6. Only then seek human-play adjudication.
+
+---
+
+## 7. Merge and deploy, and what is still red
+
+`[OBSERVED]` Cycle 10 is **merged into `main`** as PR #19, `fb667021`, with a real merge
+commit rather than a squash so the four branch-only SHAs the defect table cites nine times
+stay resolvable.
+
+### The merge itself
+
+`main` moved **30 commits** during this cycle and shipped the same motion lane first, going
+wider — all 12 additive clips including the 8 directional `hit_*`/`bighit_*`. Their roster
+won; `d70d81e6` reverted my narrower motion commit rather than merging it, because every
+artifact it produced downstream (11 rebuilt GLBs, manifests, registry, receipt) was derived
+from my clip table and would have left generated output claiming a provenance the source no
+longer has. After that revert the merge was **conflict-free**.
+
+Deploy gates were run locally against the merged tree before merging, because `static.yml` is
+`on: push: branches: [main]` and only fires afterwards: engine contract **78/78**,
+release-closure **4/4**, `run-defense-balance-sim --strict` **pass, zero failures**.
+
+### `package_pages` was red on `main` and is fixed — `012ea15d`
+
+A shared audio file was listed **twice** in `PAGES_RUNTIME_PATHS`. The job compares
+`find`'s output against the listed paths as sorted strings, so 129 unique files never equalled
+130 lines with a repeat. Reproduced locally with the job's own `git archive` and comparison.
+
+The duplicate was not a typo. `release-closure.test.mjs` derived the audio allowlist **per
+cue**, and two cues deliberately share one file (`impact-hit:PICKUP_DENIED` and
+`impact-hit:STANCE_SWITCH_BLOCKED`), so the derivation demanded the workflow carry it twice.
+Fixed at the derivation with a `Set` — a list of FILES no longer inherits the shape of a map
+keyed by CUE — then deduped the two hand-maintained lists to match. Inherited from `d05230b8`,
+not introduced here. This is defect 9's five-list pattern with a new twist: the lists agreed
+with each other and disagreed with the **filesystem**.
+
+### `browser_contract` is still red, and it is not this cycle's
+
+**The Pages deploy has not published.** `browser_contract` fails, so `package_pages`,
+`artifact_smoke`, `deploy_pages` and `deployed_smoke` all skip and the live site is unchanged.
+
+| run | head | failures |
+|---|---|---|
+| `3b2628e9` | before this branch | red |
+| `deb81b96` | before this branch | red, `browser_contract` |
+| `c139b508` | before this branch | red, `package_pages` |
+| `fb667021` | the merge | 1 — phone-HUD test 3 |
+| `012ea15d` | dedupe | 2 — + progression test 4 |
+| `30a0c111` | my race fixes | 3 — + progression test 3 |
+
+Three consecutive runs were red **before this branch merged**, so the blocker predates the
+merge. The mechanism is documented in the suite itself: the growth offer is modal, and
+`defense-run-simulation.js` returns early while one is open, so the simulation **halts** —
+starving any wait on `data-defense-input-seq` or `dataset.defenseMove` — and it steals focus,
+breaking any `activeElement` assertion. `defense-phone-battle-hud-browser.test.cjs:50-58`
+measures the runner at **rafMean ~95.8 ms against ~16 ms locally, about 6× slower, ~10 fps**,
+with the suite taking 253 s for 12 tests; the 90 s timeout is already a raised value
+compensating for exactly that. On a 6×-slow runner the modal window is 6× wider.
+
+There are **nine** `waitForFunction` sites in that file (its own comment says so) and eleven in
+`progression-mobile-ui-browser.cjs`. Closing this needs one systemic mitigation across all of
+them, authored by someone who can reproduce it.
+
+### My own error here, recorded because the reasoning was worse than the code
+
+I pushed two race fixes (`30a0c111`), saw the failure count go 1 → 2 → 3, concluded I had
+caused a regression, and **reverted them** (`dde8a36e`). That inference was **wrong**, and
+checkable: progression test 3 is at `:370`, my edit was at `:514` inside test 4 at `:478`, each
+test opens its own page, and test 3 runs first. A later test cannot retroactively break an
+earlier one. Its failure was `'E' !== 'S'` — a drag resolving to the wrong octant, geometry and
+timing, with no modal-focus mechanism at all. The 1 → 2 → 3 progression is the load variance the
+suite documents, surfacing in different assertions on different runs.
+
+So the revert removed two mechanistically-justified fixes on a bad causal claim. I did not
+re-push them, because that would be a fifth speculative push into a shared branch against a
+~20-minute feedback loop with **zero local signal** — 13 clean local runs across both files,
+before and after. The fixes are recorded here instead so someone with a reproduction can
+restore them deliberately:
+
+1. `progression-mobile-ui-browser.cjs` — the focus loop at `:509-517` drives
+   `activeElement` assertions with **no** `dismissGrowthOffer`, while the sibling loop at
+   `:381-389` carries one plus a comment explaining it must sit **inside** the loop because XP
+   crosses a threshold between iterations. Copy that pattern.
+2. `defense-phone-battle-hud-browser.test.cjs` — `activateAndWaitForInput` dismisses **before**
+   the keypress, which cannot cover the case its own comment anticipates: the press itself
+   crossing the threshold. Replace the bare seq wait with a poll that dismisses an offer
+   appearing after the press. Note this alone is insufficient — `:568` is a separate bare
+   `defenseMove === "E"` wait with no dismissal, and there are seven more.
+
+The lesson worth keeping: **a rising failure count is not attribution.** I had the file open
+with the line numbers in front of me and still inferred causation from a count instead of
+checking whether a mechanism existed. Two pushes to a shared branch came out of that.
