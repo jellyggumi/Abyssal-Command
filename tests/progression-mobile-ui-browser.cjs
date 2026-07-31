@@ -386,7 +386,16 @@ test("coarse-landscape joystick resolves eight octants and every cancellation pa
       // clear an offer that is not there yet and miss the one that actually breaks the assert.
       await dismissGrowthOffer(run);
       await button.focus();
-      assert.equal(await button.evaluate((node) => document.activeElement === node), true, `${direction} must remain keyboard focusable behind the joystick`);
+      let focused = await button.evaluate((node) => document.activeElement === node);
+      if (!focused) {
+        // The offer can also appear BETWEEN the dismiss and the focus call — the simulation keeps
+        // ticking across both awaits. One retry after clearing it keeps the claim intact while
+        // removing the race; this is the residual gap the pre-loop dismiss above cannot close.
+        await dismissGrowthOffer(run);
+        await button.focus();
+        focused = await button.evaluate((node) => document.activeElement === node);
+      }
+      assert.equal(focused, true, `${direction} must remain keyboard focusable behind the joystick`);
       const previous = Number(await run.surface.getAttribute("data-defense-input-seq"));
       await run.page.keyboard.press("Enter");
       await run.page.waitForFunction((prior) => Number(document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq) > prior, previous);

@@ -544,10 +544,26 @@ test("stable combat control IDs remain unique and their native keyboard activati
       assert.equal(await control.evaluate((node) => document.activeElement === node), true, `${selector} must accept keyboard focus`);
       const previous = Number(await run.surface.getAttribute("data-defense-input-seq"));
       await run.page.keyboard.press(key);
-      await run.page.waitForFunction(
-        ({ prior }) => Number(document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq) > prior,
-        { prior: previous },
-      );
+      try {
+        await run.page.waitForFunction(
+          ({ prior }) => Number(document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq) > prior,
+          { prior: previous },
+          { timeout: 20000 },
+        );
+      } catch {
+        // An offer that opened AFTER the dismiss above halts the simulation
+        // (defense-run-simulation.js: `if (run.growthOffer) return;`), so the sequence can never
+        // advance and the default 90 s budget burns out — the exact CI failure this guards.
+        // Clear it and re-drive the same control once.
+        await dismissGrowthOffer();
+        await control.focus();
+        await run.page.keyboard.press(key);
+        await run.page.waitForFunction(
+          ({ prior }) => Number(document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq) > prior,
+          { prior: previous },
+          { timeout: 20000 },
+        );
+      }
     };
 
     await activateAndWaitForInput("#manual-attack", "Enter");
