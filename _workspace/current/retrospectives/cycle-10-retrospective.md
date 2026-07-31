@@ -157,6 +157,11 @@ These were latent before this cycle and would not have surfaced without the spec
 | 9 | **A runtime asset must be registered in FIVE lists, and nothing enforces that they move together.** `defense-runtime-assets.mjs`, `tests/pages-artifact-smoke.cjs`, `static.yml` `PAGES_RUNTIME_PATHS`, the `release-closure.test.mjs` literal, and the generated `assets/defense-asset-manifest.json`. I moved four and missed the fifth. It was **CI-blocking**, not cosmetic: `pr-guard.yml:144` and `static.yml:117` both run `defense-asset-manifest.test.mjs` in their gate sets, so a push would have failed the PR guard. `release-closure` compares two of the five with an order-sensitive `assert.deepEqual`, so position matters as well as membership. Found by the full-suite run, not by reasoning. | `tests/defense-asset-manifest.test.mjs:50` |
 | 10 | `dev.sh --verify` execs `tests/playtest-browser-3stage.cjs`, which exists in no tree and not at HEAD. That flag has been dead since it was written. | `dev.sh:50-53` |
 | 11 | **The `gateMaxIntegrity` buff makes the published snapshot self-inconsistent — a cycle-10 regression, withdrawn rather than shipped.** `bulwark-echo` composes an effective gate cap without writing `gate.maxIntegrity`, but `getRunSnapshot` publishes `gate: run.gate` verbatim, so while the buff is live the snapshot reports `integrity 1920` against `maxIntegrity 1600`. Three consumers assume that cannot happen: the Stage1b pressure runner's `to > max` invariant (**G7 evidence tooling**), the `low-hp-focus` enemy policy's `gateRatio = integrity / maxIntegrity` (a gate buff pushes it above 1 and flips targeting to the commander — **live behaviour, not display**), and any HUD ratio. The spec's own §4 predicted the HUD half and `reconcileGateCap` answered only the *post-removal* half. **Attribution measured, not assumed:** the failing file passes 8/8 at base `033877ad` in a detached worktree, so it is ours. Item withdrawn; spec check 11 PARKED; `effectiveGateMax` keeps coverage via a synthetic entry. Re-enabling requires publishing the composed cap and rerouting all three consumers. | `stage1b-pressure: invalid gate integrity state at tick 1496: from=1600, to=1601, max=1600`; `defense-run-simulation.js:3921`, `:2705`; commit `64974d3d` |
+| 12 | **A standing attacker faced the wrong way, and the simulation was already right.** `playerAttack` writes `setFacing(source, aim.x, aim.y)` on every attack (`defense-run-simulation.js:1953`), and `getRunSnapshot` publishes `commander: run.commander` verbatim (`:3924`) so `facingX`/`facingY` already reached the renderer for commander, enemies AND companions (measured 1/1, 3/3, 2/2 at seed 7 tick 900). The renderer read them **zero times** and derived yaw solely from the position delta, so with no delta there was no re-aim. Proven before/after over the same frames: enemy-6 ticks 432–438, step exactly 0.0, `targetYaw` frozen at `-1.989021` for 12 consecutive ticks while sim facing swung `(-534,845)→(-410,912)`. Fixed renderer-only in `d0355723`. | `battle-realtime-three.js:3687` |
+| 13 | **`Math.atan2(facingX, facingY)` is wrong, and the suite could not have caught it.** `worldPointInto` divides sim x by `WORLD_WIDTH` and sim y by `WORLD_HEIGHT` independently while the rendered ground is deliberately square, so a sim-space direction does not preserve its angle. Error is exactly **0 on the pure axes** and **18.43° at 45°, 19.11° at 30°**. The pinned assertions exercise only `+z` and `+x` — both pure axes — so the naive form passes green while every diagonal attack ships ~19° off. Worse, `record.yaw` is the second operand of `hitReactionDirection`, whose quadrant boundaries sit at 45°/135°, so the same error silently mis-routes `hit_right` where `hit_front` is correct. Two bugs from one wrong `atan2`. | `battle-realtime-three.js:1093-1103`, `:3602-3614`, `tests/defense-renderer-contract.test.mjs:750-759` |
+| 14 | **`die` was a synthetic slump, not a death.** Measured on `guard::die::v01` before the fix: spine rotates 64.01° while thighs and shins move **0.00°** — static legs. It was an authored fallback (`FALLBACK_ACTIONS = ("die",)`) even though three real death motions sat unused in the bench. Retargeted from `Defeated.fbx` in `51a2c175`: spine 79.54°, thighs 35.48°, shins 14.17°. | measured from the GLB animation channels |
+| 15 | **The retarget script cannot run unmodified: its default target rig was deleted.** `assets/images/battle/glb/` no longer exists, so `DEFAULT_TARGET_RIG` points at a missing `dusk-warden.glb`. The original rig survives inside `unarmed-core.glb` (the armature is still named `dusk-warden_armature`) and substituting it is faithful — the 6 unchanged clips reproduce to within 0.043° — but the stale default is a latent trap for the next run. | `scripts/retarget-ingame-motion-blender.py` `DEFAULT_TARGET_RIG` |
+| 16 | **The motion audit report covered 42 of 66 bench files, and its two halves used non-comparable metrics.** Legacy rows recorded hips as signed end-minus-start; current rows as max-minus-min range. Choosing a source by comparing across that boundary compares two different quantities. All 66 were re-measured under one metric and the missing 24 merged, which matters because `tests/ingame-motion-pack.test.mjs:218` builds `auditByFile` from `audit.files` and every chosen source must appear there. | `_workspace/current/engineering/asset-pipeline/motion-bench/fbx-audit-report-FULL-OBSERVED.json` |
 
 ---
 
@@ -436,6 +441,68 @@ existing test would have detected it.** Registry now closed at four constants:
     (`git worktree add --detach /tmp/as-<sha> <sha>`, symlink `node_modules`, run the one
     file, ~90 s each). A three-way split that separates inherited drift from two distinct
     cycle-10 increments cost four single-file runs and no guessing.
+13. **UniRig was requested, investigated, and REJECTED on evidence — the rigs already exist.**
+    `[OBSERVED]` The ask was "apply UniRig to overhaul boss/character/enemy animation".
+    UniRig generates a skeleton and skinning weights for an **unrigged** mesh. Measured:
+    all 29 GLBs under `assets/mesh/{boss,character,enemy}` are indeed 0-skin/0-joint/0-anim
+    raw art — but they are **authoring inputs, not runtime actors** (contract §0 says so
+    explicitly). The 11 runtime models under `assets/motion/ingame/characters/` each carry
+    1 skin, **24 `DEF-*` Rigify joints**, and 11 clips, all `runtimeEligible: true`, and all
+    11 share one identical joint-name set. So UniRig's problem was already solved, by hand,
+    better than a generator would.
+
+    It also **cannot run on this machine**: arm64 Apple Silicon with no CUDA toolchain, while
+    UniRig requires `spconv-{cuda}`, CUDA wheels for `torch_scatter`/`torch_cluster`,
+    `flash_attn`, and `accelerator: gpu` with `bf16-mixed`. The equivalent local capability
+    already exists — `scripts/rig-character-asset-blender.py` plus Blender 5.1.2 — and the
+    Mixamo→DEF retarget mapping is already written (22 `MappingRow`s).
+
+    The real bottleneck was different and is what actually got fixed: of 66 Mixamo bench FBX,
+    only **9 are reachable** at runtime, and every combat action was sourced from unarmed
+    brawling while weapon and creature motion sat unused. Defects 12–16 are what the
+    investigation surfaced instead.
+
+14. **Per-character motion variety is real, dormant, and currently paid for with no return.**
+    `[OBSERVED]` Hashing keyframe bytes per state across all 11 models gives **11 distinct
+    signatures** for each of `bighit`, `critical`, `attack`, `die`, `show` — every character
+    carries its own proportion-adapted retarget, not a shared copy. But
+    `battle-realtime-three.js:1698` is `if (!key || actions[key]) continue` (first-wins) and
+    `:1835` is `allEntries = [...adapted, ...baseEntries]` (overlay first), so the
+    `unarmed-core.glb` overlay **overrides 9 of those 11 states on every character**. Only
+    `die` and `show` reach the mixer from base — which is also why fixing `die` required
+    rebuilding all 11 models rather than just the overlay.
+
+    So the project pays per-character retargeting cost for 11 states and gets visible return
+    on 2. Either the overlay should be narrowed to the states that genuinely need a shared
+    baseline, or the per-character retarget for the other 9 is wasted work. Not a defect in
+    anything changed this cycle — the override mechanism is untouched — but a real decision
+    someone owes.
+
+15. **The retarget path is not byte-reproducible.** Rebuilding drifts every retargeted clip
+    **0.02–0.047°** and changes all 11 `modelSha256` values. `die` alone drifts **0.0000**
+    because it is an authored bake rather than a retarget — that asymmetry is what makes the
+    churn explainable rather than unexplained noise. No test pins `modelSha256`, so it is not
+    gate-blocking, but a future "why did every hash move" question has its answer here.
+
+16. **11 tracked `review.blend` intermediates, 138M on disk, zero consumers — a checkout cost,
+    not a history cost.** `[OBSERVED]` `grep -rl review.blend` across `tests/`, `scripts/` and
+    `.github/` returns nothing; they are Blender working files regenerable from the tracked
+    `build-character-motion-library-blender.py`. Untracking them would cut 138M from every
+    future clone's working tree and reclaim **nothing** from history, since those blobs are
+    already permanent.
+
+    Recorded at that width deliberately, because a first pass at this claim was wrong in a way
+    worth remembering: `du` sizes were read as commit cost and the item was nearly filed as
+    "266M of churn per rebuild". Measured properly, `51a2c175` costs **122.6 MB** of on-disk
+    objects (`git rev-list --objects <c> --not <c>^ | git cat-file --batch-check='%(objectsize:disk)'`),
+    essentially all of it the 11 genuinely-new shipped GLB blobs — irreducible. The
+    `review.blend` diffs are **2 insertions / 2 deletions each**, so git deltas them almost
+    perfectly, and the `character-motion-library/<id>/model.glb` mirror is a **byte-identical
+    blob** to the shipped copy (same `git hash-object` SHA), so that apparent duplication is
+    free. There is no waste to remove; acting on the original claim would have been pointless
+    surgery on a 12G repo. Working-tree size is the only true cost, and it is a preference,
+    not a defect.
+
 
 ---
 
