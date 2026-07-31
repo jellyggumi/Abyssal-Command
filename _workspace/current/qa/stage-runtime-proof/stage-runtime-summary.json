@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-31T06:17:29.207Z",
+  "generatedAt": "2026-07-31T06:49:29.158Z",
   "canonicalStageIds": [
     "cinder-span",
     "abyss-chancel",
@@ -99,7 +99,7 @@
         "surfaceStageId": "cinder-span",
         "loadedStageId": "cinder-span",
         "renderer": "webgl",
-        "renderedFrames": 367,
+        "renderedFrames": 364,
         "terrainLoaded": true,
         "terrainGlbPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb",
         "terrainSource": "promoted-glb",
@@ -504,7 +504,7 @@
         "surfaceStageId": "abyss-chancel",
         "loadedStageId": "abyss-chancel",
         "renderer": "webgl",
-        "renderedFrames": 354,
+        "renderedFrames": 357,
         "terrainLoaded": true,
         "terrainGlbPath": "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb",
         "terrainSource": "promoted-glb",
@@ -836,8 +836,8 @@
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
           },
           {
-            "id": "echo-throne:court-crescent-prop",
-            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+            "id": "echo-throne:compass-inlay-lamp-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
           },
           {
             "id": "echo-throne:crown-shard-prop",
@@ -868,7 +868,11 @@
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
           },
           {
-            "id": "echo-throne:south-gallery-shard-prop",
+            "id": "echo-throne:narthex-shard-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:south-fractured-wing-prop",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
           },
           {
@@ -913,7 +917,7 @@
         "surfaceStageId": "echo-throne",
         "loadedStageId": "echo-throne",
         "renderer": "webgl",
-        "renderedFrames": 342,
+        "renderedFrames": 354,
         "terrainLoaded": true,
         "terrainGlbPath": "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
         "terrainSource": "promoted-glb",
@@ -928,19 +932,7 @@
         },
         "propGrounding": [
           {
-            "id": "echo-throne:aisle-blade",
-            "groundedMinY": 0,
-            "meshIntegrity": {
-              "meshCount": 1,
-              "vertexCount": 24925,
-              "triangleCount": 39495,
-              "invalidVertexCount": 0,
-              "invalidIndexCount": 0,
-              "finiteBounds": true
-            }
-          },
-          {
-            "id": "echo-throne:echo-aisle-prop",
+            "id": "echo-throne:narthex-shard-prop",
             "groundedMinY": 0,
             "meshIntegrity": {
               "meshCount": 1,
@@ -964,6 +956,42 @@
             }
           },
           {
+            "id": "echo-throne:south-fractured-wing-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "echo-throne:echo-aisle-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "echo-throne:aisle-blade",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
             "id": "echo-throne:east-fractured-wing-prop",
             "groundedMinY": 0,
             "meshIntegrity": {
@@ -976,43 +1004,7 @@
             }
           },
           {
-            "id": "echo-throne:court-crescent-prop",
-            "groundedMinY": 0,
-            "meshIntegrity": {
-              "meshCount": 1,
-              "vertexCount": 24925,
-              "triangleCount": 39495,
-              "invalidVertexCount": 0,
-              "invalidIndexCount": 0,
-              "finiteBounds": true
-            }
-          },
-          {
-            "id": "echo-throne:south-gallery-shard-prop",
-            "groundedMinY": 0,
-            "meshIntegrity": {
-              "meshCount": 1,
-              "vertexCount": 24925,
-              "triangleCount": 39495,
-              "invalidVertexCount": 0,
-              "invalidIndexCount": 0,
-              "finiteBounds": true
-            }
-          },
-          {
-            "id": "echo-throne:dais-relic",
-            "groundedMinY": 0,
-            "meshIntegrity": {
-              "meshCount": 1,
-              "vertexCount": 23895,
-              "triangleCount": 38536,
-              "invalidVertexCount": 0,
-              "invalidIndexCount": 0,
-              "finiteBounds": true
-            }
-          },
-          {
-            "id": "echo-throne:fractured-dais-prop",
+            "id": "echo-throne:west-crown-light-prop",
             "groundedMinY": 0,
             "meshIntegrity": {
               "meshCount": 1,
@@ -1036,6 +1028,18 @@
             }
           },
           {
+            "id": "echo-throne:compass-inlay-lamp-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
             "id": "echo-throne:crown-shard-prop",
             "groundedMinY": 0,
             "meshIntegrity": {
@@ -1048,7 +1052,19 @@
             }
           },
           {
-            "id": "echo-throne:west-crown-light-prop",
+            "id": "echo-throne:dais-relic",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "echo-throne:fractured-dais-prop",
             "groundedMinY": 0,
             "meshIntegrity": {
               "meshCount": 1,
@@ -1086,8 +1102,8 @@
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
           },
           {
-            "id": "echo-throne:court-crescent-prop",
-            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+            "id": "echo-throne:compass-inlay-lamp-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
           },
           {
             "id": "echo-throne:crown-shard-prop",
@@ -1118,7 +1134,11 @@
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
           },
           {
-            "id": "echo-throne:south-gallery-shard-prop",
+            "id": "echo-throne:narthex-shard-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:south-fractured-wing-prop",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
           },
           {
@@ -1210,5 +1230,5 @@
     }
   ],
   "pass": true,
-  "finishedAt": "2026-07-31T06:17:51.864Z"
+  "finishedAt": "2026-07-31T06:49:51.553Z"
 }

@@ -309,12 +309,13 @@ const profiles = [
     gameplay: {
       bounds: bounds(600, 23400, 600, 11400),
       obstacles: [
-        obstacle("echo-throne:fractured-dais", 15400, 8700, 900, "echo-throne:fractured-dais-prop"),
-        obstacle("echo-throne:echo-aisle", 11800, 3000, 800, "echo-throne:echo-aisle-prop"),
         obstacle("echo-throne:west-fractured-wing", 5400, 9000, 650, "echo-throne:west-fractured-wing-prop"),
-        obstacle("echo-throne:east-fractured-wing", 19000, 9000, 650, "echo-throne:east-fractured-wing-prop"),
-        obstacle("echo-throne:gallery-debris", 6900, 1200, 500, "echo-throne:gallery-debris-prop"),
-        obstacle("echo-throne:crown-shard", 19400, 2400, 600, "echo-throne:crown-shard-prop"),
+        obstacle("echo-throne:gallery-debris", 9200, 1400, 500, "echo-throne:gallery-debris-prop"),
+        obstacle("echo-throne:south-fractured-wing", 9800, 9800, 650, "echo-throne:south-fractured-wing-prop"),
+        obstacle("echo-throne:echo-aisle", 12000, 2600, 800, "echo-throne:echo-aisle-prop"),
+        obstacle("echo-throne:crown-shard", 15600, 1600, 600, "echo-throne:crown-shard-prop"),
+        obstacle("echo-throne:fractured-dais", 19200, 7600, 700, "echo-throne:fractured-dais-prop"),
+        obstacle("echo-throne:east-fractured-wing", 20600, 9000, 650, "echo-throne:east-fractured-wing-prop"),
       ],
       surfaces: [],
       meshColliders: [meshCollider("echo-throne:walkable-court", [
@@ -322,16 +323,20 @@ const profiles = [
         triangle(600, 600, 0, 23400, 11400, 0, 600, 11400, 0),
       ])],
       routes: [
-        route("echo-throne:critical-route", "critical", 1100, [
+        // Critical thread: narthex -> sovereign aisle -> crescent court, with both intermediate
+        // waypoints sitting exactly on the encounter objective points.
+        route("echo-throne:critical-route", "critical", 1400, [
           waypoint("echo-throne:ingress", "ingress", 1800, 6000),
-          waypoint("echo-throne:throne-aisle-break", "intermediate-objective", 7600, 6000),
-          waypoint("echo-throne:throne-dais-stand", "intermediate-gate", 13800, 6000),
+          waypoint("echo-throne:throne-aisle-break", "intermediate-objective", 15200, 6000),
+          waypoint("echo-throne:throne-dais-stand", "intermediate-gate", 18000, 6000),
           waypoint("echo-throne:final-gate", "final-gate", 22000, 6000),
         ]),
-        route("echo-throne:optional-detour", "optional-detour", 700, [
-          waypoint("echo-throne:detour-entry", "detour-entry", 5600, 4400),
-          waypoint("echo-throne:gallery-cache", "detour-objective", 9000, 1600),
-          waypoint("echo-throne:detour-exit", "detour-exit", 17200, 1600),
+        // The detour physically performs the stage's mirror: enter the north gallery, cut the
+        // sovereign aisle under fire, exit through the south gallery.
+        route("echo-throne:optional-detour", "optional-detour", 900, [
+          waypoint("echo-throne:detour-entry", "detour-entry", 7800, 2200),
+          waypoint("echo-throne:mirror-gallery-cache", "detour-objective", 12400, 9800),
+          waypoint("echo-throne:detour-exit", "detour-exit", 19200, 9200),
         ]),
       ],
     },
@@ -342,33 +347,41 @@ const profiles = [
       silhouette: { profile: "axial-crescent-court", primaryAxis: "x", skyline: "shattered-dais-crown" },
       camera: { arenaBounds: bounds(900, 23100, 900, 11100), focus: { x: 14200, y: 6000, elevation: 0 }, readableMargin: 600 },
       landmarks: [
-        landmark("landmark.throne-dais", "Fractured Throne Dais", 18200, 7200, 0, "echo-throne:dais-relic"),
-        landmark("landmark.throne-aisle", "Echo Aisle", 11800, 3000, 0, "echo-throne:echo-aisle-prop"),
-        landmark("landmark.fractured-wing", "Fractured Court Wing", 19000, 9000, 0, "echo-throne:east-fractured-wing-prop"),
-        landmark("landmark.crown-shard", "Sovereign Crown Shard", 19400, 2400, 0, "echo-throne:crown-shard-prop"),
-        landmark("landmark.echo-west-crown-light", "West Crown Light", 2700, 10500, 0, "echo-throne:west-crown-light-prop"),
-        landmark("landmark.echo-court-crescent", "Echo Court Crescent", 10400, 10800, 0, "echo-throne:court-crescent-prop"),
+        // `landmark.throne-dais` and `landmark.throne-aisle` keep their ids for the Seal Atlas
+        // vocabulary in defense-catalog.js STAGE_PRESENTATION_BY_ID.
+        landmark("landmark.throne-dais", "Throne Dais Relic", 18400, 4200, 0, "echo-throne:dais-relic"),
+        landmark("landmark.throne-aisle", "Echo Aisle", 12000, 2600, 0, "echo-throne:echo-aisle-prop"),
+        landmark("landmark.throne-fractured-dais", "Fractured Dais", 19200, 7600, 0, "echo-throne:fractured-dais-prop"),
+        landmark("landmark.throne-crown-shard", "Sovereign Crown Shard", 15600, 1600, 0, "echo-throne:crown-shard-prop"),
+        landmark("landmark.throne-east-wing", "East Court Horn", 20600, 9000, 0, "echo-throne:east-fractured-wing-prop"),
+        landmark("landmark.throne-west-crown-light", "West Crown Light", 2700, 10500, 0, "echo-throne:west-crown-light-prop"),
       ],
       props: [
-        prop("echo-throne:dais-relic", PROPS.relic, "throne-lantern", 18200, 7200, 0, 0, 190),
-        prop("echo-throne:aisle-blade", PROPS.blade, "objective-beacon", 11800, 4400, 0, 1.5708, 150),
-        prop("echo-throne:fractured-dais-prop", PROPS.relic, "arch", 15400, 8700, 0, 0, 900),
-        prop("echo-throne:echo-aisle-prop", PROPS.blade, "arch", 11800, 3000, 0, 1.5708, 800),
-        prop("echo-throne:west-fractured-wing-prop", PROPS.blade, "wall", 5400, 9000, 0, -0.5, 650),
-        prop("echo-throne:east-fractured-wing-prop", PROPS.blade, "wall", 19000, 9000, 0, 0.5, 650),
-        prop("echo-throne:gallery-debris-prop", PROPS.relic, "debris", 6900, 1200, 0, 0.4, 500),
-        prop("echo-throne:crown-shard-prop", PROPS.relic, "debris", 19400, 2400, 0, -0.4, 600),
+        prop("echo-throne:narthex-shard-prop", PROPS.blade, "background-gallery-shard", 2800, 1200, 0, 1.1, 300),
         prop("echo-throne:west-crown-light-prop", PROPS.relic, "crown-lantern", 2700, 10500, 0, -0.6, 140),
-        prop("echo-throne:court-crescent-prop", PROPS.blade, "background-court-crescent", 10400, 10800, 0, 0, 380),
+        prop("echo-throne:west-fractured-wing-prop", PROPS.blade, "wall", 5400, 9000, 0, -0.5, 650),
+        prop("echo-throne:gallery-debris-prop", PROPS.relic, "debris", 9200, 1400, 0, 0.4, 500),
+        prop("echo-throne:south-fractured-wing-prop", PROPS.blade, "wall", 9800, 9800, 0, 0.5, 650),
+        prop("echo-throne:echo-aisle-prop", PROPS.blade, "arch", 12000, 2600, 0, 1.5708, 800),
+        prop("echo-throne:compass-inlay-lamp-prop", PROPS.relic, "compass-lantern", 13400, 7400, 0, 0.2, 160),
+        prop("echo-throne:aisle-blade", PROPS.blade, "objective-beacon", 15200, 4600, 0, 1.5708, 150),
+        prop("echo-throne:crown-shard-prop", PROPS.relic, "debris", 15600, 1600, 0, -0.4, 600),
+        prop("echo-throne:dais-relic", PROPS.relic, "throne-lantern", 18400, 4200, 0, 0, 190),
+        prop("echo-throne:fractured-dais-prop", PROPS.relic, "arch", 19200, 7600, 0, 0, 700),
+        prop("echo-throne:east-fractured-wing-prop", PROPS.blade, "wall", 20600, 9000, 0, 0.5, 650),
         prop("echo-throne:east-crown-light-prop", PROPS.relic, "crown-lantern", 22200, 10500, 0, 0.6, 140),
-        prop("echo-throne:south-gallery-shard-prop", PROPS.blade, "background-gallery-shard", 2800, 1200, 0, 1.1, 300),
       ],
       visibilityAnchors: [
-        visibilityAnchor("echo-throne:dais-light-anchor", "motivated-light", 18200, 7200, 1100, "echo-throne:dais-relic"),
-        visibilityAnchor("echo-throne:aisle-light-anchor", "motivated-light", 11800, 4400, 900, "echo-throne:aisle-blade"),
         visibilityAnchor("echo-throne:west-crown-light", "motivated-light", 2700, 10500, 780, "echo-throne:west-crown-light-prop"),
+        visibilityAnchor("echo-throne:compass-light-anchor", "motivated-light", 13400, 7400, 900, "echo-throne:compass-inlay-lamp-prop"),
+        visibilityAnchor("echo-throne:dais-light-anchor", "motivated-light", 18400, 4200, 1100, "echo-throne:dais-relic"),
         visibilityAnchor("echo-throne:east-crown-light", "motivated-light", 22200, 10500, 780, "echo-throne:east-crown-light-prop"),
-        visibilityAnchor("echo-throne:court-fog-break", "fog-break", 14800, 6000, 1600),
+        // One readable pocket per authored slab.
+        visibilityAnchor("echo-throne:narthex-fog-break", "fog-break", 3800, 6000, 1400),
+        visibilityAnchor("echo-throne:north-gallery-fog-break", "fog-break", 10600, 3000, 1200),
+        visibilityAnchor("echo-throne:aisle-fog-break", "fog-break", 11000, 6000, 1500),
+        visibilityAnchor("echo-throne:south-gallery-fog-break", "fog-break", 13000, 9800, 1200),
+        visibilityAnchor("echo-throne:court-fog-break", "fog-break", 21000, 3600, 1300),
       ],
       vfxCues: [vfxCue("echo-throne", "echo-throne:fracture-echo", "echo-throne-fracture-echo", 15400, 6000, 0, 0)],
       npcs: [lookout("echo-throne:throne-lookout", 17800, 8100, 0, 3.1416, 9200, 6000, "watch-the-court", "echo-throne:break-the-command")],

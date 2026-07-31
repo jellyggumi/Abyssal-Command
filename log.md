@@ -80,3 +80,21 @@ Each entry should list the files touched, the reason for the change, and any fol
 - Digest gates needed no repin: the pinned `abyss-chancel` and `echo-throne` windows re-measured
   byte-identical, consistent with the cycle-10 finding that those windows never reach the changed
   circles.
+
+## [2026-07-31] report | Stage 3 echo-throne composition — the spec's last stage lands
+
+- Executed the authored throne composition (`stage-dungeon-composition-spec.md` §2.3/§3.4/§5.3/§5.4)
+  as one atomic change: 13 props (7 obstacles), 6 landmarks, 4 motivated lights, 5 fog breaks, and
+  both routes re-authored. Bound coordinates untouched.
+- Critical route now runs the mirror axis with both intermediate waypoints on the encounter
+  objective points; the detour enters the north gallery, cuts the aisle at (10100, 6000) and exits
+  south, so the optional path physically performs the stage's mirror.
+- `fractured-dais-prop` moves to (19200, 7600) and shrinks r900 -> r700. The cycle-10 retrospective
+  flagged this as load-bearing: keeping r900 there fails the critical route by -700. At r700 it
+  clears by 200, reproducing the spec's claimed +200.00 exactly.
+- `--verify` now passes for all three stages: cinder 50, chancel 419, throne 200 route margin,
+  every spawn approach clear.
+- Pacing unchanged and inside band (209-222 s vs 209-217 s baseline, complete on every seed).
+- Evidence: focused suites 54/54 plus gate checks 11/11 with no digest repin needed; full
+  `node --test 'tests/**/*.test.mjs'` 607 tests, 577 pass, 5 fail — the same five pre-existing
+  failures. Browser proof green on all three stages (12 / 13 / 13 props).
