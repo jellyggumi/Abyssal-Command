@@ -599,7 +599,24 @@ test("stable combat control IDs remain unique and their native keyboard activati
     );
     await run.page.keyboard.press("Space");
     await run.page.locator("#defense-pause-overlay").waitFor({ state: "detached" });
-    await run.page.waitForFunction(() => document.querySelector("#defense-battle-surface")?.dataset.defenseState === "active");
+    // `data-defense-state` is NOT a simple paused/active flag. app.js resolves it as
+    // paused > terminal > growth > reward > starting > active, so a pending growth offer parks it
+    // on "growth" and resuming can never reach "active" — that is the 90 s timeout this suite hit
+    // on CI from PR #20 onward, while a fast local run simply never had an offer open here.
+    // Clear the offer first, bound the wait, and report the state actually observed.
+    await dismissGrowthOffer();
+    try {
+      await run.page.waitForFunction(
+        () => document.querySelector("#defense-battle-surface")?.dataset.defenseState === "active",
+        null,
+        { timeout: 20000 },
+      );
+    } catch {
+      await dismissGrowthOffer();
+      const observed = await run.surface.getAttribute("data-defense-state");
+      assert.equal(observed, "active",
+        `resuming must return the run to the active state, observed "${observed}"`);
+    }
     const focusedAfterResume = await run.page.evaluate(() => ({
       id: document.activeElement?.id ?? "",
       tagName: document.activeElement?.tagName ?? "",
