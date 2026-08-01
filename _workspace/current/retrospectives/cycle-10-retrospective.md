@@ -721,3 +721,44 @@ per-target and a session on a throwaway page throttles nothing; and at 6× the s
 **passes**, so slowness alone is not sufficient to fail — it widens the window the modal needs,
 which is consistent with the `defenseState` mechanism above rather than a pure timing story.
 The hook is not shipped; it was applied to a scratch copy and removed.
+
+### The causal chain, demonstrated — this retires §7's "n=1 per condition" caveat
+
+`[OBSERVED]` PR #29 (`112dcff6`) and PR #34 (`6e4015ab`) landed, and the failure mode changed
+exactly as each fix predicted:
+
+| run | state | `not ok 3` |
+|---|---|---|
+| `3b6169c7`, `fdfe382e`, `b2408fb2` | no guard | fails — `waitForFunction` **90 s hang** |
+| `112dcff6` | guard only | fails — **assertion at 26.9 s**, ~20 lines further on |
+| `6e4015ab` | guard + precondition | **passes**; deploy green, served `candidate_sha` = tip |
+
+Three consecutive reds at one signature, then fix A moves the failure forward and shortens it
+from 90 s to 27 s, then fix B clears it. That is mechanism-confirmed causation rather than a
+count — the thing §7 correctly refused to claim from the earlier 1 → 2 → 3 sequence. The
+difference is not more runs; it is that each fix made a *specific prediction* about how the
+failure would change, and it changed that way.
+
+Two details worth keeping:
+
+- **The guard's value was legibility, not just liveness.** Its whole design claim was "fails in
+  seconds with a clear message instead of burning 90 s". That is exactly what it did — and the
+  message it produced (`'' !== 'toggle-pause'`) is what identified the second layer. A 90 s hang
+  cannot tell you what is behind it.
+- **Fix B re-runs the pause round-trip rather than calling `focus()`.** Clearing an offer
+  requires clicking its pick button, which moves focus to `BODY`, so the pre-existing assertion
+  that resume returns focus to `#toggle-pause` was measuring a destroyed precondition. Setting
+  the focus and then asserting it would have been tautological; re-running the round-trip makes
+  the **product** restore focus, which is what that assertion exists to check.
+
+**A local-verification trap worth naming**, because it nearly shipped unverified: the new block
+is gated on `clearedOffer`, which is **false on every fast local run**, so a plain local 12/12
+never executes it. Forcing the flag true on a scratch copy exercises it — 12/12 in 21.0 s, the
+pause round-trip running twice cleanly. A green local suite that skips the branch you added is
+not evidence about that branch.
+
+Residual, bounded and deliberately not chased: the re-run's own wait also accepts `"growth"` as
+terminal, so a *second* offer surfacing during the re-run would fall through to the focus assert
+and fail with the same message. Unlikely — the simulation is paused for most of that window and
+accrues almost no ticks — and the failure mode is a fast, legible assertion rather than a 90 s
+hang, which is strictly better than the state this started from.
