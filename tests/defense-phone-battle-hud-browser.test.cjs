@@ -256,7 +256,15 @@ async function measureHud(page) {
         box: bottomBox,
         buttons: bottomButtons,
         movement: box(movement),
-        movementButtonCount: movement.querySelectorAll("button").length,
+        movementButtonCount: movement.querySelectorAll("[data-move]").length,
+        requiredControls: Object.fromEntries(["#manual-attack", "#stance-cycle", "#toggle-pause"]
+          .map((selector) => [selector, document.querySelectorAll(selector).length])),
+        joystickVisible: Boolean(movement.querySelector("[data-joystick]"))
+          && isVisible(movement.querySelector("[data-joystick]")),
+        joystickSize: (() => {
+          const rect = movement.querySelector("[data-joystick]")?.getBoundingClientRect();
+          return rect ? Math.min(rect.width, rect.height) : 0;
+        })(),
         visible: isVisible(bottom) && isVisible(movement),
       },
       zones: {
@@ -352,8 +360,22 @@ function assertPhoneContract(report, viewport) {
   assert.equal(report.battlefield.exposedPoint.hitsHud, false, "the exposed center band must not be covered by HUD controls");
 
   assert.equal(report.bottomControls.visible, true, "phone bottom controls must be rendered and visible");
-  assert.equal(report.bottomControls.movementButtonCount, 5, "all five movement controls must remain rendered");
-  assert.ok(report.bottomControls.buttons.length >= 7, "movement, stance, and pause controls must remain available");
+  // KEYPAD RETIRED: the five [data-move] buttons are gone. What must be rendered and reachable at
+  // phone sizes is the drag stick itself — that is the movement control now.
+  assert.equal(report.bottomControls.movementButtonCount, 0,
+    "the retired [data-move] keypad must not be rendered");
+  assert.equal(report.bottomControls.joystickVisible, true,
+    "the drag stick must be rendered and visible at phone sizes");
+  assert.ok(report.bottomControls.joystickSize >= 44,
+    `the drag stick must stay a reachable target, got ${report.bottomControls.joystickSize}px`);
+  // The floor was 7 when five of those were the retired [data-move] ring. Movement is no longer a
+  // button at all, so the meaningful assertion is that the combat/stance/pause controls survive —
+  // named, not counted.
+  assert.ok(report.bottomControls.buttons.length >= 2,
+    `combat, stance and pause controls must remain available, got ${report.bottomControls.buttons.length}`);
+  assert.deepEqual(report.bottomControls.requiredControls, {
+    "#manual-attack": 1, "#stance-cycle": 1, "#toggle-pause": 1,
+  }, "combat, stance and pause controls must each remain a single reachable phone control");
   for (const control of report.bottomControls.buttons) {
     assert.equal(control.visible, true, `bottom control ${control.label} must be visible`);
     assert.ok(control.box.width >= 44 && control.box.height >= 44, `bottom control ${control.label} must retain a 44px target`);
@@ -544,31 +566,27 @@ test("stable combat control IDs remain unique and their native keyboard activati
       assert.equal(await control.evaluate((node) => document.activeElement === node), true, `${selector} must accept keyboard focus`);
       const previous = Number(await run.surface.getAttribute("data-defense-input-seq"));
       await run.page.keyboard.press(key);
-      try {
-        await run.page.waitForFunction(
-          ({ prior }) => Number(document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq) > prior,
-          { prior: previous },
-          { timeout: 20000 },
-        );
-      } catch {
-        // An offer that opened AFTER the dismiss above halts the simulation
-        // (defense-run-simulation.js: `if (run.growthOffer) return;`), so the sequence can never
-        // advance and the default 90 s budget burns out — the exact CI failure this guards.
-        // Clear it and re-drive the same control once.
-        await dismissGrowthOffer();
-        await control.focus();
-        await run.page.keyboard.press(key);
-        await run.page.waitForFunction(
-          ({ prior }) => Number(document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq) > prior,
-          { prior: previous },
-          { timeout: 20000 },
-        );
-      }
+      await run.page.waitForFunction(
+        ({ prior }) => Number(document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq) > prior,
+        { prior: previous },
+      );
     };
 
     await activateAndWaitForInput("#manual-attack", "Enter");
-    await activateAndWaitForInput('#movement-actions [data-move="E"]', "Enter");
+    // KEYPAD RETIRED: `#movement-actions [data-move="E"]` no longer exists. Keyboard movement is
+    // the surviving non-pointer modality and reaches the same public `data-defense-move` octant
+    // through KEY_DIRECTIONS, so the contract is asserted through the key itself.
+    await dismissGrowthOffer();
+    const beforeMove = Number(await run.surface.getAttribute("data-defense-input-seq"));
+    await run.page.keyboard.down("d");
+    await run.page.waitForFunction(
+      ({ prior }) => Number(document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq) > prior,
+      { prior: beforeMove },
+      { timeout: 20000 },
+    );
     await run.page.waitForFunction(() => document.querySelector("#defense-battle-surface")?.dataset.defenseMove === "E");
+    await run.page.keyboard.up("d");
+    await run.page.waitForFunction(() => document.querySelector("#defense-battle-surface")?.dataset.defenseMove === "IDLE");
     await activateAndWaitForInput("#stance-cycle", "Enter");
 
     const pause = run.page.locator("#toggle-pause");

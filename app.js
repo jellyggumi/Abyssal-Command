@@ -1881,12 +1881,7 @@ ${lobbyCinematicMarkup()}
           <div class="hud-panel gate-panel"><div class="gate-panel-copy">${portraitMarkup(COMMANDER_MESH_ROOT, "DW", "gate-panel-portrait rc-portrait")}<span class="hud-eyebrow">WARDEN / LANTERN INTEGRITY</span><div class="gate-panel-bars" aria-hidden="true"><span class="gate-panel-bar-icon" data-ui-icon="stat-commander"></span><span class="gate-panel-bar-track commander"><i id="battle-commander-bar-fill"></i></span><span class="gate-panel-bar-icon" data-ui-icon="stat-gate-integrity"></span><span class="gate-panel-bar-track gate"><i id="battle-gate-bar-fill"></i></span></div><strong id="battle-commander-integrity"></strong><strong id="battle-integrity"></strong><span id="battle-enemies"></span></div><div class="integrity-meter" aria-hidden="true"><i id="battle-integrity-fill"></i></div><ul class="hud-buff-strip" id="battle-buff-strip" role="list" aria-label="활성 강화" aria-live="off"></ul></div>
           <div class="one-thumb-controls" id="movement-actions" data-movement-control="octant-joystick" role="group" aria-label="한 손 이동 조작">
             <div class="virtual-joystick" data-joystick role="application" aria-label="이동 스틱" aria-describedby="movement-hint"><span class="virtual-joystick-rune" aria-hidden="true"></span><i class="virtual-joystick-knob" data-joystick-knob aria-hidden="true"></i></div>
-            <button type="button" data-move="N" aria-label="위로 이동">↑</button>
-            <button type="button" data-move="W" aria-label="왼쪽으로 이동">←</button>
-            <button type="button" data-move="IDLE" aria-label="이동 정지">●</button>
-            <button type="button" data-move="E" aria-label="오른쪽으로 이동">→</button>
-            <button type="button" data-move="S" aria-label="아래로 이동">↓</button>
-            <span id="movement-hint" class="sr-only">스틱을 끌어 이동. 방향 버튼은 키보드로도 사용할 수 있습니다.</span>
+            <span id="movement-hint" class="sr-only">스틱을 끌어 이동합니다. 키보드는 WASD 또는 방향키로 이동하며, 대각선은 두 키를 함께 누릅니다.</span>
           </div>
           <div class="combat-input-cluster" id="combat-input-cluster" role="group" aria-label="전투 입력">
             <button type="button" id="manual-attack" class="manual-attack-action" aria-label="수동 공격 (Space 또는 J)"><span class="manual-attack-glyph" aria-hidden="true">✦</span><span class="manual-attack-label">공격</span><kbd>SPACE</kbd></button>
@@ -2600,23 +2595,15 @@ export class BattleSession {
 
   onMoveControlDown(event) {
     if (this.controlPointerId !== null || (event.button !== undefined && event.button !== 0)) return;
-    // Buttons FIRST (spec §3.2). The pad is visible at every viewport after §3.4, so the
-    // octant ring and the drag surface share one container. A press that actually landed on a
-    // labelled control is that control's press -- resolving it by pad geometry instead would
-    // discard the player's stated intent and break the held-movement contract in
-    // tests/defense-survivor-browser.cjs (hover [data-move="W"] -> mouse.down -> held MOVE W).
-    // Requirement C1 keeps every [data-move] box clear of the pad centre, so a drag that
-    // starts at the centre still finds no button here and falls through to the stick.
-    const button = event.target.closest?.("[data-move]");
-    if (button) {
-      event.preventDefault();
-      this.controlPointerId = event.pointerId;
-      this.controlPointerMode = "buttons";
-      button.setPointerCapture?.(event.pointerId);
-      this.send("MOVE", button.dataset.move);
-      if (button.dataset.move !== "IDLE" && this.inLobby()) this.suppressLobbyShowcase();
-      return;
-    }
+    // The five [data-move] ring buttons are GONE (keypad retirement). They were
+    // `position: absolute; z-index: 3` boxes sitting on N/S/E/W of the pad, so every press that
+    // began near an edge was claimed by a button instead of starting a drag, and the labelled
+    // control had to be hit-tested first. With the ring removed the pad owns the whole container
+    // and there is exactly one press path: start a drag.
+    //
+    // Keyboard movement is unaffected and is now the sole non-pointer path: `KEY_DIRECTIONS`
+    // (WASD + arrows, with two held keys composing a diagonal) is handled in onKey() and never
+    // depended on the buttons existing.
     if (!this.joystickActive()) return;
     event.preventDefault();
     this.controlPointerId = event.pointerId;
@@ -2633,9 +2620,7 @@ export class BattleSession {
 
   onMoveControlEnd(event) {
     if (event.pointerId !== this.controlPointerId) return;
-    const captureTarget = this.controlPointerMode === "joystick"
-      ? this.movementControls
-      : event.target.closest?.("[data-move]");
+    const captureTarget = this.movementControls;
     if (captureTarget?.hasPointerCapture?.(event.pointerId)) captureTarget.releasePointerCapture(event.pointerId);
     this.controlPointerId = null;
     this.controlPointerMode = null;
