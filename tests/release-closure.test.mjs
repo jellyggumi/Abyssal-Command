@@ -76,6 +76,11 @@ const AUDIO_SAMPLE_ASSETS = Object.freeze([...new Set([
 ])]);
 
 const DIRECT_RUNTIME_ASSETS = Object.freeze([
+  "assets/images/sprite-2-5d/cinder-court-backdrop.png",
+  "assets/images/sprite-2-5d/warden/manifest.json",
+  "assets/images/sprite-2-5d/warden/sprite-sheet.png",
+  "assets/images/sprite-2-5d/ember-cohort/manifest.json",
+  "assets/images/sprite-2-5d/ember-cohort/sprite-sheet.png",
   // Cycle 10: the composed slab floors are the gameplay ground the runtime loads.
   // Order matters -- this list is compared with assert.deepEqual against the
   // workflow's PAGES_RUNTIME_PATHS, so these three must sit here in the same
@@ -113,7 +118,7 @@ const DIRECT_RUNTIME_ASSETS = Object.freeze([
   ...AUDIO_SAMPLE_ASSETS,
 ]);
 const RUNTIME_PATHS = [
-  "index.html", "app.js", "rpg-catalog.js", "stage-world-catalog.js", "stage-story-catalog.js", "defense-viewport.js", "defense-catalog.js", "defense-run-simulation.js",
+  "index.html", "sprite-2-5d.html", "sprite-2-5d.css", "sprite-2-5d.js", "app.js", "rpg-catalog.js", "stage-world-catalog.js", "stage-story-catalog.js", "defense-viewport.js", "defense-catalog.js", "defense-run-simulation.js",
   "campaign-state.js", "defense-storage.js", "defense-audio.js", "defense-cutscene.js", "defense-telemetry.js",
   "battle-canvas-text.js", "battle-realtime-three.js", "battle-visualizer.js", "lobby-cinematic.js", "styles.css", "react-game-ui.css", "sw.js", "manifest.json", "icon.svg", "privacy.html",
   "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
@@ -215,7 +220,7 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
   ]);
   const browserContractJob = job(workflow, "browser_contract");
   const browserLoop = browserContractJob.match(
-    /^\s*for browser_contract in defense-hud-responsive-browser defense-phone-battle-hud-browser\.test progression-mobile-ui-browser defense-survivor-browser defense-performance-browser; do\n(?<body>[\s\S]*?)^\s*done$/m,
+    /^\s*for browser_contract in defense-hud-responsive-browser defense-phone-battle-hud-browser\.test progression-mobile-ui-browser defense-survivor-browser sprite-2-5d-browser defense-performance-browser; do\n(?<body>[\s\S]*?)^\s*done$/m,
   );
   assert.ok(browserLoop, "browser_contract must iterate the exact bounded browser suite allowlist");
   assert.match(

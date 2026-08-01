@@ -25,6 +25,13 @@ try {
 
 const cacheBust = () => `cb=${encodeURIComponent(`${sha}-${Date.now()}`)}`;
 const absolute = (pathname) => new URL(`${pathname}?${cacheBust()}`, baseUrl).href;
+const SPRITE_RUNTIME_ASSETS = Object.freeze([
+  "assets/images/sprite-2-5d/cinder-court-backdrop.png",
+  "assets/images/sprite-2-5d/warden/manifest.json",
+  "assets/images/sprite-2-5d/warden/sprite-sheet.png",
+  "assets/images/sprite-2-5d/ember-cohort/manifest.json",
+  "assets/images/sprite-2-5d/ember-cohort/sprite-sheet.png",
+]);
 
 async function run() {
   const results = {
@@ -47,6 +54,16 @@ async function run() {
     assert.equal(version.candidate_sha, sha, "version.json candidate_sha must match --sha");
     assert.equal(version.rules_version, rulesVersion, "version.json rules_version must match --rules-version");
     results.version = version;
+
+    results.spriteRequests = {};
+    for (const pathname of ["sprite-2-5d.html", ...SPRITE_RUNTIME_ASSETS]) {
+      const assetResponse = await fetch(absolute(pathname), {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
+      assert.equal(assetResponse.ok, true, `${pathname} response must succeed; received ${assetResponse.status}`);
+      results.spriteRequests[pathname] = assetResponse.status;
+    }
 
     browser = await playwright.chromium.launch({ headless: true });
     for (const [width, height] of [[390, 844], [844, 390]]) {
@@ -75,8 +92,25 @@ async function run() {
       assert.equal(invariant.surface, true, "battle surface must exist");
       assert.equal(invariant.canvas, true, "battle canvas must exist");
       assert.equal(invariant.overflow, true, "battle must not overflow viewport");
+
+      const spriteResponse = await page.goto(absolute("sprite-2-5d.html"), { waitUntil: "load" });
+      assert(spriteResponse?.ok(), `${width}x${height} sprite route response must succeed`);
+      await page.locator('body[data-game-state="running"]').waitFor({ state: "attached", timeout: 15_000 });
+      const spriteInvariant = await page.evaluate(() => ({
+        runtime: document.querySelector("#sprite-2-5d-game")?.dataset.runtime,
+        canvas: {
+          width: document.querySelector("#sprite-2-5d-canvas")?.width,
+          height: document.querySelector("#sprite-2-5d-canvas")?.height,
+        },
+        controlsEnabled: [...document.querySelectorAll("[data-control]")].every((control) => !control.disabled),
+        horizontalOverflow: document.documentElement.scrollWidth > innerWidth,
+      }));
+      assert.equal(spriteInvariant.runtime, "running", "deployed sprite game root must expose the running state");
+      assert.deepEqual(spriteInvariant.canvas, { width: 1536, height: 1024 }, "deployed sprite canvas must expose its authored render resolution");
+      assert.equal(spriteInvariant.controlsEnabled, true, "deployed sprite controls must enable after asset validation");
+      assert.equal(spriteInvariant.horizontalOverflow, false, "deployed sprite route must not overflow horizontally");
       assert.deepEqual(errors, [], "deployed browser emitted errors");
-      results.sessions.push({ viewport: `${width}x${height}`, ...invariant });
+      results.sessions.push({ viewport: `${width}x${height}`, ...invariant, sprite: spriteInvariant });
       await context.close();
     }
     results.pass = true;
