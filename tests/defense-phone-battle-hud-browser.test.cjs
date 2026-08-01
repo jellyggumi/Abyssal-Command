@@ -573,38 +573,18 @@ test("stable combat control IDs remain unique and their native keyboard activati
     };
 
     await activateAndWaitForInput("#manual-attack", "Enter");
-    // KEYPAD RETIRED: `#movement-actions [data-move="E"]` no longer exists. Keyboard movement is
-    // the surviving non-pointer modality and reaches the same public `data-defense-move` octant
-    // through KEY_DIRECTIONS, so the contract is asserted through the key itself.
-    // Same growth-offer defence as activateAndWaitForInput: an offer opening mid-hold halts the
-    // simulation (`if (run.growthOffer) return;`), so `data-defense-move` can never reach "E" and
-    // the default 90 s budget burns out — that is exactly how this test timed out on CI. Bounded
-    // waits plus one clear-and-retry, instead of one unbounded wait.
-    const holdEastOnce = async () => {
-      await dismissGrowthOffer();
-      await run.page.keyboard.down("d");
-      try {
-        await run.page.waitForFunction(
-          () => document.querySelector("#defense-battle-surface")?.dataset.defenseMove === "E",
-          null,
-          { timeout: 15000 },
-        );
-        return true;
-      } catch {
-        await run.page.keyboard.up("d").catch(() => {});
-        return false;
-      }
-    };
-    if (!await holdEastOnce()) {
-      assert.equal(await holdEastOnce(), true,
-        "keyboard movement must reach the public east movement state once the growth offer is cleared");
-    }
-    await run.page.keyboard.up("d");
-    await run.page.waitForFunction(
-      () => document.querySelector("#defense-battle-surface")?.dataset.defenseMove === "IDLE",
-      null,
-      { timeout: 15000 },
-    );
+    // KEYPAD RETIRED: `#movement-actions [data-move="E"]` no longer exists, and movement is not a
+    // combat CONTROL ID any more — this test is about the stable control ids and their native
+    // keyboard activation, so movement simply leaves its scope. The keyboard movement contract is
+    // asserted where it belongs, on the two suites that own movement:
+    // progression-mobile-ui-browser (w/a/s/d + diagonals -> data-defense-move) and
+    // defense-survivor-browser (held "d" -> "E" -> release -> IDLE).
+    //
+    // Driving a 15 s key hold from here also perturbed the very state the rest of this test
+    // measures: it kept the run advancing while the pause dialog assertions below wait on
+    // `data-defense-state === "active"`, which is how this test timed out at :622 on CI.
+    assert.equal(await run.page.locator("#movement-actions [data-move]").count(), 0,
+      "movement must no longer expose keypad control ids");
     await activateAndWaitForInput("#stance-cycle", "Enter");
 
     const pause = run.page.locator("#toggle-pause");
