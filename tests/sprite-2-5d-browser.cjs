@@ -464,7 +464,6 @@ async function verifyTerminalLoopStates(browser, hosting) {
     const { page, failures } = await openRunningPage(context);
     await stepFrames(page, 1);
     const canvasBeforeGameOver = await canvasDigest(page, { x: 620, y: 420, width: 360, height: 360 });
-    const clockBeforeGameOver = await clockSnapshot(page);
     await page.evaluate(() => window.__sprite2dRuntimeTest.forceGameOver());
     assert.equal((await runtimeSnapshot(page)).mode, "gameover", "the deterministic terminal fixture must enter gameover");
     assert.equal((await clockSnapshot(page)).pending, 1, "gameover must leave the current frame available for one final render");
