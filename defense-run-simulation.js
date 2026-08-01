@@ -792,6 +792,62 @@ function arrivalPoint(run, { formation, direction, laneOffset, memberIndex, memb
     : primary;
 }
 
+/**
+ * Places a near-player arrival so the fairness floor survives TERRAIN RESOLUTION, not just the
+ * arena clamp.
+ *
+ * `arrivalPoint` guarantees its own output clears ARRIVAL_NEAR_RADIUS_MIN, but `placeOnTerrain`
+ * then runs up to four `pushOutsideObstacle` passes, and nothing about that push knows where the
+ * commander is -- an obstacle sitting between the ring and the player shoves the body INWARD.
+ * Measured on `cinder-span` seed 1: a skydrop emitted `arrivalDistance` 1273 against a floor of
+ * 1800, with the commander 460 units from the right wall so the ring crossed the boundary and the
+ * surviving arc was pinned against obstacles. The body was NOT on a clamp edge, which is what
+ * ruled the clamp out and named the terrain push instead.
+ *
+ * The retry is deterministic and bounded: the authored angle first, then the same radius rotated
+ * by a fixed sequence. A brute sweep of that ring found a legal spot at 2601 for the failing case,
+ * so a short list suffices; the sequence is fixed rather than random because two runs on one seed
+ * must place identically.
+ *
+ * If every candidate fails, the LEAST BAD one is used rather than a fabricated position. That is a
+ * stage-geometry problem and the contract test is the right place for it to surface -- silently
+ * teleporting the body somewhere legal would hide an unplayable arena.
+ */
+const ARRIVAL_RETRY_TURNS = Object.freeze([0, 500, 250, 750, 125, 375, 625, 875]);
+function placeNearArrival(run, entity, point, params) {
+  placeOnTerrain(run, entity, point);
+  const anchor = run.commander;
+  const reached = () => Math.hypot(entity.x - anchor.x, entity.y - anchor.y);
+  // `supportMeshId` is carried with the coordinates because `placeOnTerrain` sets it from the
+  // resolved point and DELETES it where nothing supports that spot. Restoring x/y/elevation alone
+  // would leave the last candidate's support id attached to the best candidate's position.
+  const snap = () => ({
+    x: entity.x,
+    y: entity.y,
+    elevation: entity.elevation,
+    supportMeshId: entity.supportMeshId,
+    distance: reached(),
+  });
+  const restore = (state) => {
+    entity.x = state.x;
+    entity.y = state.y;
+    entity.elevation = state.elevation;
+    if (state.supportMeshId === undefined) delete entity.supportMeshId;
+    else entity.supportMeshId = state.supportMeshId;
+  };
+  let best = snap();
+  if (best.distance >= ARRIVAL_NEAR_RADIUS_MIN) return;
+  for (const turnOffset of ARRIVAL_RETRY_TURNS) {
+    if (turnOffset === 0) continue;
+    const candidate = arrivalPoint(run, { ...params, angleSeed: (params.angleSeed + turnOffset) % ARRIVAL_TURN });
+    placeOnTerrain(run, entity, candidate);
+    const current = snap();
+    if (current.distance > best.distance) best = current;
+    if (current.distance >= ARRIVAL_NEAR_RADIUS_MIN) return;
+  }
+  restore(best);
+}
+
 /** Legacy saves may retain policy-derived lanes. New authored waves must resolve one immutable path. */
 function legacyLaneRoute(tactics, policyId, laneOffset) {
   if (policyId === "flank" && tactics.flank) {
@@ -1208,14 +1264,18 @@ function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
   const formation = elite ? "lane" : (ARRIVAL_FORMATIONS.includes(arrival?.formation) ? arrival.formation : "lane");
   const nearArrival = isNearArrival(formation);
   const telegraphTicks = arrivalTelegraphTicksFor(formation);
-  const point = elite ? { x: 14000, y: ARENA.gateY } : arrivalPoint(run, {
+  // Held in a named binding because `placeNearArrival` re-derives candidate angles from the SAME
+  // params, so the retry stays on the authored radius and formation instead of inventing a
+  // placement the choreography never described.
+  const arrivalParams = {
     formation,
     direction,
     laneOffset,
     memberIndex: Number.isInteger(arrival?.memberIndex) ? arrival.memberIndex : 0,
     memberCount: Number.isInteger(arrival?.memberCount) && arrival.memberCount > 0 ? arrival.memberCount : 1,
     angleSeed: Number.isInteger(arrival?.angleSeed) ? arrival.angleSeed : 0,
-  });
+  };
+  const point = elite ? { x: 14000, y: ARENA.gateY } : arrivalPoint(run, arrivalParams);
   // Mid-boss (미들 웨이브 리더): an ordinary, NON-elite enemy carrying MIDBOSS_PROFILE multipliers.
   // Keeping it non-elite is deliberate — elite spawns drive the extraction/capture flow, while a
   // mid-boss only has to be a mid-wave damage sponge that the gate-defense clear check must wait on.
@@ -1266,7 +1326,11 @@ function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
     encounterObjectiveId: spawnOpt.objectiveId || null,
     waveIndex: Number.isInteger(spawnOpt.waveIndex) ? spawnOpt.waveIndex : null,
   });
-  placeOnTerrain(run, enemy, point);
+  // A near-player arrival re-checks the fairness floor AFTER terrain resolution; every other
+  // formation walks in from a lane edge, where the floor does not apply and the plain placement is
+  // byte-identical to before this branch.
+  if (nearArrival) placeNearArrival(run, enemy, point, arrivalParams);
+  else placeOnTerrain(run, enemy, point);
   run.enemies.push(enemy);
   const spawnEvent = emit(run, "ENEMY_SPAWNED", {
     entityId: enemy.id,
