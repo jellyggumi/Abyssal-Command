@@ -724,20 +724,44 @@ The hook is not shipped; it was applied to a scratch copy and removed.
 
 ### The causal chain, demonstrated — this retires §7's "n=1 per condition" caveat
 
-`[OBSERVED]` PR #29 (`112dcff6`) and PR #34 (`6e4015ab`) landed, and the failure mode changed
-exactly as each fix predicted:
+`[OBSERVED]` Three PRs landed — #29 (`112dcff6`), #34 (`6e4015ab`), #35 (`8674fe99`) — and the
+failure signature changed exactly as each one predicted:
 
-| run | state | `not ok 3` |
+| run | change | `browser_contract` |
 |---|---|---|
-| `3b6169c7`, `fdfe382e`, `b2408fb2` | no guard | fails — `waitForFunction` **90 s hang** |
-| `112dcff6` | guard only | fails — **assertion at 26.9 s**, ~20 lines further on |
-| `6e4015ab` | guard + precondition | **passes**; deploy green, served `candidate_sha` = tip |
+| `3b6169c7`, `fdfe382e`, `b2408fb2` | — | red: phone-HUD `not ok 3`, **90 s hang** |
+| `112dcff6` | #29 guard | red: **same test**, assertion at **26.9 s**, ~20 lines further on |
+| `6e4015ab` | #34 precondition | **green**, deployed |
+| `1a91effc` | **doc only, zero code** | red: **different file** — survivor `:364`, **30 s stock default** |
+| `8674fe99` | #35 timeout | **green**, deployed, served `candidate_sha` = tip |
+
+**The `1a91effc` row is the load-bearing one.** A commit that changed nothing but a markdown
+file failed, and it failed in a *different suite* than the one the previous three reds named.
+That proves the survivor exposure was pre-existing rather than introduced by #29 or #34 — the
+same doc-commit-as-control trick that settled the revert question earlier in this section. It
+also happens to be the cleanest control available: no code changed, so nothing about the failure
+can be attributed to a code change.
 
 Three consecutive reds at one signature, then fix A moves the failure forward and shortens it
 from 90 s to 27 s, then fix B clears it. That is mechanism-confirmed causation rather than a
 count — the thing §7 correctly refused to claim from the earlier 1 → 2 → 3 sequence. The
 difference is not more runs; it is that each fix made a *specific prediction* about how the
 failure would change, and it changed that way.
+
+PR #35 is the third suite to need the same measured remedy, and it is worth naming as a pattern
+rather than three incidents. `defense-phone-battle-hud-browser.test.cjs:59` and
+`progression-mobile-ui-browser.cjs:104` both set `context.setDefaultTimeout(90_000)` on the
+grounds that the runner reports rafMean ~95.8 ms against ~16 ms locally;
+`defense-survivor-browser.cjs` never did, so it ran the same ~6×-slow CI on Playwright's stock
+30 s. **A per-suite timeout default is not a per-suite decision — it is a property of the
+runner**, and leaving it to each file to remember is why this surfaced three times.
+
+That fix is also a completeness claim rather than a restraint call, which is the distinction the
+earlier noise lacked. Measured: 11 `waitForFunction` sites in that file, 9 inside
+`verifyPlaythroughJourney`, the other 2 in helpers that take `page` as a parameter and are
+reached only from it, and **zero** after that function ends — so one line on one context covers
+all 11, and the other six `newContext` sites have nothing to harden. The 10 explicit `timeout:`
+sites keep their deliberate tight bounds, because an explicit timeout wins over the default.
 
 Two details worth keeping:
 
