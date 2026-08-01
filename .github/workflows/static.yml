@@ -58,7 +58,11 @@ env:
     assets/motion/ingame/characters/registry.json assets/motion/ingame/characters/rights-receipt.json
     assets/motion/ingame/unarmed-core.glb assets/motion/ingame/manifest.json
     assets/motion/stage-vfx/cinder-span-ember-wake.glb assets/motion/stage-vfx/abyss-chancel-mirror-static.glb
-    assets/motion/stage-vfx/echo-throne-fracture-echo.glb assets/motion/stage-vfx/manifest.json
+    assets/motion/stage-vfx/echo-throne-fracture-echo.glb
+    assets/motion/stage-vfx/drop-beacon-pillar.glb
+    assets/motion/stage-vfx/arrival-breach-gate.glb
+    assets/motion/stage-vfx/deform-fracture-seam.glb
+    assets/motion/stage-vfx/manifest.json
     assets/audio/elevenlabs/index.json
     assets/audio/elevenlabs/sfx/stage-start.mp3 assets/audio/elevenlabs/sfx/movement-step.mp3 assets/audio/elevenlabs/sfx/weapon-fire.mp3
     assets/audio/elevenlabs/sfx/impact-hit.mp3 assets/audio/elevenlabs/sfx/critical-hit.mp3 assets/audio/elevenlabs/sfx/enemy-defeated.mp3

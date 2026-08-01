@@ -137,6 +137,144 @@
       "cleanupRule": "Stop the mixer and dispose cloned geometry/material resources on stage change or renderer disposal.",
       "reference": "assets/mesh/prop/prop-sprite-sheet-single-object.03.png",
       "preview": "assets/motion/stage-vfx/qa/echo-throne-fracture-echo-preview.png"
+    },
+    {
+      "scope": "transient",
+      "stageId": null,
+      "effectId": "drop-beacon-pillar",
+      "durationSeconds": 2.0,
+      "palette": {
+        "core": "#FFD257",
+        "accent": "#5DE6FF",
+        "shadow": "#1A1206"
+      },
+      "meaning": "Field item lifecycle: appear, expire, deny, and buff transitions.",
+      "silhouette": "Vertical flare spike over a thin ground ring; separable at 48 px.",
+      "reducedMotion": "Hold the open ring and lit core; hide falling motes.",
+      "builder": "build_drop_pillar",
+      "spawnCap": 3,
+      "path": "assets/motion/stage-vfx/drop-beacon-pillar.glb",
+      "sha256": "4368aa38a1ad35cf0532fd61a561610335be0bd63f00af49041d43621c0d599e",
+      "clip": "vfx::drop-beacon-pillar::loop::v01",
+      "fps": 24,
+      "frameRange": [
+        1,
+        48
+      ],
+      "qualityGroups": {
+        "core": "vfx-core",
+        "detail": "vfx-detail",
+        "decor": "vfx-decor"
+      },
+      "qualityPolicy": {
+        "high": [
+          "core",
+          "detail",
+          "decor"
+        ],
+        "balanced": [
+          "core",
+          "detail"
+        ],
+        "low": [
+          "core"
+        ]
+      },
+      "cleanupRule": "Stop the mixer and dispose cloned geometry/material resources on stage change or renderer disposal.",
+      "reference": "assets/mesh/prop/prop-sprite-sheet-single-object.03.png",
+      "preview": "assets/motion/stage-vfx/qa/drop-beacon-pillar-preview.png"
+    },
+    {
+      "scope": "transient",
+      "stageId": null,
+      "effectId": "arrival-breach-gate",
+      "durationSeconds": 1.5,
+      "palette": {
+        "core": "#66F0BD",
+        "accent": "#A06BFF",
+        "shadow": "#04140E"
+      },
+      "meaning": "Enemy arrival marker; grade drives scale, stage drives decor accent.",
+      "silhouette": "Low wide ground seam (BASIC) or vertical gate with lintel (SHADOW).",
+      "reducedMotion": "Hold the seam or gate fully open; stop mote travel.",
+      "builder": "build_arrival_gate",
+      "spawnCap": 4,
+      "path": "assets/motion/stage-vfx/arrival-breach-gate.glb",
+      "sha256": "09af8ab0476ab1d184efec02674588ab0e75179a6c78d88cab297bf96fcdb09a",
+      "clip": "vfx::arrival-breach-gate::loop::v01",
+      "fps": 24,
+      "frameRange": [
+        1,
+        36
+      ],
+      "qualityGroups": {
+        "core": "vfx-core",
+        "detail": "vfx-detail",
+        "decor": "vfx-decor"
+      },
+      "qualityPolicy": {
+        "high": [
+          "core",
+          "detail",
+          "decor"
+        ],
+        "balanced": [
+          "core",
+          "detail"
+        ],
+        "low": [
+          "core"
+        ]
+      },
+      "cleanupRule": "Stop the mixer and dispose cloned geometry/material resources on stage change or renderer disposal.",
+      "reference": "assets/mesh/prop/prop-sprite-sheet-single-object.03.png",
+      "preview": "assets/motion/stage-vfx/qa/arrival-breach-gate-preview.png"
+    },
+    {
+      "scope": "transient",
+      "stageId": null,
+      "effectId": "deform-fracture-seam",
+      "durationSeconds": 2.5,
+      "palette": {
+        "core": "#FFD257",
+        "accent": "#F3592C",
+        "shadow": "#140A04"
+      },
+      "meaning": "Presentation-only corridor-width change. Never alters elevation or collision.",
+      "silhouette": "Hairline ground seam, 0.10 bright over 0.04 dark, plus a 1.1-unit arming marker.",
+      "reducedMotion": "Hold the solid seam; hide falling dust and the pulse.",
+      "builder": "build_deform_seam",
+      "spawnCap": 1,
+      "path": "assets/motion/stage-vfx/deform-fracture-seam.glb",
+      "sha256": "ccbbe5ae709d0fd4334ade833a4a64826b076b15e96626be1e37f4d8c5b52b2a",
+      "clip": "vfx::deform-fracture-seam::loop::v01",
+      "fps": 24,
+      "frameRange": [
+        1,
+        60
+      ],
+      "qualityGroups": {
+        "core": "vfx-core",
+        "detail": "vfx-detail",
+        "decor": "vfx-decor"
+      },
+      "qualityPolicy": {
+        "high": [
+          "core",
+          "detail",
+          "decor"
+        ],
+        "balanced": [
+          "core",
+          "detail"
+        ],
+        "low": [
+          "core"
+        ]
+      },
+      "cleanupRule": "Stop the mixer and dispose cloned geometry/material resources on stage change or renderer disposal.",
+      "reference": "assets/mesh/prop/prop-sprite-sheet-single-object.03.png",
+      "preview": "assets/motion/stage-vfx/qa/deform-fracture-seam-preview.png"
     }
   ]
 }

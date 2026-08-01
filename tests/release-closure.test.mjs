@@ -101,6 +101,9 @@ const DIRECT_RUNTIME_ASSETS = Object.freeze([
   "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
   "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
   "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
+  "assets/motion/stage-vfx/drop-beacon-pillar.glb",
+  "assets/motion/stage-vfx/arrival-breach-gate.glb",
+  "assets/motion/stage-vfx/deform-fracture-seam.glb",
   "assets/motion/stage-vfx/manifest.json",
   // Hybrid audio (D-20260730-02): DefenseAudio fetches this index at start() and layers the
   // sampled cues over the procedural profiles. If the index is not deployed the runtime silently

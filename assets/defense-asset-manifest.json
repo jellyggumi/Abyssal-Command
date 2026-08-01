@@ -9375,6 +9375,24 @@
     },
     {
       "disposition": "retain",
+      "currentPath": "assets/motion/stage-vfx/arrival-breach-gate.glb",
+      "replacementPath": "assets/motion/stage-vfx/arrival-breach-gate.glb",
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/stage-vfx/arrival-breach-gate.provenance.json",
+      "replacementPath": null,
+      "extension": ".json",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "retain",
       "currentPath": "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
       "replacementPath": "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
       "extension": ".glb",
@@ -9385,6 +9403,42 @@
     {
       "disposition": "delete",
       "currentPath": "assets/motion/stage-vfx/cinder-span-ember-wake.provenance.json",
+      "replacementPath": null,
+      "extension": ".json",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/motion/stage-vfx/deform-fracture-seam.glb",
+      "replacementPath": "assets/motion/stage-vfx/deform-fracture-seam.glb",
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/stage-vfx/deform-fracture-seam.provenance.json",
+      "replacementPath": null,
+      "extension": ".json",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/motion/stage-vfx/drop-beacon-pillar.glb",
+      "replacementPath": "assets/motion/stage-vfx/drop-beacon-pillar.glb",
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/stage-vfx/drop-beacon-pillar.provenance.json",
       "replacementPath": null,
       "extension": ".json",
       "generator": "scripts/build-defense-asset-manifest.mjs",
@@ -9438,6 +9492,24 @@
     },
     {
       "disposition": "delete",
+      "currentPath": "assets/motion/stage-vfx/qa/arrival-breach-gate-preview.png",
+      "replacementPath": null,
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/stage-vfx/qa/arrival-breach-gate-preview.provenance.json",
+      "replacementPath": null,
+      "extension": ".json",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
       "currentPath": "assets/motion/stage-vfx/qa/cinder-span-ember-wake-preview.png",
       "replacementPath": null,
       "extension": ".png",
@@ -9448,6 +9520,42 @@
     {
       "disposition": "delete",
       "currentPath": "assets/motion/stage-vfx/qa/cinder-span-ember-wake-preview.provenance.json",
+      "replacementPath": null,
+      "extension": ".json",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/stage-vfx/qa/deform-fracture-seam-preview.png",
+      "replacementPath": null,
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/stage-vfx/qa/deform-fracture-seam-preview.provenance.json",
+      "replacementPath": null,
+      "extension": ".json",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/stage-vfx/qa/drop-beacon-pillar-preview.png",
+      "replacementPath": null,
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/stage-vfx/qa/drop-beacon-pillar-preview.provenance.json",
       "replacementPath": null,
       "extension": ".json",
       "generator": "scripts/build-defense-asset-manifest.mjs",
