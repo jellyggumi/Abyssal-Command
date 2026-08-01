@@ -147,6 +147,87 @@ function installDeterministicAnimationClock() {
   });
 }
 
+function installCanvas2DRenderProbe() {
+  const events = [];
+  let recording = false;
+  const prototype = CanvasRenderingContext2D.prototype;
+  const originalDrawImage = prototype.drawImage;
+  const originalEllipse = prototype.ellipse;
+  const originalArc = prototype.arc;
+
+  const transformSnapshot = (context) => {
+    const transform = context.getTransform();
+    return {
+      a: transform.a,
+      b: transform.b,
+      c: transform.c,
+      d: transform.d,
+      e: transform.e,
+      f: transform.f,
+    };
+  };
+  const shouldRecord = (context) => recording && context.canvas?.id === "sprite-2-5d-canvas";
+
+  prototype.drawImage = function drawImage(...args) {
+    if (shouldRecord(this)) {
+      const image = args[0];
+      const source = image instanceof HTMLImageElement
+        ? new URL(image.currentSrc || image.src, location.href).pathname
+        : "";
+      events.push({
+        type: "drawImage",
+        argumentCount: args.length,
+        source,
+        transform: transformSnapshot(this),
+      });
+    }
+    return Reflect.apply(originalDrawImage, this, args);
+  };
+  prototype.ellipse = function ellipse(...args) {
+    if (shouldRecord(this)) {
+      events.push({
+        type: "ellipse",
+        args: args.slice(),
+        fillStyle: String(this.fillStyle),
+        strokeStyle: String(this.strokeStyle),
+        lineWidth: this.lineWidth,
+        transform: transformSnapshot(this),
+      });
+    }
+    return Reflect.apply(originalEllipse, this, args);
+  };
+  prototype.arc = function arc(...args) {
+    if (shouldRecord(this)) {
+      events.push({
+        type: "arc",
+        args: args.slice(),
+        lineWidth: this.lineWidth,
+        strokeStyle: String(this.strokeStyle),
+        transform: transformSnapshot(this),
+      });
+    }
+    return Reflect.apply(originalArc, this, args);
+  };
+
+  Object.defineProperty(window, "__spriteCanvas2DProbe", {
+    configurable: false,
+    value: Object.freeze({
+      reset: () => {
+        events.length = 0;
+        recording = true;
+      },
+      take: () => {
+        recording = false;
+        return events.map((event) => ({
+          ...event,
+          args: event.args && event.args.slice(),
+          transform: { ...event.transform },
+        }));
+      },
+    }),
+  });
+}
+
 async function stepFrames(page, count) {
   const callbacksRun = await page.evaluate((frameCount) => window.__spriteTestStepFrames(frameCount), count);
   assert.equal(callbacksRun, count, `the game loop must schedule one animation callback per deterministic frame (${count} requested)`);
@@ -199,6 +280,7 @@ async function verifyViewport(browser, hosting, viewport) {
     if (!response.ok()) failures.push(`response: ${url.pathname} ${response.status()}`);
   });
   await page.addInitScript(installDeterministicAnimationClock);
+  await page.addInitScript(installCanvas2DRenderProbe);
 
   try {
     const routeResponse = await page.goto("/sprite-2-5d.html", { waitUntil: "load" });
@@ -288,6 +370,7 @@ async function verifyViewport(browser, hosting, viewport) {
     const beforeAttack = await canvasDigest(page, playerRegion);
     const strikeRegion = { x: 890, y: 530, width: 40, height: 120 };
     const beforeStrike = await canvasDigest(page, strikeRegion);
+    await page.evaluate(() => window.__spriteCanvas2DProbe.reset());
     await page.keyboard.press("Space");
     let strikeRendered = false;
     let duringAttack = beforeAttack;
@@ -297,6 +380,13 @@ async function verifyViewport(browser, hosting, viewport) {
       const strikeFrame = await canvasDigest(page, strikeRegion);
       strikeRendered ||= strikeFrame.hash !== beforeStrike.hash;
     }
+    const attackDrawEvents = await page.evaluate(() => window.__spriteCanvas2DProbe.take());
+    const renderedAttackArcs = attackDrawEvents.filter((event) => event.type === "arc" && event.strokeStyle === "#ffb064");
+    assert.ok(renderedAttackArcs.length > 0, "the keyboard attack must reach the actual Canvas2D arc draw path");
+    assert.ok(
+      renderedAttackArcs.every((event) => event.args[2] === 118 && event.lineWidth === 8),
+      "the actual attack arc draw must preserve its fixed 118 radius and 8 line width",
+    );
     assert.notEqual(duringAttack.hash, beforeAttack.hash, "the keyboard attack must visibly change the rendered combat frame");
     assert.equal(strikeRendered, true, "the keyboard attack must render visible strike feedback beyond the Warden sprite bounds");
     const afterGlobalSpace = await runtimeSnapshot(page);
@@ -411,12 +501,272 @@ async function openRunningPage(context) {
     if (message.type() === "error") failures.push(`console: ${message.text()}`);
   });
   await page.addInitScript(installDeterministicAnimationClock);
+  await page.addInitScript(installCanvas2DRenderProbe);
   const response = await page.goto("/sprite-2-5d.html", { waitUntil: "load" });
   assert(response?.ok(), "instrumented sprite route response must succeed");
   const body = page.locator("body:not([data-game-state=\"loading\"])");
   await body.waitFor({ state: "attached" });
   assert.equal(await body.getAttribute("data-game-state"), "running", `instrumented sprite route must run (${failures.join("; ")})`);
   return { page, failures };
+}
+
+async function verifyDepthPerspective(browser, hosting) {
+  const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
+  try {
+    const { page, failures } = await openRunningPage(context);
+    let renderSnapshot;
+    let frames = 0;
+    while (frames < 120) {
+      renderSnapshot = await page.evaluate(() => window.__SPRITE_2_5D_TEST__.readRenderSnapshot());
+      if (renderSnapshot.actors.filter((actor) => actor.kind === "enemy").length >= 2) {
+        break;
+      }
+      await stepFrames(page, 1);
+      frames += 1;
+    }
+
+    await page.evaluate(() => window.__spriteCanvas2DProbe.reset());
+    await stepFrames(page, 1);
+    const frameDrawEvents = await page.evaluate(() => window.__spriteCanvas2DProbe.take());
+    renderSnapshot = await page.evaluate(() => window.__SPRITE_2_5D_TEST__.readRenderSnapshot());
+
+    const depthProof = await page.evaluate(() => {
+      const canvas = document.querySelector("#sprite-2-5d-canvas");
+      const context2d = canvas.getContext("2d");
+      const descriptor = Object.getOwnPropertyDescriptor(window, "__SPRITE_2_5D_TEST__");
+      const hook = descriptor.value;
+      const firstSnapshot = hook.readRenderSnapshot();
+      const secondSnapshot = hook.readRenderSnapshot();
+      const firstActor = firstSnapshot.actors[0];
+      const depthScales = [];
+      for (let y = 334; y <= 874; y += 1) {
+        depthScales.push(hook.depthScaleAtY(y));
+      }
+      window.__spriteDepthSnapshotBaseline = {
+        snapshot: firstSnapshot,
+        serialized: JSON.stringify(firstSnapshot),
+      };
+      return {
+        hook: {
+          configurable: descriptor.configurable,
+          enumerable: descriptor.enumerable,
+          writable: descriptor.writable,
+          frozen: Object.isFrozen(hook),
+        },
+        snapshot: {
+          frozen: Object.isFrozen(firstSnapshot),
+          actorsFrozen: Object.isFrozen(firstSnapshot.actors),
+          actorFrozen: Object.isFrozen(firstActor),
+          anchorFrozen: Object.isFrozen(firstActor.spriteAnchor),
+          geometryFrozen: Object.isFrozen(firstActor.shadow),
+          snapshotsDistinct: firstSnapshot !== secondSnapshot,
+          actorsDistinct: firstSnapshot.actors !== secondSnapshot.actors,
+          actorCopiesDistinct: firstActor !== secondSnapshot.actors[0],
+          geometryCopiesDistinct: firstActor.shadow !== secondSnapshot.actors[0].shadow,
+        },
+        context: {
+          isCanvas2D: context2d instanceof CanvasRenderingContext2D,
+          matchesCanvasContext: canvas.getContext("2d") === context2d,
+          webglUnavailable: canvas.getContext("webgl") === null,
+        },
+        depthScales,
+        belowArenaScale: hook.depthScaleAtY(-1000),
+        aboveArenaScale: hook.depthScaleAtY(2000),
+      };
+    });
+
+    assert.deepEqual(depthProof.hook, {
+      configurable: false,
+      enumerable: false,
+      writable: false,
+      frozen: true,
+    }, "the public render snapshot hook must remain read-only");
+    assert.deepEqual(depthProof.snapshot, {
+      frozen: true,
+      actorsFrozen: true,
+      actorFrozen: true,
+      anchorFrozen: true,
+      geometryFrozen: true,
+      snapshotsDistinct: true,
+      actorsDistinct: true,
+      actorCopiesDistinct: true,
+      geometryCopiesDistinct: true,
+    }, "render snapshots must be fresh frozen copies rather than reusable draw scratch aliases");
+    assert.deepEqual(depthProof.context, {
+      isCanvas2D: true,
+      matchesCanvasContext: true,
+      webglUnavailable: true,
+    }, "the sprite route must render exclusively through its CanvasRenderingContext2D");
+    assert.ok(renderSnapshot, "the read-only hook must return a render snapshot");
+    assert.equal(renderSnapshot.renderer, "canvas2d", "the render snapshot must identify the Canvas2D renderer");
+    assert.equal(depthProof.depthScales[0], 0.62, "far arena depth must start at scale 0.62");
+    assert.equal(depthProof.depthScales.at(-1), 1, "near arena depth must end at scale 1.0");
+    assert.equal(depthProof.belowArenaScale, 0.62, "depth scale must clamp below the arena");
+    assert.equal(depthProof.aboveArenaScale, 1, "depth scale must clamp above the arena");
+    assert.equal(new Set(depthProof.depthScales).size, 10, "arena depth must quantize to exactly 10 scale levels");
+    for (let index = 1; index < depthProof.depthScales.length; index += 1) {
+      assert.ok(
+        depthProof.depthScales[index - 1] <= depthProof.depthScales[index],
+        "quantized depth scale must be nondecreasing across every arena y",
+      );
+    }
+
+    const enemies = renderSnapshot.actors.filter((actor) => actor.kind === "enemy");
+    assert.ok(enemies.length >= 2, "the deterministic clock must spawn a far/near enemy pair");
+    assert.deepEqual(
+      renderSnapshot.actors.map((actor) => actor.drawOrder),
+      renderSnapshot.actors.map((_, index) => index),
+      "actor drawOrder must match painter order",
+    );
+    for (let index = 1; index < renderSnapshot.actors.length; index += 1) {
+      assert.ok(
+        renderSnapshot.actors[index - 1].y <= renderSnapshot.actors[index].y,
+        "actor painter order must remain sorted from far to near by world y",
+      );
+    }
+
+    const actorDrawEvents = frameDrawEvents.filter((event) => event.type === "drawImage" && event.argumentCount === 9);
+    const shadowDrawEvents = frameDrawEvents.filter((event) => event.type === "ellipse" && event.fillStyle === "#020407");
+    assert.equal(actorDrawEvents.length, renderSnapshot.actors.length, "one actual sprite draw must be consumed for every snapshotted actor");
+    assert.equal(shadowDrawEvents.length, renderSnapshot.actors.length, "one actual shadow draw must be consumed for every snapshotted actor");
+    for (let index = 0; index < renderSnapshot.actors.length; index += 1) {
+      const actor = renderSnapshot.actors[index];
+      const spriteDraw = actorDrawEvents[index];
+      const shadowDraw = shadowDrawEvents[index];
+      assert.deepEqual(
+        { x: spriteDraw.transform.e, y: spriteDraw.transform.f },
+        actor.spriteAnchor,
+        "actual sprite draw order and translate anchor must match the y-sorted render snapshot",
+      );
+      const actualSpriteScale = Math.hypot(spriteDraw.transform.c, spriteDraw.transform.d);
+      assert.ok(
+        Math.abs(actualSpriteScale - actor.spriteScale) < 1e-6,
+        `the actual Canvas2D sprite transform must consume the snapshotted depth scale (${actualSpriteScale} versus ${actor.spriteScale})`,
+      );
+      assert.deepEqual(
+        shadowDraw.args.slice(0, 4),
+        [actor.shadow.centerX, actor.shadow.centerY, actor.shadow.radiusX, actor.shadow.radiusY],
+        "the actual Canvas2D shadow draw must consume the shared attached geometry",
+      );
+    }
+
+    const farActor = enemies[0];
+    const nearActor = enemies[enemies.length - 1];
+    assert.ok(farActor.y < nearActor.y, "the deterministic actor pair must span distinct depth buckets");
+    assert.ok(farActor.drawOrder < nearActor.drawOrder, "the far actor must draw before the near actor");
+    const depthRatio = nearActor.depthScale / farActor.depthScale;
+    const spriteRatio = nearActor.spriteScale / farActor.spriteScale;
+    const geometryTolerance = 1e-9;
+    assert.ok(
+      spriteRatio > 1.1,
+      `the near actor sprite must render measurably larger than the far actor sprite (ratio ${spriteRatio})`,
+    );
+    assert.ok(
+      Math.abs(spriteRatio - depthRatio) < geometryTolerance,
+      "enemy sprite scale must derive from the same quantized depth factor",
+    );
+    const farActorDraw = actorDrawEvents[farActor.drawOrder];
+    const nearActorDraw = actorDrawEvents[nearActor.drawOrder];
+    const actualSpriteRatio = Math.hypot(nearActorDraw.transform.c, nearActorDraw.transform.d)
+      / Math.hypot(farActorDraw.transform.c, farActorDraw.transform.d);
+    assert.ok(
+      farActor.drawOrder < nearActor.drawOrder,
+      "the actual Canvas2D draw sequence must paint the far actor before the near actor",
+    );
+    assert.ok(
+      actualSpriteRatio > 1.1,
+      `the actual Canvas2D near sprite transform must exceed the far transform by 10% (ratio ${actualSpriteRatio})`,
+    );
+
+    const assertRatio = (nearValue, farValue, label) => {
+      const ratio = nearValue / farValue;
+      assert.ok(
+        Math.abs(ratio - depthRatio) < geometryTolerance,
+        `${label} must derive from the same quantized depth factor (${ratio} versus ${depthRatio})`,
+      );
+    };
+    assertRatio(nearActor.shadow.radiusX, farActor.shadow.radiusX, "shadow width");
+    assertRatio(nearActor.shadow.radiusY, farActor.shadow.radiusY, "shadow height");
+    assertRatio(
+      nearActor.spriteAnchor.y - nearActor.shadow.centerY,
+      farActor.spriteAnchor.y - farActor.shadow.centerY,
+      "shadow anchor offset",
+    );
+    assertRatio(nearActor.hitFlash.radiusX, farActor.hitFlash.radiusX, "hit cue width");
+    assertRatio(nearActor.hitFlash.radiusY, farActor.hitFlash.radiusY, "hit cue height");
+    assertRatio(nearActor.hitFlash.lineWidth, farActor.hitFlash.lineWidth, "hit cue line width");
+    assertRatio(
+      nearActor.spriteAnchor.y - nearActor.hitFlash.centerY,
+      farActor.spriteAnchor.y - farActor.hitFlash.centerY,
+      "hit cue anchor offset",
+    );
+    assertRatio(nearActor.healthBar.width, farActor.healthBar.width, "health cue width");
+    assertRatio(nearActor.healthBar.height, farActor.healthBar.height, "health cue height");
+    assertRatio(nearActor.healthBar.inset, farActor.healthBar.inset, "health cue inset");
+    assertRatio(
+      nearActor.spriteAnchor.y - nearActor.healthBar.y,
+      farActor.spriteAnchor.y - farActor.healthBar.y,
+      "health cue anchor offset",
+    );
+    for (const actor of renderSnapshot.actors) {
+      assert.equal(actor.shadow.centerX, actor.spriteAnchor.x, "shadow must share the rounded sprite x anchor");
+      assert.equal(actor.hitFlash.centerX, actor.spriteAnchor.x, "hit cue must share the rounded sprite x anchor");
+      assert.ok(
+        Math.abs(actor.shadow.centerY - (actor.spriteAnchor.y - 2 * actor.depthScale)) < geometryTolerance,
+        "shadow must offset from the rounded sprite y anchor",
+      );
+      assert.ok(
+        Math.abs(actor.hitFlash.centerY - (actor.spriteAnchor.y - 79 * actor.depthScale)) < geometryTolerance,
+        "hit cue must offset from the rounded sprite y anchor",
+      );
+      if (actor.healthBar) {
+        assert.ok(
+          Math.abs((actor.healthBar.x + actor.healthBar.width / 2) - actor.spriteAnchor.x) < geometryTolerance,
+          "health cue must stay horizontally centered on the rounded sprite anchor",
+        );
+        assert.ok(
+          Math.abs(actor.healthBar.y - (actor.spriteAnchor.y - 176 * actor.depthScale)) < geometryTolerance,
+          "health cue must offset from the rounded sprite y anchor",
+        );
+      }
+      if (actor.groundRing) {
+        assert.deepEqual(
+          { x: actor.groundRing.centerX, y: actor.groundRing.centerY },
+          actor.spriteAnchor,
+          "ground ring must share the rounded sprite anchor",
+        );
+      }
+      if (actor.attackArc) {
+        assert.equal(actor.attackArc.centerX, actor.spriteAnchor.x, "attack cue must share the rounded sprite x anchor");
+        assert.ok(
+          Math.abs(actor.attackArc.centerY - (actor.spriteAnchor.y - 54 * actor.depthScale)) < geometryTolerance,
+          "attack cue must offset from the rounded sprite y anchor",
+        );
+      }
+    }
+    await stepFrames(page, 1);
+    const snapshotStability = await page.evaluate(() => {
+      const baseline = window.__spriteDepthSnapshotBaseline;
+      const current = window.__SPRITE_2_5D_TEST__.readRenderSnapshot();
+      const result = {
+        baselineUnchanged: JSON.stringify(baseline.snapshot) === baseline.serialized,
+        currentDistinct: current !== baseline.snapshot,
+        actorArrayDistinct: current.actors !== baseline.snapshot.actors,
+        geometryDistinct: current.actors[0].shadow !== baseline.snapshot.actors[0].shadow,
+      };
+      delete window.__spriteDepthSnapshotBaseline;
+      return result;
+    });
+    assert.deepEqual(snapshotStability, {
+      baselineUnchanged: true,
+      currentDistinct: true,
+      actorArrayDistinct: true,
+      geometryDistinct: true,
+    }, "later frames must not mutate prior frozen render snapshots or reuse their geometry objects");
+    assert.deepEqual(failures, [], "depth perspective verification must not emit page or console errors");
+  } finally {
+    await context.close();
+  }
 }
 
 async function verifyLifecycleResume(browser, hosting) {
@@ -562,6 +912,7 @@ async function run() {
     for (const viewport of VIEWPORTS) {
       await verifyViewport(browser, hosting, viewport);
     }
+    await verifyDepthPerspective(browser, hosting);
     await verifyLifecycleResume(browser, hosting);
     await verifyTerminalLoopStates(browser, hosting);
     await verifyReducedMotionTiming(browser, hosting);

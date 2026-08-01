@@ -7,6 +7,8 @@ const ARENA_X = 768;
 const ARENA_Y = 604;
 const ARENA_HALF_WIDTH = 520;
 const ARENA_HALF_HEIGHT = 270;
+const FAR_DEPTH_SCALE = 0.62;
+const NEAR_DEPTH_SCALE = 1;
 const PLAYER_MAX_HEALTH = 100;
 const PLAYER_SPEED = 218;
 const PLAYER_DAMAGE = 58;
@@ -114,6 +116,34 @@ const semanticNudge = {
 
 const pointerBindings = new Map();
 const renderActors = [];
+const renderScratch = {
+  anchor: { x: 0, y: 0 },
+  shadow: { centerX: 0, centerY: 0, radiusX: 0, radiusY: 0 },
+  hitFlash: { visible: false, centerX: 0, centerY: 0, radiusX: 0, radiusY: 0, lineWidth: 0 },
+  healthBar: {
+    visible: false,
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    inset: 0,
+    fillX: 0,
+    fillY: 0,
+    fillWidth: 0,
+    fillHeight: 0,
+  },
+  attackArc: {
+    visible: false,
+    centerX: 0,
+    centerY: 0,
+    radius: 0,
+    lineWidth: 0,
+    startAngle: 0,
+    endAngle: 0,
+    anticlockwise: false,
+  },
+  groundRing: { centerX: 0, centerY: 0, radiusX: 0, radiusY: 0, lineWidth: 0 },
+};
 const SPAWN_POINTS = [
   [284, 577],
   [421, 405],
@@ -635,12 +665,95 @@ function fixedUpdate(deltaTime) {
   }
 }
 
-function drawShadow(actor) {
+function depthScaleForY(y) {
+  const normalizedDepth = Math.min(1, Math.max(0, (y - (ARENA_Y - ARENA_HALF_HEIGHT)) / (ARENA_HALF_HEIGHT * 2)));
+  const quantizedDepth = Math.round(normalizedDepth * 9) / 9;
+  return FAR_DEPTH_SCALE + (NEAR_DEPTH_SCALE - FAR_DEPTH_SCALE) * quantizedDepth;
+}
+function spriteScaleForActor(actor, depthScale) {
+  return actor.scale * depthScale;
+}
+
+function spriteAnchorForActor(actor, output) {
+  output.x = Math.round(actor.x);
+  output.y = Math.round(actor.y);
+  return output;
+}
+
+function writeShadowGeometry(actor, depthScale, anchor, output) {
+  output.centerX = anchor.x;
+  output.centerY = anchor.y - 2 * depthScale;
+  output.radiusX = (actor.kind === "player" ? 42 : 36) * depthScale;
+  output.radiusY = (actor.kind === "player" ? 14 : 12) * depthScale;
+  return output;
+}
+
+function writeHitFlashGeometry(actor, depthScale, anchor, reducedMotion, output) {
+  output.visible = actor.hitFlash > 0 && !reducedMotion;
+  output.centerX = anchor.x;
+  output.centerY = anchor.y - 79 * depthScale;
+  output.radiusX = 42 * depthScale;
+  output.radiusY = 90 * depthScale;
+  output.lineWidth = 4 * depthScale;
+  return output;
+}
+
+function writeHealthBarGeometry(actor, depthScale, anchor, output) {
+  const width = 70 * depthScale;
+  const height = 7 * depthScale;
+  const inset = depthScale;
+  const x = anchor.x - width / 2;
+  const y = anchor.y - 176 * depthScale;
+
+  output.visible = !actor.dead && actor.health < actor.maxHealth;
+  output.x = x;
+  output.y = y;
+  output.width = width;
+  output.height = height;
+  output.inset = inset;
+  output.fillX = x + inset;
+  output.fillY = y + inset;
+  output.fillWidth = (width - inset * 2) * (actor.health / actor.maxHealth);
+  output.fillHeight = Math.max(1, height - inset * 2);
+  return output;
+}
+
+function writeAttackArcGeometry(actor, depthScale, anchor, output) {
+  output.visible = actor.clipName === "attack" && actor.clipFrame >= 2 && actor.clipFrame <= 3;
+  output.centerX = anchor.x;
+  output.centerY = anchor.y - 54 * depthScale;
+  output.radius = 118;
+  output.lineWidth = 8;
+  output.startAngle = actor.facing > 0 ? -0.85 : Math.PI - 0.85;
+  output.endAngle = actor.facing > 0 ? 0.62 : Math.PI + 0.62;
+  output.anticlockwise = actor.facing < 0;
+  return output;
+}
+
+function writeGroundRingGeometry(depthScale, anchor, output) {
+  output.centerX = anchor.x;
+  output.centerY = anchor.y;
+  output.radiusX = 50 * depthScale;
+  output.radiusY = 17 * depthScale;
+  output.lineWidth = 3 * depthScale;
+  return output;
+}
+
+function drawShadow(actor, depthScale, anchor) {
+  const shadow = writeShadowGeometry(actor, depthScale, anchor, renderScratch.shadow);
   context.save();
   context.globalAlpha = actor.dead ? Math.max(0, actor.fadeTime / 0.34) * 0.22 : 0.34;
   context.fillStyle = "#020407";
   context.beginPath();
-  context.ellipse(actor.x, actor.y - 2, actor.kind === "player" ? 42 : 36, actor.kind === "player" ? 14 : 12, 0, 0, Math.PI * 2);
+  context.ellipse(
+    shadow.centerX,
+    shadow.centerY,
+    shadow.radiusX,
+    shadow.radiusY,
+    0,
+    0,
+    Math.PI * 2,
+  );
   context.fill();
   context.restore();
 }
@@ -648,13 +761,16 @@ function drawShadow(actor) {
 function drawActor(actor) {
   const clip = actor.asset.manifest.animations[actor.clipName];
   const rect = clip.rects[actor.clipFrame];
+  const depthScale = depthScaleForY(actor.y);
+  const spriteScale = spriteScaleForActor(actor, depthScale);
+  const anchor = spriteAnchorForActor(actor, renderScratch.anchor);
   const fadeAlpha = actor.dead ? Math.max(0, actor.fadeTime / (state.reducedMotion ? 0.08 : 0.34)) : 1;
 
-  drawShadow(actor);
+  drawShadow(actor, depthScale, anchor);
   context.save();
   context.globalAlpha = fadeAlpha;
-  context.translate(Math.round(actor.x), Math.round(actor.y));
-  context.scale(actor.facing * actor.scale, actor.scale);
+  context.translate(anchor.x, anchor.y);
+  context.scale(actor.facing * spriteScale, spriteScale);
   context.drawImage(
     actor.asset.image,
     rect.x,
@@ -668,40 +784,76 @@ function drawActor(actor) {
   );
   context.restore();
 
-  if (actor.hitFlash > 0 && !state.reducedMotion) {
+  const hitFlash = writeHitFlashGeometry(
+    actor,
+    depthScale,
+    anchor,
+    state.reducedMotion,
+    renderScratch.hitFlash,
+  );
+  if (hitFlash.visible) {
     context.save();
     context.globalAlpha = Math.min(0.8, actor.hitFlash * 6);
     context.strokeStyle = actor.kind === "player" ? "#7ff6ff" : "#ff8a4c";
-    context.lineWidth = 4;
+    context.lineWidth = hitFlash.lineWidth;
     context.beginPath();
-    context.ellipse(actor.x, actor.y - 79, 42, 90, 0, 0, Math.PI * 2);
+    context.ellipse(
+      hitFlash.centerX,
+      hitFlash.centerY,
+      hitFlash.radiusX,
+      hitFlash.radiusY,
+      0,
+      0,
+      Math.PI * 2,
+    );
     context.stroke();
     context.restore();
   }
 
-  if (actor.kind === "enemy" && !actor.dead && actor.health < actor.maxHealth) {
-    const barWidth = 70;
-    const healthRatio = actor.health / actor.maxHealth;
-    context.fillStyle = "rgba(2, 4, 7, 0.82)";
-    context.fillRect(actor.x - barWidth / 2, actor.y - 176, barWidth, 7);
-    context.fillStyle = "#ef6d3e";
-    context.fillRect(actor.x - barWidth / 2 + 1, actor.y - 175, (barWidth - 2) * healthRatio, 5);
+  if (actor.kind === "enemy") {
+    const healthBar = writeHealthBarGeometry(actor, depthScale, anchor, renderScratch.healthBar);
+    if (healthBar.visible) {
+      context.fillStyle = "rgba(2, 4, 7, 0.82)";
+      context.fillRect(healthBar.x, healthBar.y, healthBar.width, healthBar.height);
+      context.fillStyle = "#ef6d3e";
+      context.fillRect(
+        healthBar.fillX,
+        healthBar.fillY,
+        healthBar.fillWidth,
+        healthBar.fillHeight,
+      );
+    }
   }
 }
 
 function drawCombatFeedback() {
-  if (player.clipName === "attack" && player.clipFrame >= 2 && player.clipFrame <= 3) {
-    context.save();
-    context.globalAlpha = state.reducedMotion ? 0.28 : 0.5;
-    context.strokeStyle = "#ffb064";
-    context.lineWidth = 8;
-    context.beginPath();
-    const startAngle = player.facing > 0 ? -0.85 : Math.PI - 0.85;
-    const endAngle = player.facing > 0 ? 0.62 : Math.PI + 0.62;
-    context.arc(player.x, player.y - 54, 118, startAngle, endAngle, player.facing < 0);
-    context.stroke();
-    context.restore();
+  const depthScale = depthScaleForY(player.y);
+  const anchor = spriteAnchorForActor(player, renderScratch.anchor);
+  const attackArc = writeAttackArcGeometry(
+    player,
+    depthScale,
+    anchor,
+    renderScratch.attackArc,
+  );
+  if (!attackArc.visible) {
+    return;
   }
+
+  context.save();
+  context.globalAlpha = state.reducedMotion ? 0.28 : 0.5;
+  context.strokeStyle = "#ffb064";
+  context.lineWidth = attackArc.lineWidth;
+  context.beginPath();
+  context.arc(
+    attackArc.centerX,
+    attackArc.centerY,
+    attackArc.radius,
+    attackArc.startAngle,
+    attackArc.endAngle,
+    attackArc.anticlockwise,
+  );
+  context.stroke();
+  context.restore();
 }
 
 function drawWaveMarker() {
@@ -726,6 +878,71 @@ function drawWaveMarker() {
 function compareActorDepth(actorA, actorB) {
   return actorA.y - actorB.y || (actorA.kind === "player" ? 1 : -1);
 }
+function readActorRenderSnapshot(actor, drawOrder) {
+  const depthScale = depthScaleForY(actor.y);
+  const spriteAnchor = Object.freeze({ ...spriteAnchorForActor(actor, {}) });
+  const shadow = Object.freeze({
+    ...writeShadowGeometry(actor, depthScale, spriteAnchor, {}),
+  });
+  const hitFlash = Object.freeze({
+    ...writeHitFlashGeometry(
+      actor,
+      depthScale,
+      spriteAnchor,
+      state.reducedMotion,
+      {},
+    ),
+  });
+  const healthBar = actor.kind === "enemy"
+    ? Object.freeze({
+      ...writeHealthBarGeometry(actor, depthScale, spriteAnchor, {}),
+    })
+    : null;
+  const attackArc = actor.kind === "player"
+    ? Object.freeze({
+      ...writeAttackArcGeometry(actor, depthScale, spriteAnchor, {}),
+    })
+    : null;
+  const groundRing = actor.kind === "player"
+    ? Object.freeze({
+      ...writeGroundRingGeometry(depthScale, spriteAnchor, {}),
+    })
+    : null;
+
+  return Object.freeze({
+    kind: actor.kind,
+    id: actor.kind === "player" ? "player" : actor.id,
+    y: actor.y,
+    drawOrder,
+    depthScale,
+    spriteScale: spriteScaleForActor(actor, depthScale),
+    spriteAnchor,
+    shadow,
+    hitFlash,
+    healthBar,
+    attackArc,
+    groundRing,
+  });
+}
+
+function readRenderSnapshot() {
+  const actors = [player, ...state.enemies].sort(compareActorDepth);
+  return Object.freeze({
+    renderer: "canvas2d",
+    actors: Object.freeze(actors.map(readActorRenderSnapshot)),
+  });
+}
+
+Object.defineProperty(window, "__SPRITE_2_5D_TEST__", {
+  configurable: false,
+  enumerable: false,
+  writable: false,
+  value: Object.freeze({
+    depthScaleAtY: depthScaleForY,
+    readRenderSnapshot,
+  }),
+});
+
 
 function render() {
   if (!assets.backdrop) {
@@ -739,11 +956,26 @@ function render() {
   context.fillStyle = "rgba(2, 7, 12, 0.06)";
   context.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
+  const playerDepthScale = depthScaleForY(player.y);
+  const playerAnchor = spriteAnchorForActor(player, renderScratch.anchor);
+  const groundRing = writeGroundRingGeometry(
+    playerDepthScale,
+    playerAnchor,
+    renderScratch.groundRing,
+  );
   context.save();
   context.strokeStyle = "rgba(90, 230, 240, 0.2)";
-  context.lineWidth = 3;
+  context.lineWidth = groundRing.lineWidth;
   context.beginPath();
-  context.ellipse(player.x, player.y, 50, 17, 0, 0, Math.PI * 2);
+  context.ellipse(
+    groundRing.centerX,
+    groundRing.centerY,
+    groundRing.radiusX,
+    groundRing.radiusY,
+    0,
+    0,
+    Math.PI * 2,
+  );
   context.stroke();
   context.restore();
 
