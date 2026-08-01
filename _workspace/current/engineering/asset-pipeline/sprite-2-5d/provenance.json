@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "kind": "original-ai-generated-media",
+    "thirdPartyReferenceImages": [],
+    "generatedAt": "2026-08-01"
+  },
+  "generator": {
+    "background": {
+      "tool": "god-tibo-imagen",
+      "provider": "private-codex",
+      "model": "gpt-5.4",
+      "responseId": "resp_09ff86365dad0dc2016a6ddb3a50e08191bcd579c4b79dee99",
+      "prompt": "Original dark-fantasy 2.5D isometric battlefield backdrop for Abyssal Lantern. Wide 3:2 composition seen from a fixed three-quarter isometric camera: charcoal basalt arena, diagonal broken stone terraces, restrained ember-orange fissures, cold cyan lantern glows, deep navy fog, and a clear central play space for readable sprites. Painterly pixel-art texture with crisp silhouettes and layered depth. Environment only: no characters, no text, no UI, no logo, no watermark. Absolutely no magenta, pink, or purple."
+    },
+    "characters": {
+      "tool": "PerfectPixel ppgen",
+      "providerAdapter": "god-tibo-imagen",
+      "provider": "private-codex",
+      "model": "gpt-5.4",
+      "style": "pixel",
+      "attemptsPerState": 1,
+      "states": ["idle", "walk", "attack"],
+      "note": "PerfectPixel's generation, magenta matting, frame extraction, scoring, pixel quantization, sheet packing, and manifest export were run through a temporary local god-tibo-imagen provider adapter; the deployed game has no dependency on either generator."
+    }
+  },
+  "output": [
+    {
+      "path": "assets/images/sprite-2-5d/cinder-court-backdrop.png",
+      "bytes": 2761182,
+      "sha256": "a79e4d48650a4a5812cbd4afc920408567c6b7eb8224803631b0cd14a8e703e4",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "path": "assets/images/sprite-2-5d/warden/sprite-sheet.png",
+      "bytes": 104045,
+      "sha256": "070b5bd9f301d6740be7d95a08f3df7f3160396009ae5c422b4b4ac95757dd84",
+      "width": 1536,
+      "height": 768,
+      "manifest": "assets/images/sprite-2-5d/warden/manifest.json",
+      "quality": {
+        "idle": 68,
+        "walk": 66,
+        "attack": 60
+      }
+    },
+    {
+      "path": "assets/images/sprite-2-5d/ember-cohort/sprite-sheet.png",
+      "bytes": 77810,
+      "sha256": "996b726fd27e0e25085e5e0f46724cc9757f2993db2835ddba1f3226490b810e",
+      "width": 1536,
+      "height": 768,
+      "manifest": "assets/images/sprite-2-5d/ember-cohort/manifest.json",
+      "quality": {
+        "idle": 69,
+        "walk": 66,
+        "attack": 63
+      }
+    }
+  ],
+  "rightsReceipt": "Original AI-generated game media created for this repository without third-party reference images; retain this receipt with the runtime assets and review the provider terms that apply to the authenticated generation account.",
+  "runtimeReceipt": {
+    "runtimeEligible": true,
+    "route": "sprite-2-5d.html",
+    "localBrowserChecks": [
+      "all five runtime asset requests succeeded",
+      "body entered data-game-state=running",
+      "390x844 and 844x390 layouts had no horizontal overflow",
+      "keyboard and pointer controls responded",
+      "game-over restart restored wave 1, score 0, and health 100",
+      "no console or page errors"
+    ],
+    "deployedVerification": "pending Pages release"
+  }
+}
