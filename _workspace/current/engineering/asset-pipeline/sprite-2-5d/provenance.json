@@ -63,13 +63,14 @@
   "runtimeReceipt": {
     "runtimeEligible": true,
     "route": "sprite-2-5d.html",
-    "verifiedRuntimeRevision": "a8c14a8e",
-    "browserContractRevision": "11155ba0",
+    "verifiedRuntimeRevision": "2019bebf",
+    "browserContractRevision": "2019bebf",
     "localBrowserChecks": [
       "all five runtime asset requests succeeded",
       "body entered data-game-state=running",
       "390x844 and 844x390 layouts had no horizontal overflow",
       "keyboard, pointer, and semantic button controls responded",
+      "CanvasRenderingContext2D painter order and quantized 0.62-to-1.0 depth scaling make near sprites and attached cues larger than far sprites",
       "game-over stopped animation work and restart restored one running loop at wave 1, score 0, and health 100",
       "persisted pagehide/pageshow restored a changing canvas without duplicate animation loops",
       "reduced-motion preserved the normal wave intermission duration",
