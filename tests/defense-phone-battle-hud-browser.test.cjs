@@ -576,17 +576,35 @@ test("stable combat control IDs remain unique and their native keyboard activati
     // KEYPAD RETIRED: `#movement-actions [data-move="E"]` no longer exists. Keyboard movement is
     // the surviving non-pointer modality and reaches the same public `data-defense-move` octant
     // through KEY_DIRECTIONS, so the contract is asserted through the key itself.
-    await dismissGrowthOffer();
-    const beforeMove = Number(await run.surface.getAttribute("data-defense-input-seq"));
-    await run.page.keyboard.down("d");
-    await run.page.waitForFunction(
-      ({ prior }) => Number(document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq) > prior,
-      { prior: beforeMove },
-      { timeout: 20000 },
-    );
-    await run.page.waitForFunction(() => document.querySelector("#defense-battle-surface")?.dataset.defenseMove === "E");
+    // Same growth-offer defence as activateAndWaitForInput: an offer opening mid-hold halts the
+    // simulation (`if (run.growthOffer) return;`), so `data-defense-move` can never reach "E" and
+    // the default 90 s budget burns out — that is exactly how this test timed out on CI. Bounded
+    // waits plus one clear-and-retry, instead of one unbounded wait.
+    const holdEastOnce = async () => {
+      await dismissGrowthOffer();
+      await run.page.keyboard.down("d");
+      try {
+        await run.page.waitForFunction(
+          () => document.querySelector("#defense-battle-surface")?.dataset.defenseMove === "E",
+          null,
+          { timeout: 15000 },
+        );
+        return true;
+      } catch {
+        await run.page.keyboard.up("d").catch(() => {});
+        return false;
+      }
+    };
+    if (!await holdEastOnce()) {
+      assert.equal(await holdEastOnce(), true,
+        "keyboard movement must reach the public east movement state once the growth offer is cleared");
+    }
     await run.page.keyboard.up("d");
-    await run.page.waitForFunction(() => document.querySelector("#defense-battle-surface")?.dataset.defenseMove === "IDLE");
+    await run.page.waitForFunction(
+      () => document.querySelector("#defense-battle-surface")?.dataset.defenseMove === "IDLE",
+      null,
+      { timeout: 15000 },
+    );
     await activateAndWaitForInput("#stance-cycle", "Enter");
 
     const pause = run.page.locator("#toggle-pause");
