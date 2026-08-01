@@ -668,3 +668,56 @@ restore them deliberately:
 The lesson worth keeping: **a rising failure count is not attribution.** I had the file open
 with the line numbers in front of me and still inferred causation from a count instead of
 checking whether a mechanism existed. Two pushes to a shared branch came out of that.
+
+### Resolution: the deploy is green, and not because of me
+
+`[OBSERVED]` `main` deployed successfully at `1eae6238` — all **9 jobs success**, including
+`package_pages`, `deploy_pages` and `deployed_smoke`. Verified at the byte level rather than by
+SHA ancestry: `curl` on the live site returns HTTP 200,
+`version.json` `candidate_sha` equals the `main` tip exactly, the served
+`battle-realtime-three.js` contains `snapshotFacingYaw` **4 times**, and the served
+`stage-world-catalog.js` carries `route("cinder-span:critical-route", "critical", 1400)` with
+8 cinder obstacle rows. So cycle 10's attack-facing fix and cinder layout are live and serving.
+
+**The unblock was the concurrent session's, not mine.** `f1519387` ("성장 오퍼 포커스 탈취와
+이동 컨트롤 포커스 검사의 경합 제거") and `1d03345d` ("dismiss와 focus/Enter 사이") fixed the
+focus-stealing race in the progression suite. I attempted the same lane four times and reverted
+once; none of my pushes turned the build green. That is the honest sequence.
+
+What I contributed that survives: the `package_pages` dedupe (`012ea15d`), which was a real
+inherited blocker with a reproducible failure, and **PR #29** for the one residual
+unterminable wait.
+
+### PR #29 — the residual hang, and how it was made checkable
+
+`defense-phone-battle-hud-browser.test.cjs`'s `defenseState === "active"` wait after the
+pause round-trip is **still bare on `main`**. It is the site every one of the four red CI
+stacks named, and it is a permanent hang rather than slowness:
+
+| attribute | written where | with an offer open |
+|---|---|---|
+| `defenseState` | `app.js:3219`, recomputed **per frame** from the snapshot | pinned at `"growth"` → **unterminable** |
+| `defenseMove` | `app.js:2745`, input-dispatch path on an accepted `MOVE` | cannot be pinned → slow, never hangs |
+
+That table is why the fix is one hunk rather than nine, and why no timeout increase could ever
+have helped. It is a PR rather than a push because `main` is green — a green build does not take
+speculative pushes, which is the lesson the previous subsection paid for.
+
+**The reproduction technique is the durable part.** This suite never failed locally in 13 runs,
+which is what made every hypothesis cost a ~20-minute CI cycle. CDP CPU throttling closes that
+gap — one env-gated line after `context.newPage()`:
+
+```js
+if (process.env.CPU_THROTTLE) {
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: Number(process.env.CPU_THROTTLE) });
+}
+```
+
+Measured: unthrottled **18.8 s**, 6× → **70.8 s**, 10× → **113.1 s**, all 12/12. 6× lands close
+to CI's documented 253 s for 12 tests, so the regime is reproducible on a laptop. Two caveats
+worth carrying: the session must attach to the page the test actually uses, because the rate is
+per-target and a session on a throwaway page throttles nothing; and at 6× the suite still
+**passes**, so slowness alone is not sufficient to fail — it widens the window the modal needs,
+which is consistent with the `defenseState` mechanism above rather than a pure timing story.
+The hook is not shipped; it was applied to a scratch copy and removed.
