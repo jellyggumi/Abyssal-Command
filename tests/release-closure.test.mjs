@@ -217,7 +217,7 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
   ]);
   const browserContractJob = job(workflow, "browser_contract");
   const browserLoop = browserContractJob.match(
-    /^\s*for browser_contract in defense-hud-responsive-browser defense-phone-battle-hud-browser\.test progression-mobile-ui-browser defense-survivor-browser defense-performance-browser; do\n(?<body>[\s\S]*?)^\s*done$/m,
+    /^\s*for browser_contract in defense-hud-responsive-browser defense-phone-battle-hud-browser\.test progression-mobile-ui-browser defense-survivor-browser sprite-2-5d-browser defense-performance-browser; do\n(?<body>[\s\S]*?)^\s*done$/m,
   );
   assert.ok(browserLoop, "browser_contract must iterate the exact bounded browser suite allowlist");
   assert.match(

@@ -193,7 +193,7 @@ jobs:
           npm ci
           npx --no-install playwright install --with-deps chromium
           status=passed
-          for browser_contract in defense-hud-responsive-browser defense-phone-battle-hud-browser.test progression-mobile-ui-browser defense-survivor-browser defense-performance-browser; do
+          for browser_contract in defense-hud-responsive-browser defense-phone-battle-hud-browser.test progression-mobile-ui-browser defense-survivor-browser sprite-2-5d-browser defense-performance-browser; do
             result="results/${browser_contract}.json"
             echo "::group::${browser_contract}"
             set +e
