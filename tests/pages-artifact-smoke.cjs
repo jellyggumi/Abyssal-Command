@@ -7,6 +7,9 @@ const { resolve, dirname, relative } = require("node:path");
 const REQUIRED_FILES = [
   "index.html",
   "version.json",
+  "sprite-2-5d.html",
+  "sprite-2-5d.css",
+  "sprite-2-5d.js",
   "app.js",
   "rpg-catalog.js",
   "stage-world-catalog.js",
@@ -50,6 +53,11 @@ const REQUIRED_FILES = [
   "assets/images/battle/ui/hud/stat-commander.webp",
   "assets/images/battle/ui/hud/stat-echo-xp.webp",
   "assets/images/battle/ui/hud/stat-gate-integrity.webp",
+  "assets/images/sprite-2-5d/cinder-court-backdrop.png",
+  "assets/images/sprite-2-5d/warden/manifest.json",
+  "assets/images/sprite-2-5d/warden/sprite-sheet.png",
+  "assets/images/sprite-2-5d/ember-cohort/manifest.json",
+  "assets/images/sprite-2-5d/ember-cohort/sprite-sheet.png",
   // Cycle 10: the composed slab floors are what the runtime loads for gameplay ground.
   // The retained diorama and textured candidates stay listed as offline provenance.
   "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb",

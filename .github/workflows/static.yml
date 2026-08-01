@@ -23,7 +23,7 @@ env:
   RULES_VERSION: defense-survivor-v1
   PAGES_ARTIFACT_DIR: .pages-artifact
   PAGES_RUNTIME_PATHS: >-
-    index.html app.js rpg-catalog.js stage-world-catalog.js stage-story-catalog.js defense-viewport.js defense-catalog.js defense-run-simulation.js campaign-state.js defense-storage.js defense-audio.js
+    index.html sprite-2-5d.html sprite-2-5d.css sprite-2-5d.js app.js rpg-catalog.js stage-world-catalog.js stage-story-catalog.js defense-viewport.js defense-catalog.js defense-run-simulation.js campaign-state.js defense-storage.js defense-audio.js
     defense-cutscene.js defense-telemetry.js battle-canvas-text.js battle-realtime-three.js battle-visualizer.js lobby-cinematic.js styles.css react-game-ui.css sw.js manifest.json icon.svg privacy.html
     vendor/three.module.js vendor/three.core.js vendor/loaders/GLTFLoader.js vendor/utils/BufferGeometryUtils.js vendor/utils/SkeletonUtils.js
     assets/icons/icon-192.png assets/icons/icon-512.png
@@ -32,6 +32,9 @@ env:
     assets/images/battle/ui/hud/nav-companions.webp assets/images/battle/ui/hud/nav-growth.webp assets/images/battle/ui/hud/nav-inventory.webp
     assets/images/battle/ui/hud/nav-sortie.webp assets/images/battle/ui/hud/nav-stronghold.webp assets/images/battle/ui/hud/stat-commander.webp
     assets/images/battle/ui/hud/stat-echo-xp.webp assets/images/battle/ui/hud/stat-gate-integrity.webp
+    assets/images/sprite-2-5d/cinder-court-backdrop.png
+    assets/images/sprite-2-5d/warden/manifest.json assets/images/sprite-2-5d/warden/sprite-sheet.png
+    assets/images/sprite-2-5d/ember-cohort/manifest.json assets/images/sprite-2-5d/ember-cohort/sprite-sheet.png
     assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb
     assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb
     assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb
