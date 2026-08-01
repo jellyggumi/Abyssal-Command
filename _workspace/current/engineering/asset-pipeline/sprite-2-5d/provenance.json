@@ -63,8 +63,8 @@
   "runtimeReceipt": {
     "runtimeEligible": true,
     "route": "sprite-2-5d.html",
-    "verifiedRuntimeRevision": "538a0e73",
-    "browserContractRevision": "d54152dd",
+    "verifiedRuntimeRevision": "a8c14a8e",
+    "browserContractRevision": "01d66ca8",
     "localBrowserChecks": [
       "all five runtime asset requests succeeded",
       "body entered data-game-state=running",
