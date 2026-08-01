@@ -654,6 +654,51 @@
     },
     {
       "disposition": "delete",
+      "currentPath": "assets/images/sprite-2-5d/cinder-court-backdrop.png",
+      "replacementPath": null,
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/images/sprite-2-5d/ember-cohort/manifest.json",
+      "replacementPath": null,
+      "extension": ".json",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/images/sprite-2-5d/ember-cohort/sprite-sheet.png",
+      "replacementPath": null,
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/images/sprite-2-5d/warden/manifest.json",
+      "replacementPath": null,
+      "extension": ".json",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/images/sprite-2-5d/warden/sprite-sheet.png",
+      "replacementPath": null,
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
       "currentPath": "assets/mesh/boss/s1-cinder-warden/fbx/fbx/base_basic_pbr.fbx",
       "replacementPath": null,
       "extension": ".fbx",
