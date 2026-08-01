@@ -1,0 +1,1425 @@
+diff --git a/campaign-state.js b/campaign-state.js
+index ebaff2a0..c2fa7d2d 100644
+--- a/campaign-state.js
++++ b/campaign-state.js
+@@ -1,5 +1,6 @@
+ import {
+   CARRY_OVER_MAX_ITEMS, CARRY_OVER_MAX_RANK, COMPANIONS, ITEMS, REWARDS, SKILLS, STAGE_REWARD_IDS,
++  COMPANION_CAPACITY_BASE, COMPANION_CAPACITY_MAX, COMPANION_SLOT_UNLOCKS, companionSlotUnlockFor,
+ } from "./defense-catalog.js";
+ import {
+   WARDEN_STATS, wardenStatTotalCost, WARDEN_SKILL_TREE,
+@@ -19,7 +20,14 @@ export const STAGES = Object.freeze([
+   Object.freeze({ id: "echo-throne", name: "Echo Throne", bossName: "Gate Sovereign", sequence: 3 }),
+ ]);
+ const STAGE_INDEX = new Map(STAGES.map((stage, index) => [stage.id, index]));
+-const MAX_LOADOUT_SIZE = 3;
++/**
++ * Legion capacity (core-loop-legion-spec.md §3). `MAX_LOADOUT_SIZE` used to be the single hard
++ * bound; it is now the BASE capacity, and the effective bound is derived per campaign from the
++ * unlocked-slot ladder. Re-exported so the lobby UI binds to one source of truth instead of
++ * re-deriving the ladder.
++ */
++const MAX_LOADOUT_SIZE = COMPANION_CAPACITY_BASE;
++export { COMPANION_CAPACITY_BASE, COMPANION_CAPACITY_MAX, COMPANION_SLOT_UNLOCKS };
+ export const MAX_EXTRACTED_SKILL_LOADOUT = 3;
+ export const MAX_EXTRACTED_SKILL_LEVEL = 5;
+ /** Warden equipment owner id — verified disjoint from every COMPANIONS prototype id. */
+@@ -129,11 +137,62 @@ export function echoCoreSpent(campaign) {
+     .reduce((sum, level) => sum + extractedSkillSpentAtLevel(level), 0);
+   return statCost + skillCost + extractedSkillCost;
+ }
++/**
++ * Bound Fragment spent so far. Equipment tiers and companion slots draw on the SAME currency, which
++ * is the budget conflict spec §3 escalated to PM rather than silently resolving: earning is
++ * `resolvedIds.length` (max 10) while a full slot ladder costs 16 cumulative, and one equipment line
++ * to T5 already costs 10. Both spends are counted here so the shared budget is enforced honestly and
++ * the shortfall surfaces as an unaffordable purchase instead of a hidden overdraft.
++ */
+ export function boundFragmentSpent(campaign) {
+-  return campaign.ownedEquipmentIds.reduce((sum, id) => {
++  const equipmentCost = campaign.ownedEquipmentIds.reduce((sum, id) => {
+     const stepIndex = Number(id.split(":")[2]);
+     return sum + (EQUIPMENT_TIER_UPGRADE_COST[stepIndex] ?? 0);
+   }, 0);
++  return equipmentCost + companionSlotSpent(campaign.unlockedCompanionSlots ?? 0);
++}
++
++/** Cumulative Bound Fragment cost of the first `unlockedSlots` ladder rows. */
++function companionSlotSpent(unlockedSlots) {
++  return COMPANION_SLOT_UNLOCKS.slice(0, unlockedSlots).reduce((sum, entry) => sum + entry.boundFragmentCost, 0);
++}
++
++/** Unlocked extra slots beyond the base (0..7). Slots are contiguous, so a count IS the full state. */
++export function companionSlotsUnlocked(campaign) {
++  return Math.min(campaign.unlockedCompanionSlots ?? 0, COMPANION_SLOT_UNLOCKS.length);
++}
++
++/**
++ * Derived legion capacity for this campaign: base 3 plus every unlocked slot, hard-capped at 10.
++ *
++ * This is the MUTATION-TIME bound (spec §3). It is deliberately NOT used by `validCampaign()`: that
++ * function checks loadout length at line 281 BEFORE it validates `resolvedIds` at line 282, so a
++ * resolver called there would let a tampered save self-certify its own capacity from fields that
++ * have not been validated yet. Load time uses the literal ceiling instead. Three checkpoints, three
++ * different bounds, on purpose.
++ */
++export function companionCapacityForCampaign(campaign) {
++  return Math.min(COMPANION_CAPACITY_BASE + companionSlotsUnlocked(campaign), COMPANION_CAPACITY_MAX);
++}
++
++/**
++ * The next purchasable slot and whether it is currently attainable, or null at max capacity.
++ * Exposed so the lobby renders the unlock button from one source of truth rather than re-deriving
++ * the (contested, PM-owned) ladder numbers.
++ */
++export function companionSlotUnlockCostFor(campaign) {
++  const nextSlot = COMPANION_CAPACITY_BASE + companionSlotsUnlocked(campaign) + 1;
++  const entry = companionSlotUnlockFor(nextSlot);
++  if (!entry) return null;
++  const stageGateMet = campaign.resolvedIds.length >= entry.requiresStageClears;
++  const remainingBudget = boundFragmentEarned(campaign) - boundFragmentSpent(campaign);
++  return {
++    slot: entry.slot,
++    requiresStageClears: entry.requiresStageClears,
++    boundFragmentCost: entry.boundFragmentCost,
++    stageGateMet,
++    affordable: remainingBudget >= entry.boundFragmentCost,
++  };
+ }
+ /** 0-based tier index (0=T1 baseline .. 4=T5) currently owned for an owner+slot pair. */
+ export function equipmentTierIndexFor(campaign, ownerId, slot) {
+@@ -189,6 +248,24 @@ function validCompanionFormation(campaign, companionFormation) {
+   if (!entries.every(([prototype, slot]) => campaign.companionLoadout.prototypeIds.includes(prototype) && FORMATION_SLOTS.includes(slot))) return false;
+   return entries.filter(([, slot]) => slot === "FRONT").length <= MAX_FRONT_SLOTS;
+ }
++/**
++ * Validates the unlocked-slot count (load time).
++ *
++ * Stored as a contiguous COUNT rather than a set of slot numbers: the ladder can only be climbed in
++ * order, so a count is the exact state and there is no gap case to validate (unlike
++ * `ownedEquipmentIds`, which needs a contiguity check because it is keyed per owner+slot).
++ *
++ * Both gates are re-checked here, not just the budget, so a hand-edited save cannot grant slots it
++ * never earned: every unlocked row must have its stage-clear requirement met, and the combined
++ * equipment + slot spend must fit the earned Bound Fragment budget.
++ */
++function validUnlockedCompanionSlots(campaign) {
++  const unlocked = campaign.unlockedCompanionSlots;
++  if (!Number.isInteger(unlocked) || unlocked < 0 || unlocked > COMPANION_SLOT_UNLOCKS.length) return false;
++  const gatesMet = COMPANION_SLOT_UNLOCKS.slice(0, unlocked)
++    .every((entry) => campaign.resolvedIds.length >= entry.requiresStageClears);
++  return gatesMet && boundFragmentSpent(campaign) <= boundFragmentEarned(campaign);
++}
+ export function extractedSkillUpgradeCostForLevel(targetLevel) {
+   return targetLevel - 1;
+ }
+@@ -251,12 +328,13 @@ function copyCampaign(campaign) {
+     companionFormation: copyCompanionFormation(campaign.companionFormation ?? {}),
+     stageCarryOver: copyStageCarryOver(campaign.stageCarryOver ?? initialStageCarryOver()),
+     storyProgress: copyStoryProgress(campaign.storyProgress ?? initialStoryProgress(campaign.resolvedIds)),
++    unlockedCompanionSlots: campaign.unlockedCompanionSlots ?? 0,
+   };
+ }
+ const LEGACY_KEYS = ["campaignId", "resetEpoch", "unlockedStageIndex", "companionCollection", "companionLoadout", "resolvedIds", "attemptsByStage", "lastResolution"];
+ const REWARD_KEYS = [...LEGACY_KEYS, "rewardIds", "achievementIds"];
+ const IDLE_KEYS = [...REWARD_KEYS, "idleReturn"];
+-const CURRENT_KEYS = [...IDLE_KEYS, "wardenProgress", "ownedEquipmentIds", "companionFormation", "stageCarryOver", "storyProgress"];
++const CURRENT_KEYS = [...IDLE_KEYS, "wardenProgress", "ownedEquipmentIds", "companionFormation", "stageCarryOver", "storyProgress", "unlockedCompanionSlots"];
+ const initialIdleReturn = () => ({ version: IDLE_RETURN_VERSION, lastSettledAt: null, totalProgress: 0 });
+ function migrateCampaign(value) {
+   if (!isPlainObject(value)) return value;
+@@ -270,6 +348,8 @@ function migrateCampaign(value) {
+   if (!Object.hasOwn(value, "companionFormation")) patch.companionFormation = {};
+   if (!Object.hasOwn(value, "stageCarryOver")) patch.stageCarryOver = initialStageCarryOver();
+   if (!Object.hasOwn(value, "storyProgress")) patch.storyProgress = initialStoryProgress(value.resolvedIds);
++  // Cycle 9: pre-capacity saves carry no slot state; 0 unlocked == the historical hard cap of 3.
++  if (!Object.hasOwn(value, "unlockedCompanionSlots")) patch.unlockedCompanionSlots = 0;
+   return Object.keys(patch).length ? { ...value, ...patch } : value;
+ }
+ function validCampaign(value) {
+@@ -278,7 +358,17 @@ function validCampaign(value) {
+   if (!isNonEmptyString(candidate.campaignId) || !Number.isInteger(candidate.resetEpoch) || candidate.resetEpoch < 0 || !Number.isInteger(candidate.unlockedStageIndex) || candidate.unlockedStageIndex < 0 || candidate.unlockedStageIndex >= STAGES.length) return false;
+   if (!Array.isArray(candidate.companionCollection) || !candidate.companionCollection.every((record) => isPlainObject(record) && hasOnlyKeys(record, ["prototype", "evolution", "capturedEliteIds"]) && canonicalPrototype(record.prototype) && Number.isInteger(record.evolution) && record.evolution >= 1 && record.evolution <= 3 && validIds(record.capturedEliteIds))) return false;
+   const prototypes = candidate.companionCollection.map((record) => record.prototype);
+-  if (new Set(prototypes).size !== prototypes.length || !isPlainObject(candidate.companionLoadout) || !hasOnlyKeys(candidate.companionLoadout, ["prototypeIds"]) || !validIds(candidate.companionLoadout.prototypeIds) || candidate.companionLoadout.prototypeIds.length > MAX_LOADOUT_SIZE || !candidate.companionLoadout.prototypeIds.every((prototype) => prototypes.includes(prototype))) return false;
++  /**
++   * LOAD-TIME bound (spec §3): the literal `COMPANION_CAPACITY_MAX`, never the derived resolver.
++   *
++   * This check runs BEFORE `resolvedIds` is validated on the next line, and `companionCapacityForCampaign`
++   * derives capacity from `resolvedIds` + `unlockedCompanionSlots`. Calling the resolver here would let a
++   * tampered save self-certify its own capacity from fields this function has not vetted yet — inflate
++   * `resolvedIds`, and an oversized loadout would validate itself. The literal ceiling cannot be gamed:
++   * a save is well-formed if it is within the absolute maximum, and the derived per-campaign bound is
++   * enforced at MUTATION time by `setCompanionLoadout()` where the campaign is already trusted.
++   */
++  if (new Set(prototypes).size !== prototypes.length || !isPlainObject(candidate.companionLoadout) || !hasOnlyKeys(candidate.companionLoadout, ["prototypeIds"]) || !validIds(candidate.companionLoadout.prototypeIds) || candidate.companionLoadout.prototypeIds.length > COMPANION_CAPACITY_MAX || !candidate.companionLoadout.prototypeIds.every((prototype) => prototypes.includes(prototype))) return false;
+   if (!validIds(candidate.resolvedIds) || !candidate.resolvedIds.every((id) => STAGE_INDEX.has(id)) || !isPlainObject(candidate.attemptsByStage) || !Object.entries(candidate.attemptsByStage).every(([id, attempts]) => STAGE_INDEX.has(id) && Number.isInteger(attempts) && attempts >= 0)) return false;
+   if (!validIds(candidate.rewardIds) || !candidate.rewardIds.every((id) => Object.hasOwn(REWARDS, id)) || !validIds(candidate.achievementIds)) return false;
+   if (!isPlainObject(candidate.idleReturn) || !hasOnlyKeys(candidate.idleReturn, ["version", "lastSettledAt", "totalProgress"]) || candidate.idleReturn.version !== IDLE_RETURN_VERSION || (candidate.idleReturn.lastSettledAt !== null && !isTimestamp(candidate.idleReturn.lastSettledAt)) || !isTimestamp(candidate.idleReturn.totalProgress)) return false;
+@@ -287,6 +377,7 @@ function validCampaign(value) {
+   if (!validWardenProgress(candidate, candidate.wardenProgress)) return false;
+   if (!validStoryProgress(candidate, candidate.storyProgress)) return false;
+   if (!validOwnedEquipmentIds(candidate, candidate.ownedEquipmentIds)) return false;
++  if (!validUnlockedCompanionSlots(candidate)) return false;
+   return validCompanionFormation(candidate, candidate.companionFormation);
+ }
+ function requireCampaign(campaign) { if (!validCampaign(campaign)) fail("Invalid defense campaign."); }
+@@ -301,6 +392,7 @@ export function createCampaign({ campaignId, resetEpoch = 0 } = {}) {
+     wardenProgress: initialWardenProgress(), ownedEquipmentIds: [], companionFormation: {},
+     stageCarryOver: initialStageCarryOver(),
+     storyProgress: initialStoryProgress(),
++    unlockedCompanionSlots: 0,
+   };
+ }
+ export function startRun(campaign, stageId = STAGES[campaign?.unlockedStageIndex]?.id) {
+@@ -500,7 +592,14 @@ export function captureElite(campaign, eliteId, prototype) {
+ }
+ export function setCompanionLoadout(campaign, prototypeIds) {
+   requireCampaign(campaign);
+-  if (!validIds(prototypeIds) || prototypeIds.length > MAX_LOADOUT_SIZE || !prototypeIds.every((prototype) => campaign.companionCollection.some((record) => record.prototype === prototype))) fail("Loadout must contain up to three owned canonical companions.");
++  /**
++   * MUTATION-TIME bound (spec §3): the DERIVED per-campaign capacity, not the literal ceiling. The
++   * campaign has already passed `requireCampaign` on the line above, so its `resolvedIds` and
++   * unlocked-slot count are trusted and the resolver is safe to call here — which is exactly why
++   * load-time validation must not use it.
++   */
++  const capacity = companionCapacityForCampaign(campaign);
++  if (!validIds(prototypeIds) || prototypeIds.length > capacity || !prototypeIds.every((prototype) => campaign.companionCollection.some((record) => record.prototype === prototype))) fail(`Loadout must contain up to ${capacity} owned canonical companions.`);
+   const next = copyCampaign(campaign);
+   next.companionLoadout.prototypeIds = [...prototypeIds].sort();
+   next.companionFormation = Object.fromEntries(Object.entries(next.companionFormation).filter(([prototype]) => prototypeIds.includes(prototype)));
+@@ -573,6 +672,26 @@ export function purchaseEquipmentTier(campaign, ownerId, slot) {
+   if (boundFragmentSpent(next) > boundFragmentEarned(next)) fail("Not enough Bound Fragment.");
+   return next;
+ }
++/**
++ * Unlocks the next legion slot (4th..10th), following `purchaseEquipmentTier`'s pattern exactly:
++ * validate the campaign, reject the terminal case, mutate a copy, then assert the Bound Fragment
++ * budget on the RESULT and fail if it overdraws. Checking the budget post-mutation is what makes the
++ * shared equipment/slot budget honest — `boundFragmentSpent(next)` sums both spends, so a slot cannot
++ * be bought with fragments already committed to equipment tiers.
++ *
++ * Requires BOTH gates (spec §3): the stage-clear count and the payment. Level alone is insufficient.
++ */
++export function purchaseCompanionSlot(campaign) {
++  requireCampaign(campaign);
++  const unlocked = companionSlotsUnlocked(campaign);
++  const entry = companionSlotUnlockFor(COMPANION_CAPACITY_BASE + unlocked + 1);
++  if (!entry) fail("Legion capacity is already at maximum.");
++  if (campaign.resolvedIds.length < entry.requiresStageClears) fail(`Slot ${entry.slot} unlocks at ${entry.requiresStageClears} cleared stages.`);
++  const next = copyCampaign(campaign);
++  next.unlockedCompanionSlots = unlocked + 1;
++  if (boundFragmentSpent(next) > boundFragmentEarned(next)) fail("Not enough Bound Fragment.");
++  return next;
++}
+ 
+ export function serializeCampaign(campaign) {
+   requireCampaign(campaign);
+diff --git a/defense-catalog.js b/defense-catalog.js
+index 1bdceb46..777a481f 100644
+--- a/defense-catalog.js
++++ b/defense-catalog.js
+@@ -58,6 +58,95 @@ export const COMBAT_TARGETING = freeze({
+   elevationTolerance: 700,
+ });
+ 
++/**
++ * Aim-biased target selection (core-loop-legion-spec.md §5). An optional player aim vector WEIGHTS
++ * candidate selection instead of replacing it:
++ *
++ *   score(enemy) = distance^2 * (1 + AIM_BIAS * (1 - cos t) / 2)
++ *
++ * where t is the angle between the aim vector and the vector to the enemy. At AIM_BIAS 3.0 an enemy
++ * directly behind the commander must be ~2x closer to win over one being aimed at. With no aim
++ * vector present the weight is exactly 1, so the score reduces to `distance^2` and selection is
++ * bit-identical to the pre-cycle-9 nearest-enemy behavior (ties still broken by id).
++ *
++ * Expressed in basis points because the comparison itself is done in scaled INTEGER arithmetic —
++ * float scores would make ordering engine-dependent, which a deterministic sim cannot accept.
++ */
++export const AIM_BIAS_BP = 30000; // 3.0 x 10000
++/** Fixed-point scale shared by aim/analog/facing vectors. Integer millis at magnitude 1000. */
++export const AIM_VECTOR_SCALE = 1000;
++
++/**
++ * Extraction: corpse -> channel -> companion (core-loop-legion-spec.md §2).
++ * Ported from the deferred `engineering/extraction-system.js` design. The timing values are the
++ * deferred module's own and are internally consistent at 60 Hz, so they carry over unchanged.
++ */
++export const EXTRACTION = freeze({
++  /** Corpse persists 10 s. */
++  corpseDurationTicks: TICK_RATE * 10,
++  /** Channel takes 2 s of continuous proximity. */
++  channelTicks: TICK_RATE * 2,
++  /** World units; the commander must stay inside this radius or the channel BREAKS (never pauses). */
++  range: 1200,
++  /** Hard cap on live corpses; oldest is evicted first (spec §6 tick-cost bound). */
++  corpseCap: 12,
++});
++
++/**
++ * Enemy grade -> companion grade. Fixes spec defect D2: the deferred module declared ALL enemy
++ * types extractable, but extraction is midboss-onward, so trash produces no corpse at all. `normal`
++ * is deliberately absent — absence IS the "no corpse" rule, and it also bounds the corpse array.
++ */
++export const EXTRACTION_GRADE_BY_ENEMY = freeze({
++  elite: "BASIC",
++  midboss: "SHADOW",
++  boss: "BOSS",
++});
++
++/** Companion stat inheritance per extracted grade (spec §2 table, retained from the deferred module). */
++export const GRADE_COMPANION_MULTIPLIERS = freeze({
++  BASIC: freeze({ damageBp: 15000, fireTicksBp: 8000, hpInheritBp: 3000, defaultRange: 4000, loyaltyBase: 100 }),
++  SHADOW: freeze({ damageBp: 18000, fireTicksBp: 7500, hpInheritBp: 4000, defaultRange: 4600, loyaltyBase: 120 }),
++  BOSS: freeze({ damageBp: 20000, fireTicksBp: 7000, hpInheritBp: 5000, defaultRange: 5200, loyaltyBase: 150 }),
++});
++
++/**
++ * Legion capacity, dynamic 3 -> 10 (core-loop-legion-spec.md §3).
++ * `COMPANION_CAPACITY_BASE` replaces the *meaning* of campaign-state's MAX_LOADOUT_SIZE;
++ * `COMPANION_CAPACITY_MAX` is the absolute ceiling used by load-time validation.
++ */
++export const COMPANION_CAPACITY_BASE = 3;
++export const COMPANION_CAPACITY_MAX = 10;
++
++/**
++ * The 4th..10th slot unlock ladder, shipped as DATA on purpose.
++ *
++ * spec §3 flags an UNRESOLVED budget conflict and hands it to PM, not to this file: Bound Fragment
++ * earning is `resolvedIds.length`, capped at 10 (campaign-state.js), while the full ladder below
++ * costs 16 cumulative — and equipment tiers already compete for the same currency at 10 per slot
++ * to T5. The ladder as authored is therefore NOT fully affordable, which is a deliberate, recorded
++ * state, not an oversight. Because these numbers are contested and WILL change, the resolver
++ * (`companionCapacityForCampaign`) reads this table and contains no inline thresholds — a PM
++ * decision edits data here and touches no logic anywhere.
++ *
++ * Each slot requires BOTH a stage-clear gate and a Bound Fragment payment; level alone is
++ * insufficient, matching the request (레벨과 특정 조건(비용지불등)에 따라 해금).
++ */
++export const COMPANION_SLOT_UNLOCKS = freeze([
++  freeze({ slot: 4, requiresStageClears: 1, boundFragmentCost: 1 }),
++  freeze({ slot: 5, requiresStageClears: 2, boundFragmentCost: 1 }),
++  freeze({ slot: 6, requiresStageClears: 3, boundFragmentCost: 2 }),
++  freeze({ slot: 7, requiresStageClears: 4, boundFragmentCost: 2 }),
++  freeze({ slot: 8, requiresStageClears: 6, boundFragmentCost: 3 }),
++  freeze({ slot: 9, requiresStageClears: 8, boundFragmentCost: 3 }),
++  freeze({ slot: 10, requiresStageClears: 10, boundFragmentCost: 4 }),
++]);
++
++/** Ladder row for one slot number, or null when that slot is not unlockable. */
++export function companionSlotUnlockFor(slot) {
++  return COMPANION_SLOT_UNLOCKS.find((entry) => entry.slot === slot) || null;
++}
++
+ /** Body-vs-body and body-vs-terrain collision limits shared by placement and movement. */
+ export const COLLISION = freeze({
+   /** Elevation rise a body can walk up in one tick; anything steeper blocks like a wall. */
+@@ -326,6 +415,19 @@ export const SKILLS = freeze({
+   "grave-pulse": { id: "grave-pulse", name: "Echo Pulse", role: "active", kind: "active", damage: 650, cooldown: 240, radius: 3000, motion: "critical", vfx: "grave-pulse" },
+   "void-aegis": { id: "void-aegis", name: "Zenith Aegis", role: "active", kind: "active", damage: 0, cooldown: 300, radius: 0, integrity: 50, motion: "defence", vfx: "void-aegis" },
+   "shadow-step": { id: "shadow-step", name: "Dusk Step", role: "active", kind: "active", damage: 900, cooldown: 210, radius: 4500, motion: "avoid", vfx: "shadow-step" },
++  // --- aoe-burst (광역 파괴) --------------------------------------------
++  // Authored in design/skill-and-growth-spec.md §2.2 as the answer to
++  // SURGE/BIGWAVE density ("근접 처치율 2.7/s로는 밀도 60을 감당할 수 없다"), and
++  // required by master-numeric-contract.md §2 row 2 ("광역기 필요성 발생"). Both
++  // are 원형 360°, which orderedTargets() already resolves natively.
++  //
++  // `regents-verdict` is the BIGWAVE payoff: damage is `min(targets, targetCap)
++  // * damagePerTarget`, so it is worth 400 against one enemy and 4800 against
++  // twelve. Density IS the damage — that is what makes one cast resolve a wave.
++  // `damage: 0` keeps skillRankDamage()'s base term at zero so rank scaling
++  // applies to damagePerTarget alone (castSkill()).
++  "ash-nova": { id: "ash-nova", name: "Ash Nova", role: "active", kind: "active", category: "aoe-burst", damage: 1400, cooldown: 480, radius: 3600, motion: "critical", vfx: "ash-nova" },
++  "regents-verdict": { id: "regents-verdict", name: "Regent's Verdict", role: "active", kind: "active", category: "aoe-burst", damage: 0, damagePerTarget: 400, targetCap: 12, cooldown: 900, radius: 5000, motion: "critical", vfx: "regents-verdict" },
+   "eclipse-edge": { id: "eclipse-edge", name: "Dusk Edge", role: "passive", kind: "passive", basicDamage: 180 },
+   "soul-magnet": { id: "soul-magnet", name: "Echo Magnet", role: "passive", kind: "passive", pickupRange: 1500 },
+   "ward-binder": { id: "ward-binder", name: "Zenith Binder", role: "passive", kind: "passive", maxIntegrity: 120 },
+diff --git a/defense-run-simulation.js b/defense-run-simulation.js
+index 51a3a6ff..73504e49 100644
+--- a/defense-run-simulation.js
++++ b/defense-run-simulation.js
+@@ -10,7 +10,9 @@ import {
+   MAX_SKILL_RANK, SKILL_RANK_COOLDOWN_FLOOR, SKILL_RANK_COOLDOWN_STEP, SKILL_RANK_DAMAGE_STEP,
+   SKILL_RANK_PASSIVE_SHARE,
+   GATE, ITEMS, MEASUREMENT_PROFILES, OCTANT_VECTORS, REWARDS, SKILLS, STAGE_BY_ID, STAGE_ITEM_IDS,
+-  STAGE_REWARD_IDS, TARGET_PRIORITY, TICK_RATE, XP_GROWTH
++  STAGE_REWARD_IDS, TARGET_PRIORITY, TICK_RATE, XP_GROWTH,
++  AIM_BIAS_BP, AIM_VECTOR_SCALE, COMPANION_CAPACITY_BASE, EXTRACTION, EXTRACTION_GRADE_BY_ENEMY,
++  GRADE_COMPANION_MULTIPLIERS,
+ } from "./defense-catalog.js";
+ import {
+   BACK_ROW_SYNERGY_DAMAGE_BONUS, BOSS_RALLY_COOLDOWN_REDUCTION, COMPANION_ROLES,
+@@ -43,7 +45,31 @@ const stageFor = (stageId) => {
+   if (!stage) throw new RangeError(`Unknown defense stage: ${stageId}`);
+   return stage;
+ };
+-const validLoadout = (loadout) => [...new Set((Array.isArray(loadout) ? loadout : []).filter((id) => COMPANIONS[id]))].sort().slice(0, 3);
++/**
++ * Deduplicated, deterministically ordered loadout, clamped to `capacity`.
++ *
++ * The clamp bound was a literal 3 before cycle 9, which silently truncated at RUN CREATION: a
++ * campaign carrying more than three deployed companions entered the run with exactly three, no error
++ * and no event, defeating every downstream capacity check. `COMPANIONS` has nine prototypes, so that
++ * was reachable, not theoretical. Only the bound changed — the dedup-then-sort is untouched and
++ * remains load-bearing for determinism, so a base-3 campaign resolves the identical ordered triple.
++ */
++const validLoadout = (loadout, capacity = COMPANION_CAPACITY_BASE) =>
++  [...new Set((Array.isArray(loadout) ? loadout : []).filter((id) => COMPANIONS[id]))].sort().slice(0, capacity);
++/**
++ * A movement/aim vector in the integer-millis contract shared with `OCTANT_VECTORS` and
++ * `FACING_SCALE`: integer axes in [-1000, 1000] with magnitude <= 1000.
++ *
++ * Magnitude is tested as `x*x + y*y > 1000*1000` — an exact integer comparison, never a `hypot`
++ * float. Over-magnitude input is REJECTED rather than clamped: clamping requires a scaling divide,
++ * which reintroduces the float the contract exists to exclude, and the client is required to
++ * quantize before sending. Integers in, `Math.trunc`, integers out.
++ */
++const validVectorMillis = (vector) => vector !== null && typeof vector === "object" && !Array.isArray(vector)
++  && Number.isInteger(vector.x) && Number.isInteger(vector.y)
++  && vector.x >= -AIM_VECTOR_SCALE && vector.x <= AIM_VECTOR_SCALE
++  && vector.y >= -AIM_VECTOR_SCALE && vector.y <= AIM_VECTOR_SCALE
++  && vector.x * vector.x + vector.y * vector.y <= AIM_VECTOR_SCALE * AIM_VECTOR_SCALE;
+ const nextId = (run, prefix) => `${prefix}-${++run.nextId}`;
+ const actor = (id, kind, x, y, hp, maxHp, extra = {}) => ({ id, kind, x, y, elevation: 0, hp, maxHp, ...extra });
+ const sortedActors = (entries) => [...entries].sort((left, right) => left.id.localeCompare(right.id));
+@@ -618,12 +644,13 @@ function playerSideTarget(run, enemy) {
+   if (distanceSquared(enemy, nearestFront) <= distanceSquared(enemy, run.commander)) return nearestFront;
+   return run.commander;
+ }
+-/** Resolves a loadout into deterministic stance position-rank order, capped at 3.
++/** Resolves a loadout into deterministic stance position-rank order, capped at `capacity`
++ * (COMPANION_CAPACITY_BASE when the caller supplies none, i.e. the pre-cycle-9 bound of 3).
+  * Saved FRONT intent ranks first, unassigned companions retain the deterministic companionId
+  * fallback, and saved BACK intent ranks last. The active stance still owns the live FRONT/BACK
+  * count through stanceSlotForIndex(); this map only chooses which companion occupies each rank. */
+-function resolveFormation(companionLoadout, formation = {}) {
+-  return orderCompanionsByFormationIntent(validLoadout(companionLoadout), formation);
++function resolveFormation(companionLoadout, formation = {}, capacity = COMPANION_CAPACITY_BASE) {
++  return orderCompanionsByFormationIntent(validLoadout(companionLoadout, capacity), formation);
+ }
+ 
+ /**
+@@ -644,6 +671,7 @@ function addCompanion(run, companionId, { equipment = {} } = {}) {
+   if (run.measurementProfile) return;
+   const data = COMPANIONS[companionId];
+   if (!data || run.companions.some((entry) => entry.companionId === companionId)) return;
++  if (!companionSlotAvailable(run)) return;
+   const runtime = deriveCompanionRuntimeStats(companionId, { equipment });
+   const rpgActive = Boolean(run.rpgActive);
+   const wardenRuntime = run.wardenState?.runtime;
+@@ -666,6 +694,256 @@ function addCompanion(run, companionId, { equipment = {} } = {}) {
+   run.companions.push(companion);
+ }
+ 
++/**
++ * Live legion capacity for this run. `run.companionCapacity` is conditionally present — absent means
++ * the base 3, so an untouched run serialises exactly as before (see `getRunSnapshot`).
++ */
++function companionCapacityFor(run) {
++  return run.companionCapacity ?? COMPANION_CAPACITY_BASE;
++}
++
++/**
++ * Run-time capacity gate (spec §3, fixes defect D3). Before cycle 9, `addCompanion` pushed to
++ * `run.companions` with NO length check at all, so a 4th+ companion could already be added mid-run
++ * regardless of the campaign-side MAX_LOADOUT_SIZE. This is the third of three deliberately
++ * different checkpoints: load time validates against the literal ceiling, mutation time against the
++ * derived unlocked capacity, and run time (here) against this run's own resolved capacity.
++ */
++function companionSlotAvailable(run) {
++  return run.companions.length < companionCapacityFor(run);
++}
++
++/**
++ * Free slot for an IN-RUN corpse extraction, which is stricter than `companionSlotAvailable`.
++ *
++ * One slot is reserved for the authored elite extraction (`EXTRACT_ELITE` -> `run.stage.eliteCompanion`)
++ * for as long as that objective is unresolved. Without the reservation, discretionary corpse
++ * extraction could consume the last slot and permanently block a GUARANTEED stage reward — the
++ * authored elite is part of the objective chain and the stage-clear contract, while a corpse is an
++ * opportunistic pickup, so the scripted reward outranks the optional one.
++ *
++ * This resolves a collision the spec does not address: §2 defines corpse extraction and §3 defines
++ * capacity, but neither says what happens when the two compete for the final slot. Flagged in the
++ * hand-off rather than silently picking a winner.
++ *
++ * Consequence, and it is the intended shape of the feature: at base capacity 3 a full 3-companion
++ * loadout leaves NO room for corpse extraction, and a 2-companion loadout leaves none either once
++ * the elite slot is reserved. In-run extraction becomes available exactly as the unlock ladder raises
++ * capacity — which is what makes buying slots mean something.
++ */
++function extractionSlotAvailable(run) {
++  const authoredReserve = run.extracted || run.extractionProgress.failed ? 0 : 1;
++  return run.companions.length + authoredReserve < companionCapacityFor(run);
++}
++
++/**
++ * Enemy -> extractable grade, or null when the enemy leaves no corpse (spec §2, fixes defect D2).
++ *
++ * The spec is written in the deferred module's vocabulary (`kind === "midboss"`), but the live sim
++ * does not carry grade in `kind`: `actor()` puts the enemy *type* there ("grunt", "guardian", ...),
++ * and grade lives in the `elite` / `midboss` booleans and the "boss" class. This maps the live
++ * representation onto the spec's four grades. `normal` is the absent case — no corpse at all, which
++ * is what bounds the corpse array.
++ *
++ * Order matters: a boss is checked first, then midboss, then elite, so a body that somehow carried
++ * more than one marker resolves to its strongest grade rather than to whichever test ran first.
++ */
++function extractionGradeFor(enemy) {
++  if (enemy.class === "boss" || enemy.kind === "boss") return EXTRACTION_GRADE_BY_ENEMY.boss;
++  if (enemy.midboss) return EXTRACTION_GRADE_BY_ENEMY.midboss;
++  if (enemy.elite) return EXTRACTION_GRADE_BY_ENEMY.elite;
++  return null;
++}
++
++/**
++ * Creates a corpse from a defeated enemy, or does nothing when that enemy leaves no corpse.
++ *
++ * IDs come from `nextId(run, "corpse")` — the run-scoped, seed-derived primitive that already backs
++ * `spawnEnemy`/`spawnBoss`. This is spec defect D1, which was BLOCKING: the deferred module used a
++ * module-level `corpseSeq` counter, so two runs of the same seed in one process produced different
++ * entity IDs and replay identity broke. `Math.random()` is likewise forbidden.
++ *
++ * The cap evicts the OLDEST corpse first (spec §6). Corpses are appended in death order, so index 0
++ * is always the oldest and a single shift is correct.
++ */
++function createCorpse(run, enemy) {
++  const grade = extractionGradeFor(enemy);
++  if (!grade) return null;
++  if (!run.corpses) run.corpses = [];
++  const corpse = actor(nextId(run, "corpse"), "corpse", enemy.x, enemy.y, 1, 1, {
++    grade,
++    sourceEnemyId: enemy.id,
++    sourceKind: enemy.kind,
++    elevation: enemy.elevation || 0,
++    createdTick: run.tick,
++    expiryTick: run.tick + EXTRACTION.corpseDurationTicks,
++    remainingTicks: EXTRACTION.corpseDurationTicks,
++    extractable: true,
++    sourceDamage: enemy.damage || 0,
++    sourceMaxHp: enemy.maxHp || enemy.hp || 1,
++    sourceAttackTicks: enemy.attackTicks || 60,
++    sourceRadius: enemy.radius || 300,
++    sourceProjectileRange: enemy.projectileRange || 0,
++  });
++  placeOnTerrain(run, corpse, corpse);
++  while (run.corpses.length >= EXTRACTION.corpseCap) {
++    const evicted = run.corpses.shift();
++    emit(run, "CORPSE_EXPIRED", { entityId: evicted.id, grade: evicted.grade, reason: "CAPACITY_EVICTED" });
++  }
++  run.corpses.push(corpse);
++  emit(run, "CORPSE_CREATED", {
++    entityId: corpse.id,
++    grade,
++    sourceEnemyId: enemy.id,
++    expiryTick: corpse.expiryTick,
++    extractionUnlocked: Boolean(run.extractionUnlocked),
++  });
++  return corpse;
++}
++
++/**
++ * Expires timed-out corpses and refreshes `remainingTicks` on the survivors.
++ *
++ * Drops the array entirely once empty so the conditional-presence rule in `getRunSnapshot` keeps
++ * holding for the rest of the run — leaving an empty `[]` behind would serialise a new key forever
++ * after the first corpse and break byte-identity for every later tick.
++ */
++function updateCorpses(run) {
++  if (!run.corpses?.length) return;
++  const survivors = [];
++  for (const corpse of run.corpses) {
++    if (run.tick >= corpse.expiryTick || !corpse.extractable) {
++      emit(run, "CORPSE_EXPIRED", {
++        entityId: corpse.id,
++        grade: corpse.grade,
++        reason: corpse.extractable ? "TIMED_OUT" : "EXTRACTED",
++      });
++      continue;
++    }
++    corpse.remainingTicks = corpse.expiryTick - run.tick;
++    survivors.push(corpse);
++  }
++  if (survivors.length) run.corpses = survivors;
++  else delete run.corpses;
++}
++
++/** Nearest extractable corpse in range of the commander, ties broken by id. */
++function nearestExtractableCorpse(run) {
++  const maxSquared = EXTRACTION.range ** 2;
++  let best = null;
++  for (const corpse of run.corpses || []) {
++    if (!corpse.extractable) continue;
++    const distance = distanceSquared(corpse, run.commander);
++    if (distance > maxSquared) continue;
++    if (!best || distance < best.distance
++      || (distance === best.distance && corpse.id.localeCompare(best.corpse.id) < 0)) {
++      best = { corpse, distance };
++    }
++  }
++  return best?.corpse || null;
++}
++
++/**
++ * Converts a completed channel into a live companion.
++ *
++ * IDs use `nextId(run, "extracted")` (spec §2, defect D1) rather than the deferred module's
++ * `companionSeq`. Stats inherit from the corpse through `GRADE_COMPANION_MULTIPLIERS`, expressed in
++ * basis points so the derivation is integer arithmetic end to end.
++ *
++ * This deliberately does NOT route through `addCompanion`: that function resolves a catalog
++ * prototype from `COMPANIONS`, and an extracted body has no prototype — its stats come from the
++ * enemy it used to be. The capacity gate is applied here explicitly so both entry points are gated.
++ */
++function addExtractedCompanion(run, corpse) {
++  if (!extractionSlotAvailable(run)) return null;
++  const multipliers = GRADE_COMPANION_MULTIPLIERS[corpse.grade] || GRADE_COMPANION_MULTIPLIERS.BASIC;
++  const maxHp = Math.max(1, Math.trunc(corpse.sourceMaxHp * multipliers.hpInheritBp / 10000));
++  const index = run.companions.length;
++  const offsets = activeStanceConfig(run).offsets;
++  const offset = offsets[Math.min(index, offsets.length - 1)];
++  const companion = actor(nextId(run, "extracted"), "companion", run.commander.x + offset.x, run.commander.y + offset.y, maxHp, maxHp, {
++    companionId: null,
++    extractedGrade: corpse.grade,
++    sourceEnemyId: corpse.sourceEnemyId,
++    cooldown: 0,
++    damage: Math.max(1, Math.trunc(corpse.sourceDamage * multipliers.damageBp / 10000)),
++    fireTicks: Math.max(12, Math.trunc(corpse.sourceAttackTicks * multipliers.fireTicksBp / 10000)),
++    range: corpse.sourceProjectileRange > 0 ? corpse.sourceProjectileRange : multipliers.defaultRange,
++    radius: 300,
++    loyalty: multipliers.loyaltyBase,
++    slot: stanceSlotForIndex(run, index),
++    status: "ACTIVE",
++    role: null,
++    eliteDamageBonus: 0,
++    aiState: "FOLLOW",
++    aiTargetId: null,
++    combatTargetId: null,
++  });
++  placeOnTerrain(run, companion, companion);
++  run.companions.push(companion);
++  return companion;
++}
++
++/**
++ * Drives the extraction channel from commander proximity (spec §2).
++ *
++ * The channel BREAKS rather than pauses: leaving range deletes the entry and destroys partial
++ * progress, so a contested extraction is a real decision. Re-entering range starts a new channel at
++ * elapsed 1. Only one channel exists at a time (spec §6 scopes the distance test to the commander),
++ * so this is a single object rather than the deferred module's `Map` — a Map would not survive the
++ * JSON snapshot round-trip anyway.
++ *
++ * Gated on `run.extractionUnlocked`: before the first midboss dies, corpses exist but nothing can be
++ * channelled from them.
++ */
++function updateExtractionChannel(run) {
++  if (!run.extractionUnlocked) {
++    if (run.extractionChannel) delete run.extractionChannel;
++    return;
++  }
++  const active = run.extractionChannel
++    ? (run.corpses || []).find((corpse) => corpse.id === run.extractionChannel.corpseId && corpse.extractable) || null
++    : null;
++  if (run.extractionChannel && (!active || distanceSquared(active, run.commander) > EXTRACTION.range ** 2)) {
++    emit(run, "EXTRACTION_CHANNEL_BROKEN", {
++      entityId: run.extractionChannel.corpseId,
++      elapsedTicks: run.extractionChannel.elapsedTicks,
++      reason: active ? "OUT_OF_RANGE" : "CORPSE_LOST",
++    });
++    delete run.extractionChannel;
++  }
++  const target = active && run.extractionChannel ? active : nearestExtractableCorpse(run);
++  if (!target) return;
++  if (!run.extractionChannel) {
++    if (!extractionSlotAvailable(run)) return;
++    run.extractionChannel = { corpseId: target.id, elapsedTicks: 0, requiredTicks: EXTRACTION.channelTicks };
++    emit(run, "EXTRACTION_CHANNEL_STARTED", {
++      entityId: target.id,
++      grade: target.grade,
++      requiredTicks: EXTRACTION.channelTicks,
++    });
++  }
++  run.extractionChannel.elapsedTicks += 1;
++  if (run.extractionChannel.elapsedTicks < EXTRACTION.channelTicks) return;
++  const companion = addExtractedCompanion(run, target);
++  delete run.extractionChannel;
++  if (!companion) return;
++  target.extractable = false;
++  run.progress.extracted += 1;
++  emit(run, "CORPSE_EXTRACTED", {
++    entityId: target.id,
++    grade: target.grade,
++    companionEntityId: companion.id,
++    sourceEnemyId: target.sourceEnemyId,
++    damage: companion.damage,
++    maxHp: companion.maxHp,
++    range: companion.range,
++    legionSize: run.companions.length,
++    legionCapacity: companionCapacityFor(run),
++    cue: eventCue("eliteExtracted"),
++  });
++}
++
+ function applyOwnedRewards(run, rewardIds) {
+   if (run.measurementProfile) return;
+   const owned = [...new Set((Array.isArray(rewardIds) ? rewardIds : []).filter((id) => REWARDS[id]))].sort();
+@@ -1450,24 +1728,79 @@ function damageEnemyBody(run, target, damage) {
+ const withinStrikeHeight = (source, other) =>
+   Math.abs((other.elevation || 0) - (source.elevation || 0)) <= COMBAT_TARGETING.elevationTolerance;
+ 
+-/** Nearest living enemy inside `range` that is also within strike height — direction only, no lock. */
++/**
++ * The commander's player-supplied aim vector, or null. Deliberately narrow: aim biases ONLY the
++ * commander's own target pick. `nearestEnemy` is also called for companion targeting and by
++ * `playerAttack` for every companion, and leaking the bias into those paths would change selection
++ * on runs that must stay bit-identical.
++ */
++function commanderAim(run, source) {
++  if (source !== run.commander) return null;
++  const aim = run.commander.aim;
++  if (!aim) return null;
++  return aim.x === 0 && aim.y === 0 ? null : aim;
++}
++
++/**
++ * Aim weight in basis points for one candidate direction (core-loop-legion-spec.md §5):
++ *
++ *   weight = 10000 * (1 + AIM_BIAS * (1 - cos t) / 2)
++ *
++ * cos t is computed as a basis-point integer from the integer dot product over the two integer
++ * magnitudes, so the whole comparison stays in scaled integer arithmetic. `Math.sqrt` is used
++ * rather than `Math.hypot` because sqrt is exactly-rounded per IEEE-754 (hypot is not required to
++ * be), and its result is truncated to an integer immediately — so the magnitudes are identical on
++ * every conforming engine.
++ *
++ * Returns 10000 (identity) when either vector has zero length, so a degenerate case can never
++ * perturb selection.
++ */
++function aimWeightBp(aim, dx, dy) {
++  const aimMagnitude = Math.trunc(Math.sqrt(aim.x * aim.x + aim.y * aim.y));
++  const toEnemyMagnitude = Math.trunc(Math.sqrt(dx * dx + dy * dy));
++  if (aimMagnitude <= 0 || toEnemyMagnitude <= 0) return 10000;
++  const dot = aim.x * dx + aim.y * dy;
++  // cos t in basis points, clamped for the truncation slack in the magnitudes above.
++  const cosBp = clamp(Math.trunc(dot * 10000 / aimMagnitude / toEnemyMagnitude), -10000, 10000);
++  return 10000 + Math.trunc(AIM_BIAS_BP * (10000 - cosBp) / 20000);
++}
++
++/**
++ * Nearest living enemy inside `range` that is also within strike height — direction only, no lock.
++ *
++ * With no commander aim vector this is the pre-cycle-9 function unchanged: it compares raw
++ * `distanceSquared` and breaks ties by id. When the commander has an aim vector, candidates are
++ * compared by the aim-weighted score instead, which is why the weighted branch is kept strictly
++ * separate rather than folded in as a `* 1` multiply — a uniform multiply would change the
++ * magnitudes being compared and could reorder equal-distance candidates.
++ */
+ function nearestEnemy(run, source, range) {
+   const maxSquared = getEffectiveRange(run, range) ** 2;
++  const aim = commanderAim(run, source);
+   let best = null;
+   for (const enemy of run.enemies) {
+     if (enemy.hp <= 0) continue;
+     if (!withinStrikeHeight(source, enemy)) continue;
+     const distance = distanceSquared(enemy, source);
+     if (distance > maxSquared) continue;
+-    if (!best || distance < best.distance
+-      || (distance === best.distance && enemy.id.localeCompare(best.enemy.id) < 0)) {
+-      best = { enemy, distance };
++    const score = aim
++      ? Math.trunc(distance * aimWeightBp(aim, enemy.x - source.x, enemy.y - source.y) / 10000)
++      : distance;
++    if (!best || score < best.score
++      || (score === best.score && enemy.id.localeCompare(best.enemy.id) < 0)) {
++      best = { enemy, distance, score };
+     }
+   }
+   return best?.enemy || null;
+ }
+ 
+-/** Unit aim vector: toward the nearest body in range, else the direction the attacker faces. */
++/**
++ * Unit aim vector: toward the nearest body in range, else the player's own aim, else the direction
++ * the attacker faces. The nearest -> facing -> (1,0) chain is preserved exactly as-is; the player
++ * aim is inserted only as a fallback ahead of `facing`, so that aiming at empty space points the
++ * attack where the stick points instead of where the last movement happened. Selection bias itself
++ * lives in `nearestEnemy`, per spec §5 ("aim biases selection, never replaces it").
++ */
+ function aimDirection(run, source, range) {
+   const near = nearestEnemy(run, source, range);
+   if (near) {
+@@ -1476,6 +1809,11 @@ function aimDirection(run, source, range) {
+     const length = Math.hypot(dx, dy);
+     if (length > 0) return { x: dx / length, y: dy / length, aimId: near.id };
+   }
++  const aim = commanderAim(run, source);
++  if (aim) {
++    const length = Math.hypot(aim.x, aim.y);
++    if (length > 0) return { x: aim.x / length, y: aim.y / length, aimId: null };
++  }
+   const facing = facingOf(source);
+   if (facing) return { x: facing.x, y: facing.y, aimId: near?.id || null };
+   return near ? { x: 1, y: 0, aimId: near.id } : null;
+@@ -1884,6 +2222,25 @@ function skillRankDamage(run, skill) {
+   const rank = run.commander.skillRanks?.[skill.id] ?? 1;
+   return Math.round((skill.damage || 0) * (1 + SKILL_RANK_DAMAGE_STEP * (rank - 1)));
+ }
++/**
++ * Base damage for ONE cast, before per-target multipliers.
++ *
++ * Density-scaled AoE (`damagePerTarget`, design/skill-and-growth-spec.md §2.2
++ * `regents-verdict`): every target in the radius takes
++ * `min(targetsHit, targetCap) * damagePerTarget`, rank-scaled. The count is
++ * resolved ONCE per cast and applied uniformly, so the result cannot depend on
++ * the iteration order of `orderedTargets()` — a cast that hits 12 bodies deals
++ * the same number to each of them regardless of which id sorts first.
++ *
++ * Skills without `damagePerTarget` are untouched and keep `skillRankDamage()`
++ * exactly, so every pre-existing skill resolves byte-identically.
++ */
++function skillCastBaseDamage(run, skill, targetCount) {
++  if (!skill.damagePerTarget) return skillRankDamage(run, skill);
++  const rank = run.commander.skillRanks?.[skill.id] ?? 1;
++  const counted = Math.min(targetCount, skill.targetCap ?? targetCount);
++  return Math.round(skill.damagePerTarget * counted * (1 + SKILL_RANK_DAMAGE_STEP * (rank - 1)));
++}
+ /** Active-skill cooldown at its current rank: -6% of base per rank beyond the first, floored at 70%. */
+ function skillRankCooldown(run, skill, baseCooldownTicks) {
+   const rank = run.commander.skillRanks?.[skill.id] ?? 1;
+@@ -1901,9 +2258,10 @@ function castSkill(run, skillId) {
+   if (skill.integrity) run.commander.integrity = clamp(run.commander.integrity + skill.integrity, 0, run.commander.maxIntegrity);
+   if (skill.radius) {
+     const firstStrikeFactor = targets.length ? consumeFirstStrikeFactor(run) : 1;
++    const castBaseDamage = skillCastBaseDamage(run, skill, targets.length);
+     targets.forEach((entry) => {
+       const healthBefore = entry.hp;
+-      const hit = resolveCritical(run, "skill", Math.round(skillRankDamage(run, skill) * commanderDamageMultiplier(run, entry, { skill: true, firstStrikeFactor })));
++      const hit = resolveCritical(run, "skill", Math.round(castBaseDamage * commanderDamageMultiplier(run, entry, { skill: true, firstStrikeFactor })));
+       entry.hp -= hit.damage;
+       const healthAfter = entry.hp;
+       entry.lastCastInstanceId = castInstanceId;
+@@ -2106,10 +2464,23 @@ function processInput(run, input) {
+   if (["MOVE", "ATTACK", "SKILL_CAST", "SKILL_SELECTED", "GROWTH_OFFER_SELECTED", "EXTRACT_ELITE"].includes(input.type)) run.commander.engaged = true;
+   if (input.type === "MOVE") {
+     const direction = typeof input.payload === "string" ? input.payload : input.payload?.octant;
+-    if (OCTANT_VECTORS[direction]) {
++    const analog = typeof input.payload === "string" ? undefined : input.payload?.analog;
++    const aim = typeof input.payload === "string" ? undefined : input.payload?.aim;
++    if (!OCTANT_VECTORS[direction]) rejectionReason = "INVALID_DIRECTION";
++    else if (analog !== undefined && analog !== null && !validVectorMillis(analog)) rejectionReason = "INVALID_DIRECTION";
++    else if (aim !== undefined && aim !== null && !validVectorMillis(aim)) rejectionReason = "INVALID_DIRECTION";
++    else {
+       run.commander.move = direction;
++      // Conditional presence (fixes defect D4). `getRunSnapshot` serialises the WHOLE commander
++      // object, so an always-present field would enter every digest. These keys are created only
++      // when a payload actually carries them, and deleted when a later octant-only payload arrives,
++      // so keyboard/button/legacy-string input leaves the serialised commander byte-identical.
++      if (analog) run.commander.moveAnalog = { x: analog.x, y: analog.y };
++      else delete run.commander.moveAnalog;
++      if (aim) run.commander.aim = { x: aim.x, y: aim.y };
++      else delete run.commander.aim;
+       accepted = true;
+-    } else rejectionReason = "INVALID_DIRECTION";
++    }
+   } else if (input.type === "ATTACK") {
+     // Inputs are processed before the per-tick cooldown decrement. Allowing one remaining
+     // tick keeps the manual verb reachable without racing the automatic-fire loop; the +1
+@@ -2211,6 +2582,31 @@ function resolveDeaths(run) {
+   if (!dead.length) return;
+   run.enemies = run.enemies.filter((entry) => entry.hp > 0);
+   run.progress.defeated += dead.length;
++  /**
++   * Extraction capability unlock (core-loop-legion-spec.md §1). Resolved in its own pass BEFORE any
++   * corpse is created, so the outcome cannot depend on the id-sort order of bodies that died on the
++   * same tick: a midboss and an elite dying together must unlock extraction regardless of which id
++   * sorts first. Once true it never reverts within a run.
++   *
++   * The live sim does not store grade in `kind` (see `extractionGradeFor`), so the spec's
++   * `kind === "midboss"` is the `entry.midboss` boolean here — the flag `spawnEnemy` sets at :722.
++   *
++   * This flag is ORTHOGONAL to `run.objectives.extraction`, which keeps its exact semantics: that
++   * objective is the terminal run-completion elite extraction, and the 7-phase order in
++   * `updateObjectivePhase` is deliberately NOT reordered. Conflating the two would break the stage
++   * contract and the objective-phase tests.
++   */
++  if (!run.extractionUnlocked) {
++    const trigger = dead.find((entry) => entry.midboss);
++    if (trigger) {
++      run.extractionUnlocked = true;
++      emit(run, "EXTRACTION_UNLOCKED", {
++        entityId: trigger.id,
++        midbossId: trigger.midbossId || null,
++        atTick: run.tick,
++      });
++    }
++  }
+   dead.forEach((entry) => {
+     const echo = actor(nextId(run, "pickup"), "pickup", entry.x, entry.y, 1, 1, { kind: "echo", xp: entry.xp, elevation: entry.elevation || 0 });
+     placeOnTerrain(run, echo, echo);
+@@ -2226,6 +2622,9 @@ function resolveDeaths(run) {
+     });
+     killEvent.killEventId = killEvent.eventId;
+     entry.killEventId = killEvent.eventId;
++    // Corpse -> channel -> companion (spec §2). Measurement-profile runs are excluded for the same
++    // reason they skip item drops and `addCompanion`: a G2 balance fixture must not gain a legion.
++    if (!run.measurementProfile) createCorpse(run, entry);
+     if (entry.elite) {
+       const itemId = run.measurementProfile ? null : (STAGE_ITEM_IDS[run.stage.id] || null);
+       if (!run.measurementProfile) {
+@@ -2869,7 +3268,21 @@ function tick(run) {
+       moveDirection = "OBJECTIVE_ROUTE";
+     }
+   } else {
+-    const vector = OCTANT_VECTORS[run.commander.move];
++    /**
++     * Analog is a strict generalization of the octant table, not a parallel code path: both are
++     * integer millis at magnitude 1000, so the truncation math below is IDENTICAL for both and is
++     * reused verbatim. When `moveAnalog` is absent (keyboard, buttons, every legacy/replay input)
++     * this reads `OCTANT_VECTORS[run.commander.move]` exactly as it did before cycle 9.
++     *
++     * NO magnitude floor is applied, deliberately. Spec §4 measured it: `getCommanderSpeed()` carries
++     * exactly one multiplier (occupation `moveMultiplier`, 1.15, an INCREASE), so the minimum
++     * reachable commander speed is COMMANDER.speed = 4100. At 4100 the smallest analog value that
++     * still produces motion is 15 millis, while the client's dead zone is 220 — the dead zone masks
++     * the truncation floor by 14x. A `Math.max(1, ...)` guard would therefore be dead code, and
++     * shipping one would fake motion the player did not ask for. `run.commander.move` stays the
++     * octant string for renderer/event compatibility.
++     */
++    const vector = run.commander.moveAnalog || OCTANT_VECTORS[run.commander.move];
+     moveOnTerrain(run, run.commander, {
+       x: run.commander.x + Math.trunc(vector.x * commanderSpeed / 1000 / TICK_RATE),
+       y: run.commander.y + Math.trunc(vector.y * commanderSpeed / 1000 / TICK_RATE),
+@@ -3026,6 +3439,16 @@ function tick(run) {
+   separateBodies(run);
+ 
+   resolveDeaths(run);
++  /**
++   * Extraction runs immediately after `resolveDeaths` so a corpse created this tick is already a
++   * channel candidate, and BEFORE `collectPickups` so the extraction beat resolves in the same
++   * order as the echo/item pickups dropped by the same deaths.
++   *
++   * `updateCorpses` first: it expires timed-out bodies and drops consumed ones, so the channel never
++   * evaluates a corpse that should already be gone.
++   */
++  updateCorpses(run);
++  updateExtractionChannel(run);
+   processWaveClearRecovery(run);
+   assignCompanionItemClaims(run);
+   collectPickups(run);
+@@ -3164,11 +3587,21 @@ function applyCarryOver(state, carryOver) {
+  * `formation` is the saved per-companion FRONT/BACK intent map. It deterministically chooses
+  * companion position rank at run creation; the active stance still derives the live slot count
+  * from STANCE_CONFIG every tick. See resolveFormation(). */
+-export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rewardIds = [], measurementProfileId = null, wardenProgress = null, wardenEquipment = {}, companionEquipment = {}, formation = {}, extractedSkillRanks = null, carryOver = null, abyssDepth = 0 } = {}) {
++export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rewardIds = [], measurementProfileId = null, wardenProgress = null, wardenEquipment = {}, companionEquipment = {}, formation = {}, extractedSkillRanks = null, carryOver = null, abyssDepth = 0, companionCapacity = null } = {}) {
+   const stage = stageFor(stageId);
+   const stagePlan = stagePlanFor(stage);
+   const unsignedSeed = (seed >>> 0) || 1;
+   const depth = Number.isInteger(abyssDepth) ? clamp(abyssDepth, 0, ABYSS_DEPTH_MAX) : 0;
++  /**
++   * Legion capacity for this run (spec §3). The caller (campaign adapter) resolves the campaign's
++   * unlocked capacity and passes the integer in; the simulation never imports campaign-state, so no
++   * module cycle is created. Clamped to [BASE, MAX] so a tampered or malformed value cannot widen
++   * capacity past the ceiling, and defaults to BASE (3) — which is what keeps every existing caller
++   * and fixture behaving exactly as before.
++   */
++  const resolvedCapacity = Number.isInteger(companionCapacity)
++    ? clamp(companionCapacity, COMPANION_CAPACITY_BASE, Catalog.COMPANION_CAPACITY_MAX)
++    : COMPANION_CAPACITY_BASE;
+   // Only the wave schedule reroutes on depth; identity/surprise/combat rng stay on unsignedSeed so
+   // depth 0 is byte-identical and higher depths just rotate which enemy policies/compositions roll.
+   const waveSeed = depth ? (((unsignedSeed ^ (0x51ed2701 * (depth + 1))) >>> 0) || 1) : unsignedSeed;
+@@ -3213,6 +3646,9 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
+     seed: unsignedSeed,
+     abyssDepth: depth,
+     abyssDepthName: depthPackage?.name || null,
++    // Conditional presence: only stored when capacity was actually raised above the base, so an
++    // untouched run carries no new field and serialises byte-identically (mirrors `abyssDepth`).
++    ...(resolvedCapacity > COMPANION_CAPACITY_BASE ? { companionCapacity: resolvedCapacity } : {}),
+     rng: nextRng,
+     combatRng: rngNext(unsignedSeed ^ 0x9e3779b9),
+     nextId: 0,
+@@ -3368,7 +3804,26 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
+       state.commander.cooldownScale = clamp(state.commander.cooldownScale - runtime.cooldownReduction, 0.4, 1);
+       state.commander.critProfile.chanceBp = clamp(state.commander.critProfile.chanceBp + runtime.critChanceBonusBp, 0, 10000);
+     }
+-    resolveFormation(companionLoadout, formation).forEach((id) => addCompanion(state, id, { equipment: companionEquipment[id] || {} }));
++    /**
++     * Truncation must never be silent (it was, before cycle 9 — see `validLoadout`). A loadout
++     * larger than capacity is a caller bug, so it is surfaced as an event rather than a throw:
++     * `createDefenseRun` is on the browser adapter path, where throwing would turn a recoverable bug
++     * into a black screen at stage start, and the event stream is already what the QA harness reads.
++     * The event fires ONLY when truncation actually happens, so no existing run gains an event.
++     */
++    const orderedLoadout = resolveFormation(companionLoadout, formation, resolvedCapacity);
++    const requestedLoadout = validLoadout(companionLoadout, Catalog.COMPANION_CAPACITY_MAX);
++    if (requestedLoadout.length > orderedLoadout.length) {
++      emit(state, "COMPANION_LOADOUT_TRUNCATED", {
++        stageId: stage.id,
++        requested: requestedLoadout.length,
++        accepted: orderedLoadout.length,
++        capacity: resolvedCapacity,
++        capacitySource: resolvedCapacity > COMPANION_CAPACITY_BASE ? "UNLOCKED_SLOTS" : "BASE",
++        droppedCompanionIds: requestedLoadout.filter((id) => !orderedLoadout.includes(id)),
++      });
++    }
++    orderedLoadout.forEach((id) => addCompanion(state, id, { equipment: companionEquipment[id] || {} }));
+     applyOwnedRewards(state, rewardIds);
+     applyExtractedSkillRanks(state, extractedSkillRanks);
+     applyCarryOver(state, carryOver);
+@@ -3496,6 +3951,21 @@ export function getRunSnapshot(run) {
+     bossName: run.stage.bossName,
+     terminal: run.terminal,
+     ...(run.abyssDepth ? { abyssDepth: run.abyssDepth, abyssDepthName: run.abyssDepthName ?? null } : {}),
++    /**
++     * Cycle-9 conditional-presence block (spec §4 defect D4, §6). Corpses and the channel are
++     * simulation entities and therefore belong in the snapshot, but this function serialises into
++     * `getRunDigest()`, so an always-present key would break depth-0 byte-identity and every stored
++     * replay fixture. Each key appears only once its state actually exists — the same rule
++     * `abyssDepth` uses on the line above.
++     *
++     * `extractionUnlocked` is emitted only while true (never as `false`), `corpses` only while
++     * non-empty (`updateCorpses` deletes the array rather than leaving `[]`), and
++     * `companionCapacity` only when above the base 3.
++     */
++    ...(run.extractionUnlocked ? { extractionUnlocked: true } : {}),
++    ...(run.corpses?.length ? { corpses: sortedActors(run.corpses) } : {}),
++    ...(run.extractionChannel ? { extractionChannel: run.extractionChannel } : {}),
++    ...(run.companionCapacity ? { companionCapacity: run.companionCapacity } : {}),
+     plan: {
+       identity: run.planCommitment.identity,
+       mapPlanId: run.planCommitment.mapPlan.id,
+@@ -3567,4 +4037,9 @@ export {
+   OBJECTIVE_PRESSURE_GRACE_TICKS,
+   BOSS_PRESSURE_GRACE_TICKS,
+   ECHO_RECOVERY_PRESSURE_GRACE_TICKS,
++  AIM_BIAS_BP,
++  AIM_VECTOR_SCALE,
++  COMPANION_CAPACITY_BASE,
++  EXTRACTION,
++  GRADE_COMPANION_MULTIPLIERS,
+ };
+diff --git a/tests/campaign-state-rpg.test.mjs b/tests/campaign-state-rpg.test.mjs
+index ae6d133d..63b88600 100644
+--- a/tests/campaign-state-rpg.test.mjs
++++ b/tests/campaign-state-rpg.test.mjs
+@@ -33,6 +33,13 @@ import {
+   purchaseEquipmentTier,
+   setCompanionFormationSlot,
+   settleIdleReturn,
++  purchaseCompanionSlot,
++  companionCapacityForCampaign,
++  companionSlotsUnlocked,
++  companionSlotUnlockCostFor,
++  COMPANION_CAPACITY_BASE,
++  COMPANION_CAPACITY_MAX,
++  COMPANION_SLOT_UNLOCKS,
+   IDLE_RETURN_INTERVAL_MS,
+ } from "../campaign-state.js";
+ 
+@@ -312,13 +319,45 @@ test("settleIdleReturn SETTLES normally when pressure does not exceed wardLevel
+   assert.ok(settled.campaign.idleReturn.totalProgress > 0);
+ });
+ 
+-test("restoreCampaign migrates all four historical shapes, defaulting missing RPG-era fields", () => {
++test("restoreCampaign migrates all five historical shapes, defaulting missing RPG-era and cycle-9 fields", () => {
+   let campaign = createCampaign({ campaignId: "migrate-shapes", resetEpoch: 7 });
+   campaign = startRun(campaign, "cinder-span");
+   campaign = applyCampaignRunResult(campaign, { stageId: "cinder-span", outcome: "victory" });
+   const current = serializeCampaign(campaign);
+-  // 16 = the 15 pre-story campaign keys plus `storyProgress`.
+-  assert.equal(Object.keys(current).length, 16);
++  /**
++   * The persisted campaign shape is 17 keys. Cycle 9 added the 17th, `unlockedCompanionSlots`
++   * (core-loop-legion-spec.md §3): the contiguous count of purchased legion slots beyond the base 3,
++   * which `companionCapacityForCampaign()` turns into the derived 3..10 capacity. It is a versioned
++   * addition, not a leak — `CURRENT_KEYS` carries it and `migrateCampaign` defaults pre-cycle-9 saves
++   * to 0 (asserted by shape (e) below).
++   *
++   * Asserted as a SORTED KEY SET, not a count, and written out as literals rather than imported from
++   * `CURRENT_KEYS`. A count cannot distinguish an addition from a rename, nor from a simultaneous
++   * drop+add — which is how the 17th key landed here silently. Deriving the expectation from the
++   * schema's own key list would be worse still: the test would validate the code against itself and
++   * a stray `CURRENT_KEYS` entry would certify itself. Same anti-circularity rule the implementation
++   * follows at campaign-state.js:361-370, where load-time validation uses the literal ceiling 10
++   * instead of calling the derived resolver.
++   */
++  assert.deepEqual(Object.keys(current).sort(), [
++    "achievementIds",
++    "attemptsByStage",
++    "campaignId",
++    "companionCollection",
++    "companionFormation",
++    "companionLoadout",
++    "idleReturn",
++    "lastResolution",
++    "ownedEquipmentIds",
++    "resetEpoch",
++    "resolvedIds",
++    "rewardIds",
++    "stageCarryOver",
++    "storyProgress",
++    "unlockedCompanionSlots",
++    "unlockedStageIndex",
++    "wardenProgress",
++  ].sort());
+   assert.ok(current.rewardIds.length > 0);
+   assert.ok(current.achievementIds.length > 0);
+   const expectedMigratedStoryProgress = {
+@@ -331,6 +370,12 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
+     equippedAppearance: { back: "cinder-span-ember-chain" },
+   };
+ 
++  /**
++   * Shapes (a)-(d) all predate cycle 9, so each must also drop `unlockedCompanionSlots` to stay the
++   * shape it claims to be. Before this, they inherited the new key from `current` and quietly became
++   * 9/10/11/12-key hybrids — the documented counts were the only thing still asserting the old
++   * shapes, and they were wrong. Every one of them must migrate the slot count to 0.
++   */
+   // shape (a): oldest 8-key pre-reward shape
+   const shapeA = { ...current };
+   delete shapeA.rewardIds;
+@@ -341,6 +386,7 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
+   delete shapeA.companionFormation;
+   delete shapeA.stageCarryOver;
+   delete shapeA.storyProgress;
++  delete shapeA.unlockedCompanionSlots;
+   assert.equal(Object.keys(shapeA).length, 8);
+   const restoredA = restoreCampaign(shapeA);
+   assert.ok(restoredA);
+@@ -352,6 +398,7 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
+   assert.deepEqual(restoredA.companionFormation, {});
+   assert.deepEqual(restoredA.stageCarryOver, { version: 1, stageId: null, skillRanks: {}, itemIds: [] });
+   assert.deepEqual(restoredA.storyProgress, expectedMigratedStoryProgress);
++  assert.equal(restoredA.unlockedCompanionSlots, 0, "the oldest shape must migrate to zero purchased slots");
+ 
+   // shape (b): 9-key (+idleReturn, no rewards)
+   const shapeB = { ...current };
+@@ -362,12 +409,14 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
+   delete shapeB.companionFormation;
+   delete shapeB.stageCarryOver;
+   delete shapeB.storyProgress;
++  delete shapeB.unlockedCompanionSlots;
+   assert.equal(Object.keys(shapeB).length, 9);
+   const restoredB = restoreCampaign(shapeB);
+   assert.ok(restoredB);
+   assert.deepEqual(restoredB.rewardIds, []);
+   assert.deepEqual(restoredB.idleReturn, current.idleReturn);
+   assert.deepEqual(restoredB.storyProgress, expectedMigratedStoryProgress);
++  assert.equal(restoredB.unlockedCompanionSlots, 0);
+ 
+   // shape (c): 10-key (+rewards, no idleReturn)
+   const shapeC = { ...current };
+@@ -377,12 +426,14 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
+   delete shapeC.companionFormation;
+   delete shapeC.stageCarryOver;
+   delete shapeC.storyProgress;
++  delete shapeC.unlockedCompanionSlots;
+   assert.equal(Object.keys(shapeC).length, 10);
+   const restoredC = restoreCampaign(shapeC);
+   assert.ok(restoredC);
+   assert.deepEqual(restoredC.rewardIds, current.rewardIds);
+   assert.deepEqual(restoredC.idleReturn, { version: 1, lastSettledAt: null, totalProgress: 0 });
+   assert.deepEqual(restoredC.storyProgress, expectedMigratedStoryProgress);
++  assert.equal(restoredC.unlockedCompanionSlots, 0);
+ 
+   // shape (d): 11-key current pre-RPG production shape (rewards+idleReturn, no RPG fields),
+   // WITH non-empty rewardIds/achievementIds — regression: an earlier implementation wiped these.
+@@ -392,6 +443,7 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
+   delete shapeD.companionFormation;
+   delete shapeD.stageCarryOver;
+   delete shapeD.storyProgress;
++  delete shapeD.unlockedCompanionSlots;
+   assert.equal(Object.keys(shapeD).length, 11);
+   const restoredD = restoreCampaign(shapeD);
+   assert.ok(restoredD);
+@@ -401,6 +453,18 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
+   assert.deepEqual(restoredD.ownedEquipmentIds, []);
+   assert.deepEqual(restoredD.companionFormation, {});
+   assert.deepEqual(restoredD.storyProgress, expectedMigratedStoryProgress);
++
++  // shape (e): 16-key pre-cycle-9 shape — everything except `unlockedCompanionSlots`. This is the
++  // real production save that existed before the dynamic capacity system, so it MUST migrate to 0
++  // unlocked slots (the historical hard cap of 3) rather than fail validation.
++  const shapeE = { ...current };
++  delete shapeE.unlockedCompanionSlots;
++  assert.equal(Object.keys(shapeE).length, 16);
++  const restoredE = restoreCampaign(shapeE);
++  assert.ok(restoredE, "a pre-cycle-9 save must still load");
++  assert.equal(restoredE.unlockedCompanionSlots, 0, "pre-cycle-9 saves default to zero purchased slots");
++  assert.equal(companionCapacityForCampaign(restoredE), COMPANION_CAPACITY_BASE, "a migrated pre-cycle-9 save keeps the historical capacity of 3");
++  assert.deepEqual(restoredE.storyProgress, expectedMigratedStoryProgress);
+ });
+ 
+ test("restoreCampaign rejects a tampered save with an unaffordable statPoints total", () => {
+@@ -501,3 +565,267 @@ test("deterministic persistence trace preserves stable campaign fields across se
+     assert.deepEqual(restored[field], preSerialization[field], `${field} must survive persistence exactly`);
+   }
+ });
++
++// --- Cycle 9: dynamic legion capacity (core-loop-legion-spec.md §3) ---
++
++/**
++ * Budget dominance: at EVERY prefix of the slot ladder, cumulative Bound Fragment cost is >= the
++ * largest stage-clear gate in that prefix.
++ *
++ * This is not a balance assertion — it is the reason two clauses of `validUnlockedCompanionSlots`
++ * (campaign-state.js:262) cannot be observed at load time today. Earning is `resolvedIds.length`, so
++ * "budget affordable" already implies "every gate met": any tampered save that trips a gate has
++ * necessarily overdrawn the budget first. The gate clause and the `> COMPANION_SLOT_UNLOCKS.length`
++ * range clause are therefore defense-in-depth at load time, and the rejection tests below land on
++ * the budget clause no matter which value they tamper with — stated explicitly there rather than
++ * claimed as gate coverage.
++ *
++ * Spec §3 records the ladder pricing as CONTESTED and PM-owned. The moment PM reprices a row so a
++ * gate binds before its cost, this assertion fails — which is the signal that the gate clause has
++ * become independently load-bearing at load time and needs its own direct rejection test.
++ */
++test("slot ladder pricing keeps cumulative Bound Fragment cost >= every stage-clear gate in the prefix (canary: gate clause is load-time redundant only while this holds)", () => {
++  let cumulativeCost = 0;
++  let maxGate = 0;
++  for (const [index, entry] of COMPANION_SLOT_UNLOCKS.entries()) {
++    cumulativeCost += entry.boundFragmentCost;
++    maxGate = Math.max(maxGate, entry.requiresStageClears);
++    assert.ok(
++      cumulativeCost >= maxGate,
++      `slot ${entry.slot} (ladder row ${index}): cumulative cost ${cumulativeCost} must stay >= max gate ${maxGate}, or the stage-clear gate becomes load-time load-bearing and needs its own rejection test`,
++    );
++  }
++});
++
++test("a full slot ladder is unaffordable by design, so maximum legion capacity is unreachable in a legitimate campaign", () => {
++  const fullLadderCost = COMPANION_SLOT_UNLOCKS.reduce((sum, entry) => sum + entry.boundFragmentCost, 0);
++  let campaign = createCampaign({ campaignId: "capacity-unreachable" });
++  for (const { id: stageId } of STAGES) {
++    campaign = startRun(campaign, stageId);
++    campaign = applyCampaignRunResult(campaign, { stageId, outcome: "victory" });
++  }
++  // Earning is resolvedIds.length, so STAGES.length IS the campaign's lifetime Bound Fragment ceiling.
++  assert.equal(boundFragmentEarned(campaign), STAGES.length);
++  assert.ok(
++    fullLadderCost > STAGES.length,
++    `spec §3 records this shortfall as a deliberate, PM-owned state: the ladder costs ${fullLadderCost} but a campaign can only ever earn ${STAGES.length}`,
++  );
++  /**
++   * Consequence: a maxed-out save cannot be forged past validation at all, which is why
++   * `purchaseCompanionSlot`'s "Legion capacity is already at maximum" branch has no reachable test
++   * through a real campaign — `requireCampaign` rejects the maxed input before that branch runs.
++   * Both load-time rules refuse it here (the top rows' gates need 10 cleared stages against
++   * STAGES.length = 3, and the cost overdraws), so this asserts the rejection, not which clause won.
++   * If PM ever makes the full ladder affordable, this test fails and the terminal branch becomes
++   * reachable — that is the point at which it needs its own direct test.
++   */
++  const maxed = { ...serializeCampaign(campaign), unlockedCompanionSlots: COMPANION_SLOT_UNLOCKS.length };
++  assert.equal(restoreCampaign(maxed), null, "a full-ladder save must not validate while the ladder is unaffordable");
++});
++
++test("restoreCampaign rejects a tampered save claiming more unlocked slots than the ladder has rows", () => {
++  let campaign = createCampaign({ campaignId: "tamper-slots-overlong" });
++  for (const { id: stageId } of STAGES) {
++    campaign = startRun(campaign, stageId);
++    campaign = applyCampaignRunResult(campaign, { stageId, outcome: "victory" });
++  }
++  const base = serializeCampaign(campaign); // boundFragmentEarned = 3
++  // One past the ladder. Per the dominance canary above, the BUDGET clause is what rejects this
++  // (cost 16 > earned 3); the range clause is redundant here. Asserted anyway because the rejection
++  // itself is the contract callers depend on.
++  assert.equal(restoreCampaign({ ...base, unlockedCompanionSlots: COMPANION_SLOT_UNLOCKS.length + 1 }), null);
++});
++
++test("restoreCampaign rejects a tampered save whose unlockedCompanionSlots is not a non-negative integer", () => {
++  let campaign = createCampaign({ campaignId: "tamper-slots-nonint" });
++  for (const { id: stageId } of STAGES) {
++    campaign = startRun(campaign, stageId);
++    campaign = applyCampaignRunResult(campaign, { stageId, outcome: "victory" });
++  }
++  const base = serializeCampaign(campaign); // boundFragmentEarned = 3
++  // These two values are the ONLY witnesses that isolate the integer and sign clauses. Both slip
++  // past the gate and budget checks on their own:
++  //   1.5 -> slice(0, 1.5) keeps 1 row, cost 1 <= 3 and its gate is met, so only Number.isInteger rejects it.
++  //   -7  -> slice(0, -7) is EMPTY, so cost 0 and gates vacuously met; only `unlocked < 0` rejects it.
++  assert.equal(restoreCampaign({ ...base, unlockedCompanionSlots: 1.5 }), null, "a fractional slot count must be rejected by the integer clause");
++  assert.equal(restoreCampaign({ ...base, unlockedCompanionSlots: -7 }), null, "a negative slot count must be rejected by the sign clause, not by a cost that a negative slice silently zeroes");
++  assert.equal(restoreCampaign({ ...base, unlockedCompanionSlots: "2" }), null, "a string slot count must be rejected");
++});
++
++test("restoreCampaign accepts a tampered-but-legitimate unlockedCompanionSlots that is affordable and gate-met (guard against an always-reject regression)", () => {
++  let campaign = createCampaign({ campaignId: "tamper-slots-affordable" });
++  for (const { id: stageId } of STAGES) {
++    campaign = startRun(campaign, stageId);
++    campaign = applyCampaignRunResult(campaign, { stageId, outcome: "victory" });
++  }
++  const base = serializeCampaign(campaign); // earned 3, no equipment spend
++  // Slots 4 and 5 cost 1 each (cumulative 2 <= 3) and gate at 1 and 2 cleared stages (both met at 3).
++  const restored = restoreCampaign({ ...base, unlockedCompanionSlots: 2 });
++  assert.ok(restored, "an affordable, gate-met slot count must load");
++  assert.equal(restored.unlockedCompanionSlots, 2);
++  assert.equal(companionCapacityForCampaign(restored), COMPANION_CAPACITY_BASE + 2);
++
++  /**
++   * The exact affordability boundary, and the ONLY witness that isolates the load-time budget clause.
++   * A third slot costs 2 more (cumulative 4 > earned 3) while its gate — 3 cleared stages — IS met,
++   * so `gatesMet` alone would admit it. Without this case, deleting
++   * `boundFragmentSpent(campaign) <= boundFragmentEarned(campaign)` from
++   * `validUnlockedCompanionSlots` leaves the whole suite green: every other tampered value this file
++   * tries is already stopped by an unmet gate.
++   */
++  const oneTooMany = restoreCampaign({ ...base, unlockedCompanionSlots: 3 });
++  assert.equal(oneTooMany, null, "the third slot's gate is met but its cost overdraws the budget, so the save must be rejected on budget alone");
++});
++
++test("purchaseCompanionSlot and purchaseEquipmentTier draw from the SAME Bound Fragment budget in both directions", () => {
++  let campaign = createCampaign({ campaignId: "shared-fragment-budget" });
++  for (const { id: stageId } of STAGES) {
++    campaign = startRun(campaign, stageId);
++    campaign = applyCampaignRunResult(campaign, { stageId, outcome: "victory" });
++  }
++  assert.equal(boundFragmentEarned(campaign), 3);
++
++  // Direction 1: slots first shrink what equipment can afford.
++  const twoSlots = purchaseCompanionSlot(purchaseCompanionSlot(campaign)); // slots 4+5, cost 1+1
++  assert.equal(boundFragmentSpent(twoSlots), 2, "slot purchases must register as Bound Fragment spend");
++  const slotsThenEquip = purchaseEquipmentTier(twoSlots, "warden", "weapon"); // step 0 costs 1 -> total 3
++  assert.equal(boundFragmentSpent(slotsThenEquip), 3);
++  assert.throws(
++    () => purchaseEquipmentTier(slotsThenEquip, "warden", "weapon"),
++    /Not enough Bound Fragment/u,
++    "step 1 costs 2 more; the two purchased slots already consumed the fragments that would have paid for it",
++  );
++
++  // Control: without the slot purchases the identical equipment path SUCCEEDS on the same earnings.
++  // This is what proves the block above came from the shared budget and not from an equipment rule.
++  const equipOnly = purchaseEquipmentTier(purchaseEquipmentTier(campaign, "warden", "weapon"), "warden", "weapon");
++  assert.equal(equipmentTierIndexFor(equipOnly, "warden", "weapon"), 2, "the same two tier steps must be affordable when no slots were bought");
++  assert.equal(boundFragmentSpent(equipOnly), 3);
++
++  // Direction 2: equipment first shrinks what slots can afford.
++  assert.throws(
++    () => purchaseCompanionSlot(equipOnly),
++    /Not enough Bound Fragment/u,
++    "slot 4 costs 1 but equipment already committed the whole 3-fragment budget",
++  );
++  // And the slot WAS affordable before that equipment spend — same campaign, same earnings.
++  assert.equal(companionCapacityForCampaign(purchaseCompanionSlot(campaign)), COMPANION_CAPACITY_BASE + 1);
++});
++
++test("purchaseCompanionSlot fails on the stage-clear gate before the budget, with a distinct gate message", () => {
++  const fresh = createCampaign({ campaignId: "slot-gate-unmet" });
++  assert.equal(boundFragmentEarned(fresh), 0);
++  // Slot 4 gates at 1 cleared stage and costs 1. With 0 resolved stages BOTH rules are violated, and
++  // the gate is checked first (campaign-state.js:689) — so the surfaced message is the gate's, not
++  // the budget's. Asserting the message is what gives the gate clause teeth: delete the gate check
++  // and this throws /Not enough Bound Fragment/ instead, failing this assertion.
++  assert.throws(
++    () => purchaseCompanionSlot(fresh),
++    /Slot 4 unlocks at 1 cleared stages/u,
++    "an unmet stage gate must surface as a gate failure, never as a payment failure",
++  );
++
++  // Gate binding independently of affordability: one cleared stage buys slot 4, but slot 5 gates at 2.
++  let oneStage = startRun(fresh, STAGES[0].id);
++  oneStage = applyCampaignRunResult(oneStage, { stageId: STAGES[0].id, outcome: "victory" });
++  const slotFour = purchaseCompanionSlot(oneStage);
++  assert.equal(companionCapacityForCampaign(slotFour), COMPANION_CAPACITY_BASE + 1);
++  assert.throws(
++    () => purchaseCompanionSlot(slotFour),
++    /Slot 5 unlocks at 2 cleared stages/u,
++    "level alone is insufficient: the next slot's stage gate must block before payment is considered",
++  );
++  assert.equal(companionSlotUnlockCostFor(slotFour).stageGateMet, false, "the lobby resolver must report the same unmet gate");
++});
++
++test("purchaseCompanionSlot fails with insufficient Bound Fragment rather than overdrawing, once the gate is met", () => {
++  let campaign = createCampaign({ campaignId: "slot-budget-unmet" });
++  for (const { id: stageId } of STAGES) {
++    campaign = startRun(campaign, stageId);
++    campaign = applyCampaignRunResult(campaign, { stageId, outcome: "victory" });
++  }
++  const twoSlots = purchaseCompanionSlot(purchaseCompanionSlot(campaign)); // cumulative cost 2 of 3
++  // Slot 6 gates at 3 cleared stages (MET) and costs 2, which would total 4 against 3 earned.
++  const next = companionSlotUnlockCostFor(twoSlots);
++  assert.equal(next.slot, 6);
++  assert.equal(next.stageGateMet, true, "the gate is satisfied, isolating the budget as the blocking rule");
++  assert.equal(next.affordable, false);
++  assert.throws(() => purchaseCompanionSlot(twoSlots), /Not enough Bound Fragment/u);
++  // The rejection must not leave a partial purchase behind.
++  assert.equal(twoSlots.unlockedCompanionSlots, 2, "a failed purchase must not mutate the source campaign");
++  assert.equal(boundFragmentSpent(twoSlots), 2, "a failed purchase must not overdraw the budget");
++});
++
++test("companionCapacityForCampaign returns the base for a fresh campaign, adds exactly 1 per unlocked slot, and clamps at the maximum", () => {
++  assert.equal(companionCapacityForCampaign(createCampaign({ campaignId: "capacity-fresh" })), COMPANION_CAPACITY_BASE);
++
++  // Exercised on the pure resolver: the full ladder is unaffordable by design (see the canary above),
++  // so no legitimate campaign can reach the upper rows. The resolver is total and its clamp is the
++  // real guard against a repriced ladder or a forged count, so it is tested at every row directly.
++  for (let unlocked = 0; unlocked <= COMPANION_SLOT_UNLOCKS.length; unlocked += 1) {
++    assert.equal(
++      companionCapacityForCampaign({ unlockedCompanionSlots: unlocked }),
++      COMPANION_CAPACITY_BASE + unlocked,
++      `${unlocked} unlocked slots must derive capacity ${COMPANION_CAPACITY_BASE + unlocked}`,
++    );
++  }
++  assert.equal(COMPANION_CAPACITY_BASE + COMPANION_SLOT_UNLOCKS.length, COMPANION_CAPACITY_MAX, "the ladder must span exactly base -> max with no gap or overshoot");
++
++  // Past the ladder both the count and the capacity clamp instead of running away.
++  assert.equal(companionSlotsUnlocked({ unlockedCompanionSlots: 99 }), COMPANION_SLOT_UNLOCKS.length);
++  assert.equal(companionCapacityForCampaign({ unlockedCompanionSlots: 99 }), COMPANION_CAPACITY_MAX);
++  // A pre-cycle-9 shape reaching the resolver before migration must read as the base, not NaN.
++  assert.equal(companionCapacityForCampaign({}), COMPANION_CAPACITY_BASE);
++});
++
++test("setCompanionLoadout accepts a loadout up to the DERIVED capacity and rejects one beyond it", () => {
++  let campaign = createCampaign({ campaignId: "loadout-derived-capacity" });
++  for (const { id: stageId } of STAGES) {
++    campaign = startRun(campaign, stageId);
++    campaign = applyCampaignRunResult(campaign, { stageId, outcome: "victory" });
++  }
++  const owned = ["ember-cohort", "rift-lens", "veil-vanguard", "anchor-shard", "throne-echo", "dawnless-crown"];
++  for (const prototype of owned) campaign = captureElite(campaign, `elite-${prototype}`, prototype);
++
++  // At base capacity 3: three fit, a fourth does not — even though six companions are owned.
++  assert.equal(companionCapacityForCampaign(campaign), COMPANION_CAPACITY_BASE);
++  assert.equal(setCompanionLoadout(campaign, owned.slice(0, 3)).companionLoadout.prototypeIds.length, 3);
++  assert.throws(() => setCompanionLoadout(campaign, owned.slice(0, 4)), /up to 3 owned canonical companions/u);
++
++  // Two purchased slots raise the DERIVED bound to 5: five now fit, six still do not.
++  const twoSlots = purchaseCompanionSlot(purchaseCompanionSlot(campaign));
++  assert.equal(companionCapacityForCampaign(twoSlots), COMPANION_CAPACITY_BASE + 2);
++  assert.equal(setCompanionLoadout(twoSlots, owned.slice(0, 5)).companionLoadout.prototypeIds.length, 5, "capacity purchased with fragments must actually be usable");
++  assert.throws(() => setCompanionLoadout(twoSlots, owned), /up to 5 owned canonical companions/u, "the derived bound must move with purchases, not jump to the literal ceiling");
++});
++
++test("load-time validation bounds the loadout by the literal ceiling while setCompanionLoadout bounds it by the derived capacity (spec §3 asymmetry, deliberately not one bound)", () => {
++  let campaign = createCampaign({ campaignId: "loadout-bound-asymmetry" });
++  const owned = ["ember-cohort", "rift-lens", "veil-vanguard", "anchor-shard", "throne-echo"];
++  for (const prototype of owned) campaign = captureElite(campaign, `elite-${prototype}`, prototype);
++  campaign = startRun(campaign, STAGES[0].id);
++  campaign = applyCampaignRunResult(campaign, { stageId: STAGES[0].id, outcome: "victory" });
++
++  // A five-companion loadout with ZERO purchased slots: over the derived capacity of 3, under the
++  // literal ceiling of 10. `validCampaign` checks the loadout BEFORE it validates `resolvedIds`, so
++  // it deliberately uses the literal ceiling — calling the derived resolver there would let a save
++  // self-certify its capacity from fields not yet vetted (campaign-state.js:361-370).
++  const forged = {
++    ...serializeCampaign(campaign),
++    companionLoadout: { prototypeIds: [...owned].sort() },
++  };
++  assert.equal(forged.unlockedCompanionSlots, 0);
++  const restored = restoreCampaign(forged);
++  assert.ok(restored, "load time must accept a well-formed loadout within the literal ceiling even though it exceeds the derived capacity");
++  assert.equal(restored.companionLoadout.prototypeIds.length, 5);
++  assert.equal(companionCapacityForCampaign(restored), COMPANION_CAPACITY_BASE);
++
++  // MUTATION time refuses to grow — or even re-set — that same loadout, quoting the derived bound.
++  assert.throws(
++    () => setCompanionLoadout(restored, owned),
++    /up to 3 owned canonical companions/u,
++    "the mutation bound is the derived capacity, so an over-capacity legacy loadout cannot be re-committed",
++  );
++  // The asymmetry must not brick the save: shrinking into the derived capacity still works.
++  assert.equal(setCompanionLoadout(restored, owned.slice(0, 3)).companionLoadout.prototypeIds.length, 3);
++});
