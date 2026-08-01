@@ -834,6 +834,9 @@ function handleKeyDown(event) {
   }
 
   if (event.code === "Space") {
+    if (event.target instanceof Element && event.target.closest("[data-control]")) {
+      return;
+    }
     if (state.mode === "running" || state.mode === "wave-clear") {
       if (!event.repeat) {
         attackQueued = true;
