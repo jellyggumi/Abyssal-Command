@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "assetId": "deform-fracture-seam-preview",
+  "generator": "scripts/build-stage-vfx-blender.py",
+  "source": "assets/motion/stage-vfx/deform-fracture-seam.glb",
+  "reference": "assets/mesh/prop/prop-sprite-sheet-single-object.03.png",
+  "runtimeEligible": false,
+  "output": {
+    "path": "assets/motion/stage-vfx/qa/deform-fracture-seam-preview.png",
+    "sha256": "e5ce6b9853dd54a5b32f10d4753ec7903c9de9af182604b36c04bc25db3e8065"
+  }
+}

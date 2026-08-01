@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "assetId": "drop-beacon-pillar-preview",
+  "generator": "scripts/build-stage-vfx-blender.py",
+  "source": "assets/motion/stage-vfx/drop-beacon-pillar.glb",
+  "reference": "assets/mesh/prop/prop-sprite-sheet-single-object.03.png",
+  "runtimeEligible": false,
+  "output": {
+    "path": "assets/motion/stage-vfx/qa/drop-beacon-pillar-preview.png",
+    "sha256": "0e5616e14fdc5a661e7c80cb25327f2bd7c7ca8e31c297e30105d90e78b2b3ca"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "assetId": "arrival-breach-gate-preview",
+  "generator": "scripts/build-stage-vfx-blender.py",
+  "source": "assets/motion/stage-vfx/arrival-breach-gate.glb",
+  "reference": "assets/mesh/prop/prop-sprite-sheet-single-object.03.png",
+  "runtimeEligible": false,
+  "output": {
+    "path": "assets/motion/stage-vfx/qa/arrival-breach-gate-preview.png",
+    "sha256": "7f867cf820d8c4b33155a568bbd9c622a5e8c37cb77a9562aaa7c2c011d15111"
+  }
+}

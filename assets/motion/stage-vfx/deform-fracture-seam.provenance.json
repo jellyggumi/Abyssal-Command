@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "assetId": "deform-fracture-seam",
+  "stageId": null,
+  "generator": "scripts/build-stage-vfx-blender.py",
+  "tool": "Blender 5.1.2",
+  "reference": {
+    "path": "assets/mesh/prop/prop-sprite-sheet-single-object.03.png",
+    "usage": "silhouette-and-material-language-only",
+    "embedded": false
+  },
+  "rightsReceipt": "Repository-authored deterministic procedural geometry; no third-party media embedded.",
+  "runtimeReceipt": {
+    "runtimeEligible": true,
+    "reason": "Self-contained GLB, bounded geometry, authored quality groups, and loop clip."
+  },
+  "output": {
+    "path": "assets/motion/stage-vfx/deform-fracture-seam.glb",
+    "sha256": "ccbbe5ae709d0fd4334ade833a4a64826b076b15e96626be1e37f4d8c5b52b2a"
+  }
+}

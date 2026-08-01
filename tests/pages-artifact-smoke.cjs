@@ -73,6 +73,9 @@ const REQUIRED_FILES = [
   "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
   "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
   "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
+  "assets/motion/stage-vfx/drop-beacon-pillar.glb",
+  "assets/motion/stage-vfx/arrival-breach-gate.glb",
+  "assets/motion/stage-vfx/deform-fracture-seam.glb",
   "assets/motion/stage-vfx/manifest.json",
 ];
 

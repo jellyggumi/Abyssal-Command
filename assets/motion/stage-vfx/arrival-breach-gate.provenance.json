@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "assetId": "arrival-breach-gate",
+  "stageId": null,
+  "generator": "scripts/build-stage-vfx-blender.py",
+  "tool": "Blender 5.1.2",
+  "reference": {
+    "path": "assets/mesh/prop/prop-sprite-sheet-single-object.03.png",
+    "usage": "silhouette-and-material-language-only",
+    "embedded": false
+  },
+  "rightsReceipt": "Repository-authored deterministic procedural geometry; no third-party media embedded.",
+  "runtimeReceipt": {
+    "runtimeEligible": true,
+    "reason": "Self-contained GLB, bounded geometry, authored quality groups, and loop clip."
+  },
+  "output": {
+    "path": "assets/motion/stage-vfx/arrival-breach-gate.glb",
+    "sha256": "09af8ab0476ab1d184efec02674588ab0e75179a6c78d88cab297bf96fcdb09a"
+  }
+}

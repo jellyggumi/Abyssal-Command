@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "assetId": "drop-beacon-pillar",
+  "stageId": null,
+  "generator": "scripts/build-stage-vfx-blender.py",
+  "tool": "Blender 5.1.2",
+  "reference": {
+    "path": "assets/mesh/prop/prop-sprite-sheet-single-object.03.png",
+    "usage": "silhouette-and-material-language-only",
+    "embedded": false
+  },
+  "rightsReceipt": "Repository-authored deterministic procedural geometry; no third-party media embedded.",
+  "runtimeReceipt": {
+    "runtimeEligible": true,
+    "reason": "Self-contained GLB, bounded geometry, authored quality groups, and loop clip."
+  },
+  "output": {
+    "path": "assets/motion/stage-vfx/drop-beacon-pillar.glb",
+    "sha256": "4368aa38a1ad35cf0532fd61a561610335be0bd63f00af49041d43621c0d599e"
+  }
+}

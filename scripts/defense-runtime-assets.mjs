@@ -69,6 +69,9 @@ export const RETAINED_ASSET_PATHS = Object.freeze([
   "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
   "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
   "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
+  "assets/motion/stage-vfx/drop-beacon-pillar.glb",
+  "assets/motion/stage-vfx/arrival-breach-gate.glb",
+  "assets/motion/stage-vfx/deform-fracture-seam.glb",
   "assets/motion/stage-vfx/manifest.json",
   // Hybrid audio (D-20260730-02). DefenseAudio fetches the index at start() and every url
   // inside it; without these rows the asset manifest classifies the whole set as deletable
