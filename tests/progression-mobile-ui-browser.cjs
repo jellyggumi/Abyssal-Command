@@ -376,30 +376,24 @@ test("coarse-landscape joystick resolves eight octants and every cancellation pa
     const joystick = run.page.locator("[data-joystick]");
     assert.equal(await joystick.evaluate((node) => getComputedStyle(node).display), "grid", "coarse landscape must expose the drag joystick");
 
-    const buttons = movement.locator("button[data-move]");
-    assert.equal(await buttons.count(), 5, "the drag surface must not replace the five keyboard movement controls");
-    for (const direction of ["N", "W", "IDLE", "E", "S"]) {
-      const button = movement.locator(`button[data-move="${direction}"]`);
-      // INSIDE the loop, not before it. Unlike the opening cutscene, the growth offer is
-      // recurrent: each Enter below moves the commander and accrues XP, so a level-up can cross
-      // its threshold during iteration 4 or 5 and take focus mid-loop. A pre-loop dismiss would
-      // clear an offer that is not there yet and miss the one that actually breaks the assert.
+    // KEYPAD RETIRED — the five ring buttons are gone, so the keyboard path is asserted directly.
+    // KEY_DIRECTIONS (app.js) never routed through those buttons: it reads the key, composes two
+    // held keys into a diagonal, and writes the same public `data-defense-move` octant. That is the
+    // contract worth pinning, and it survives the keypad without any focus target.
+    assert.equal(await movement.locator("[data-move]").count(), 0,
+      "the retired [data-move] keypad must not come back");
+    for (const [keys, expected] of [
+      [["w"], "N"], [["a"], "W"], [["s"], "S"], [["d"], "E"],
+      [["w", "d"], "NE"], [["s", "a"], "SW"],
+    ]) {
       await dismissGrowthOffer(run);
-      await button.focus();
-      let focused = await button.evaluate((node) => document.activeElement === node);
-      if (!focused) {
-        // The offer can also appear BETWEEN the dismiss and the focus call — the simulation keeps
-        // ticking across both awaits. One retry after clearing it keeps the claim intact while
-        // removing the race; this is the residual gap the pre-loop dismiss above cannot close.
-        await dismissGrowthOffer(run);
-        await button.focus();
-        focused = await button.evaluate((node) => document.activeElement === node);
-      }
-      assert.equal(focused, true, `${direction} must remain keyboard focusable behind the joystick`);
       const previous = Number(await run.surface.getAttribute("data-defense-input-seq"));
-      await run.page.keyboard.press("Enter");
+      for (const key of keys) await run.page.keyboard.down(key);
       await run.page.waitForFunction((prior) => Number(document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq) > prior, previous);
-      assert.equal(await run.surface.getAttribute("data-defense-move"), direction, `${direction} keyboard activation must reach the public movement state`);
+      assert.equal(await run.surface.getAttribute("data-defense-move"), expected,
+        `${keys.join("+")} must reach the public movement state as ${expected}`);
+      for (const key of keys) await run.page.keyboard.up(key);
+      await run.page.waitForFunction(() => document.querySelector("#defense-battle-surface")?.dataset.defenseMove === "IDLE");
     }
 
     const box = await joystick.boundingBox();
@@ -507,70 +501,51 @@ test("the joystick is the primary movement control at every viewport", async () 
       // is the analog resolution denominator, so a silent size change alters movement feel.
       assert.ok(Math.abs(box.width - options.padSize) <= 1 && Math.abs(box.height - options.padSize) <= 1,
         `${options.label} pad must measure ${options.padSize}px, got ${box.width}x${box.height}`);
-      // 2. the five controls survive as the accessible fallback -- retained strength.
-      const buttons = run.page.locator("#movement-actions button[data-move]");
-      assert.equal(await buttons.count(), 5,
-        `${options.label} must keep the five keyboard movement controls`);
-      assert.deepEqual(
-        await run.page.$$eval("#movement-actions button[data-move]", (nodes) => nodes.map((node) => node.dataset.move)),
-        ["N", "W", "IDLE", "E", "S"],
-        `${options.label} must keep DOM order N,W,IDLE,E,S -- position is CSS-only (spec C2)`);
-      // The growth offer steals focus. `app.js` renders the level-up card and immediately calls
-      // `card.querySelector("button")?.focus()`, which is correct modal behaviour — but it races
-      // this loop: the run keeps ticking while the five buttons are checked, and a level-up landing
-      // mid-loop moves activeElement off the movement control between `focus()` and the assertion.
-      // On a fast machine the loop finishes first; on the CI runner it did not, and the failure
-      // always landed on `E` (the fourth of five, i.e. the most elapsed time) — see the
-      // "fine-pointer landscape E must stay keyboard focusable" break on main.
-      //
-      // Answering the offer before each check isolates the claim under test (a movement control is
-      // keyboard focusable) from an unrelated modal's focus management. The claim is unchanged: all
-      // five controls must still take focus, and no assertion is relaxed.
-      const settleGrowthOffer = async () => {
-        const pick = run.page.locator("#defense-growth-offer [data-pick]").first();
-        if (await pick.count()) await pick.click({ timeout: 5000 }).catch(() => undefined);
-      };
-      for (const direction of ["N", "W", "IDLE", "E", "S"]) {
-        const button = run.page.locator(`#movement-actions button[data-move="${direction}"]`);
-        const rect = await button.boundingBox();
-        assert.ok(rect && rect.width >= 44 && rect.height >= 44,
-          `${options.label} ${direction} must retain a 44px target`);
-        await settleGrowthOffer();
-        await button.focus();
-        let focused = await button.evaluate((node) => document.activeElement === node);
-        if (!focused) {
-          // One retry, and only after clearing an offer that appeared inside the check itself.
-          await settleGrowthOffer();
-          await button.focus();
-          focused = await button.evaluate((node) => document.activeElement === node);
-        }
-        assert.equal(focused, true,
-          `${options.label} ${direction} must stay keyboard focusable`);
-      }
-      // 3. NEW strength the old test could not have: the centre stays drag-only (spec C1).
+      // 2. KEYPAD RETIRED. The five [data-move] ring buttons are gone, and their ABSENCE is now the
+      // contract: they were `position: absolute; z-index: 3` boxes on the pad's N/S/E/W edges,
+      // hit-tested BEFORE the drag surface, so an edge-started drag was claimed by a button instead
+      // of moving the stick. What replaces them is not a weaker assertion but a different one —
+      // the whole pad must be drag surface, and the keyboard must still move the commander.
+      assert.equal(await run.page.locator("#movement-actions [data-move]").count(), 0,
+        `${options.label} must not re-introduce the retired [data-move] keypad`);
       const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-      const hit = await run.page.evaluate(({ x, y }) =>
-        document.elementFromPoint(x, y)?.closest("[data-move]")?.dataset.move ?? null, centre);
-      assert.equal(hit, null,
-        `${options.label} pad centre must be drag-only, no [data-move] may intercept it`);
-      // C1 dead-zone margin. Reported, and asserted as a WARNING-grade floor rather than the
-      // gate: the binding form is the point exclusion above. A press inside the dead zone is
-      // exactly the press that must start a drag instead of resolving to a button, so if the
-      // nearest [data-move] edge ever crosses padRadius x 0.22 the octant drag starts failing.
-      const margin = await run.page.evaluate(({ cx, cy }) => {
-        const edges = [...document.querySelectorAll("#movement-actions button[data-move]")].map((node) => {
-          const rect = node.getBoundingClientRect();
-          const dx = Math.max(rect.left - cx, 0, cx - rect.right);
-          const dy = Math.max(rect.top - cy, 0, cy - rect.bottom);
-          return Math.hypot(dx, dy);
-        });
-        return Math.min(...edges);
-      }, { cx: centre.x, cy: centre.y });
-      const deadZone = (box.width / 2) * DEAD_ZONE_RATIO;
-      assert.ok(margin > deadZone,
-        `${options.label} nearest [data-move] edge ${margin.toFixed(2)}px must clear the `
-        + `${deadZone.toFixed(2)}px dead-zone radius (margin ${(margin - deadZone).toFixed(2)}px)`);
-      // 4. NEW strength: the JS predicate and the CSS visibility cannot disagree (spec §2.1).
+      for (const [label, point] of [
+        ["centre", centre],
+        ["north edge", { x: centre.x, y: box.y + 4 }],
+        ["south edge", { x: centre.x, y: box.y + box.height - 4 }],
+        ["west edge", { x: box.x + 4, y: centre.y }],
+        ["east edge", { x: box.x + box.width - 4, y: centre.y }],
+      ]) {
+        const owner = await run.page.evaluate(({ x, y }) => {
+          const node = document.elementFromPoint(x, y);
+          return {
+            joystick: Boolean(node?.closest("[data-joystick]")),
+            move: node?.closest("[data-move]")?.dataset.move ?? null,
+          };
+        }, point);
+        assert.equal(owner.move, null,
+          `${options.label} ${label} must not be intercepted by any [data-move] control`);
+        assert.equal(owner.joystick, true,
+          `${options.label} ${label} must belong to the drag stick`);
+      }
+      // 3. Vertical drags must not be stolen by the browser. `touch-action` is resolved from the
+      // element the touch STARTS on and is NOT inherited, so the pad itself must carry `none`.
+      // Before this contract existed the pad computed `auto` while only its wrapper had `none`,
+      // and on a real touch device every downward drag panned the page instead of moving the
+      // commander — the "the stick only moves left and right" report.
+      assert.equal(
+        await run.page.evaluate(() => getComputedStyle(document.querySelector("[data-joystick]")).touchAction),
+        "none",
+        `${options.label} the pad itself must own touch-action:none or vertical drags become page pans`);
+      // 4. Keyboard movement survives the keypad's removal — it never went through those buttons.
+      const beforeKeyboard = await run.surface.getAttribute("data-defense-input-seq");
+      await run.page.keyboard.down("w");
+      await run.page.waitForFunction((prior) => document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq !== prior, beforeKeyboard);
+      assert.equal(await run.surface.getAttribute("data-defense-move"), "N",
+        `${options.label} keyboard movement must still reach the public movement state`);
+      await run.page.keyboard.up("w");
+      await run.page.waitForFunction(() => document.querySelector("#defense-battle-surface")?.dataset.defenseMove === "IDLE");
+      // 5. The JS predicate and the CSS visibility cannot disagree (spec §2.1).
       assert.equal(
         await run.page.evaluate(() => {
           const pad = document.querySelector("[data-joystick]");

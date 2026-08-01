@@ -898,6 +898,12 @@ const LOCOMOTION_RECOVERY_FADE_SECONDS = Object.freeze({
   critical: 0.12,
 });
 const DEFAULT_LOCOMOTION_RECOVERY_FADE_SECONDS = 0.15;
+// Minimum gap between two non-heavy flinches on a MOVING commander. Sustained contact fires hit
+// events faster than a reaction clip finishes, and each one re-arms the one-shot lock that
+// `recoverLocomotion()` refuses to run through — so the walk/run clip never got a frame. 900 ms is
+// above the reaction clip length and still well inside the enemy attack cadence
+// (ENEMIES.attackTicks 60-120 ticks = 1.0-2.0 s), so a player under fire keeps seeing flinches.
+const MOVING_FLINCH_MIN_INTERVAL_MS = 900;
 
 // A directional reaction variant ("hit_left") carries exactly the beat weight
 // and fade envelope of its flat parent ("hit") -- direction changes which clip
@@ -4405,8 +4411,34 @@ export class RealtimeBattle {
   // incoming blow's heading is measured against the target's rendered facing,
   // so the same event drives a left/right/back flinch on rigs that carry the
   // directional clips and the flat reaction everywhere else.
+  /**
+   * Is the commander moving RIGHT NOW, as of the snapshot currently being rendered?
+   *
+   * `record.moveState` is only correct after syncActorState() has run for this frame, and beats
+   * triggered from event handling run before that — so it lags by one tick exactly when it matters.
+   * `this.commanderMoveState` is captured at the top of renderSnapshot() from the same
+   * authoritative field, so it is correct for every consumer in the frame.
+   */
+  commanderIsMoving(record) {
+    const live = typeof this.commanderMoveState === "string" ? this.commanderMoveState : null;
+    const state = live ?? (typeof record?.moveState === "string" ? record.moveState : "IDLE");
+    return state !== "IDLE";
+  }
+
   triggerHitReaction(record, attackerRecord, heavy, nowMs) {
     if (!record) return false;
+    // Flinch throttle for a MOVING commander — same failure mode as the attack beat. A hit reaction
+    // is a LoopOnce one-shot, and under sustained contact the events arrive faster than the clip
+    // finishes, so the rig sat in `hit_front` forever and locomotion never showed. Measured on a
+    // live run: `activeActionKey: "hit_front"` while `moveState: "E"`.
+    //
+    // The flinch is NOT dropped, only rate-limited while moving, so contact still reads while the
+    // walk/run clip gets frames. A HEAVY blow always plays — that beat must never be swallowed.
+    if (record.kind === "commander" && !heavy && this.commanderIsMoving(record)) {
+      const now = Number.isFinite(nowMs) ? nowMs : 0;
+      if (now - (record.lastMovingFlinchMs ?? -Infinity) < MOVING_FLINCH_MIN_INTERVAL_MS) return false;
+      record.lastMovingFlinchMs = now;
+    }
     let direction = "front";
     if (attackerRecord?.root && record.root && Number.isFinite(record.yaw)) {
       const from = attackerRecord.root.position;
@@ -5687,6 +5719,18 @@ export class RealtimeBattle {
       this.updateActorFacing(record, delta);
       if (record.kind === "projectile") this.updateProjectilePresentation(record, nowMs);
       else this.updateAmbientIdle(record, nowMs);
+      // A MOVING commander never stays locked in a combat beat. Guarding the trigger sites alone was
+      // not enough: beats reach the rig from several event paths and the one-shot lock then survives
+      // until its clip ends, while the commander auto-fires every 0.40 s and takes contact faster
+      // than that. Measured before this: `activeActionKey` sat on `attack_ranged`/`hit_front` while
+      // `moveState` was "E", with idle/move/run all present in `record.actions`. `die` is exempt.
+      if (record.kind === "commander"
+        && !record.dead
+        && record.oneShotAction
+        && record.oneShotActionKey !== "die"
+        && this.commanderIsMoving(record)) {
+        this.finishOneShot(record);
+      }
       if (!record.oneShotAction && !record.dead) this.recoverLocomotion(record);
       for (const presentation of record.presentationMixers ?? []) presentation.mixer.update(delta);
     }
@@ -5724,6 +5768,12 @@ export class RealtimeBattle {
 
   triggerAttackDelivery(attacker, target, nowMs, charged = false) {
     if (!attacker) return false;
+    // LOCOMOTION WINS WHILE MOVING. The commander auto-fires every `COMMANDER.basicCooldown` = 24
+    // ticks = 0.40 s, and an attack beat is a LoopOnce one-shot that locks `record.oneShotAction`
+    // until its clamped final frame. The delivery clips do not finish inside 0.40 s, so the lock was
+    // re-armed before it ever released and `recoverLocomotion()` could never run. Damage,
+    // projectiles and VFX are separate event-driven paths, so this only changes which clip plays.
+    if (attacker.kind === "commander" && this.commanderIsMoving(attacker)) return false;
     const delivery = this.combatDelivery(attacker, target);
     const dedicatedKey = delivery === "melee"
       ? "attack_melee"
@@ -6340,6 +6390,11 @@ export class RealtimeBattle {
 
   renderSnapshot(snapshot = {}, frame = {}) {
     if (this.disposed || !this.renderer || !this.camera || !this.scene) return;
+    // Commander move state, captured BEFORE this frame consumes any event. `record.moveState` is
+    // written by syncActorState(), which runs after event handling, so a beat triggered from an
+    // event saw the PREVIOUS tick's value — measured: the moving-commander guard was bypassed at
+    // two of three viewports because `moveState` still read "IDLE" when WEAPON_FIRED was handled.
+    this.commanderMoveState = typeof snapshot?.commander?.move === "string" ? snapshot.commander.move : "IDLE";
     const { width, height } = bounds(this.canvas, this.viewport ?? frame?.viewport);
     const nativeWidth = Math.max(1, Math.round(width * this.pixelRatio));
     const nativeHeight = Math.max(1, Math.round(height * this.pixelRatio));

@@ -387,32 +387,38 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
       movement: {
         role: surface.querySelector("#movement-actions")?.getAttribute("role"),
         label: surface.querySelector("#movement-actions")?.getAttribute("aria-label"),
-        buttons: [...surface.querySelectorAll("#movement-actions [data-move]")].map((button) => ({
-          move: button.dataset.move,
-          label: button.getAttribute("aria-label"),
-        })),
+        // KEYPAD RETIRED: the five [data-move] ring buttons are gone. What must stay exposed is the
+        // drag stick itself plus the hint that names the keyboard path, since keyboard movement
+        // (KEY_DIRECTIONS in app.js) is now the sole non-pointer modality.
+        joystick: {
+          present: Boolean(surface.querySelector("#movement-actions [data-joystick]")),
+          role: surface.querySelector("#movement-actions [data-joystick]")?.getAttribute("role"),
+          label: surface.querySelector("#movement-actions [data-joystick]")?.getAttribute("aria-label"),
+          describedBy: surface.querySelector("#movement-actions [data-joystick]")?.getAttribute("aria-describedby"),
+        },
+        hint: surface.querySelector("#movement-hint")?.textContent?.trim() ?? null,
+        legacyKeypadButtons: surface.querySelectorAll("#movement-actions [data-move]").length,
       },
     }));
     assert.match(accessibility.label ?? "", /\S/, "battle surface must expose an accessible name");
     assert.match(accessibility.canvasLabel ?? "", /\S/, "battle canvas must expose an accessible name");
     assert.equal(accessibility.statusLive, "polite", "battle status must announce snapshot changes");
-    assert.deepEqual(accessibility.movement, {
-      role: "group",
-      label: "한 손 이동 조작",
-      buttons: [
-        { move: "N", label: "위로 이동" },
-        { move: "W", label: "왼쪽으로 이동" },
-        { move: "IDLE", label: "이동 정지" },
-        { move: "E", label: "오른쪽으로 이동" },
-        { move: "S", label: "아래로 이동" },
-      ],
-    }, "one-thumb directions must expose stable, labeled public controls");
-    await page.locator('[data-move="E"]').focus();
-    assert.equal(
-      await page.evaluate(() => document.activeElement?.dataset.move),
-      "E",
-      "a one-thumb direction must remain keyboard focusable",
+    assert.equal(accessibility.movement.role, "group", "movement controls must stay a labelled group");
+    assert.equal(accessibility.movement.label, "한 손 이동 조작", "movement group must keep its accessible name");
+    assert.equal(accessibility.movement.legacyKeypadButtons, 0,
+      "the retired [data-move] keypad must not come back — it sat on top of the pad and swallowed edge-started drags");
+    assert.deepEqual(
+      {
+        present: accessibility.movement.joystick.present,
+        role: accessibility.movement.joystick.role,
+        label: accessibility.movement.joystick.label,
+        describedBy: accessibility.movement.joystick.describedBy,
+      },
+      { present: true, role: "application", label: "이동 스틱", describedBy: "movement-hint" },
+      "the drag stick must be the labelled, described movement control",
     );
+    assert.match(accessibility.movement.hint ?? "", /WASD|방향키/,
+      "the movement hint must name the keyboard path, now the only non-pointer modality");
     assert.equal(
       await cutscene.isVisible(),
       true,
@@ -429,11 +435,17 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
     assert.equal(await cutscene.isVisible(), false, "all queued opening dialogue and narration must be dismissed");
     assert.equal(await surface.getAttribute("data-defense-cutscene"), null, "cutscene dismissal must not leave stale presentation state");
     report.events.push(...openingCutscenes.map((entry) => ({ event: "opening-cutscene-dismissed", ...entry })));
+    // Keyboard movement without the retired keypad: KEY_DIRECTIONS handles the key directly, so
+    // this is the same public contract (data-defense-move === "E") reached through the modality
+    // that actually survives — no focus target required.
     const beforeControlKeyboard = await surface.getAttribute("data-defense-input-seq");
-    await page.locator('[data-move="E"]').focus();
-    await page.keyboard.press("Enter");
+    // HOLD, not press: a keyup returns movement to IDLE, so a press/release pair would race the
+    // assertion. This mirrors how a player actually holds a direction.
+    await page.keyboard.down("d");
     await page.waitForFunction((value) => document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq !== value, beforeControlKeyboard);
-    assert.equal(await surface.getAttribute("data-defense-move"), "E", "keyboard activation must queue the public east movement command");
+    assert.equal(await surface.getAttribute("data-defense-move"), "E", "keyboard movement must queue the public east movement command");
+    await page.keyboard.up("d");
+    await page.waitForFunction(() => document.querySelector("#defense-battle-surface")?.dataset.defenseMove === "IDLE");
     report.events.push("stage-cutscene-dismissed");
     const before = await surface.getAttribute("data-defense-input-seq");
     await page.keyboard.press("ArrowRight");
@@ -544,8 +556,15 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
       !["victory", "defeat", "final_completion"].includes(beforePress.defenseState),
       `the held-movement contract needs a live battle; public state was ${String(beforePress.defenseState)}`,
     );
-    await page.locator('[data-move="W"]').hover();
+    // Held movement without the keypad: press and HOLD a west drag on the stick. The button that
+    // used to be hovered here is retired, and the stick is the control that owns a held direction —
+    // pointer capture keeps the hold alive exactly as the button press did.
+    const padBox = await page.locator("#movement-actions [data-joystick]").boundingBox();
+    assert(padBox, "the drag stick must have bounds before a held movement command");
+    const padCentre = { x: padBox.x + padBox.width / 2, y: padBox.y + padBox.height / 2 };
+    await page.mouse.move(padCentre.x, padCentre.y);
     await page.mouse.down();
+    await page.mouse.move(padCentre.x - padBox.width * 0.36, padCentre.y, { steps: 4 });
     let heldMovement = null;
     try {
       await page.waitForFunction(

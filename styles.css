@@ -2518,13 +2518,21 @@ button:disabled {
   .hud-xp { margin-top: .2rem; }
   .hud-loop-state { min-height: 38px; }
 
+  /* COMPOSITION B — phone portrait, LANDSCAPE-SHAPED BAND.
+     Was two stacked rows ("gate actions" / "movement combat"), which pushed the thumb controls
+     into a second line and ate vertical play space. It now mirrors composition A's single band:
+     the pad is pinned left, the combat cluster right, and the gate/actions column sits between
+     them — the same left-thumb / right-thumb reach as landscape, at 390px of width.
+     `movement` and `combat` span both rows so they read as one full-height column each; only the
+     narrow middle column stacks, because gate and actions genuinely cannot share 116px of width. */
   .defense-bottom {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 9.4rem;
+    grid-template-columns: minmax(6.5rem, auto) minmax(0, 1fr) 8.6rem;
+    grid-template-rows: auto auto;
     grid-template-areas:
-      "gate actions"
-      "movement combat";
-    gap: .3rem;
+      "movement gate combat"
+      "movement actions combat";
+    gap: .28rem;
     align-items: end;
   }
   .defense-bottom > .gate-panel {
@@ -2555,6 +2563,7 @@ button:disabled {
   .defense-bottom > #movement-actions {
     grid-area: movement;
     justify-self: start;
+    align-self: center;
   }
   /* B has vertical room, so the strip gets its own line BELOW .integrity-meter at 30px. */
   .gate-panel .hud-buff-strip { --buff-slot: 30px; max-width: 204px; }
@@ -2563,8 +2572,11 @@ button:disabled {
   .defense-bottom > #combat-input-cluster {
     grid-area: combat;
     justify-self: end;
-    width: 9.4rem;
-    height: 7.9rem;
+    align-self: end;
+    /* Narrowed from 9.4rem so the three-column band fits 390px:
+       pad 6.5rem + gate/actions 1fr + combat 8.6rem + gaps ≈ 384px. */
+    width: 8.6rem;
+    height: 7.4rem;
   }
   .defense-bottom > #battle-actions {
     grid-area: actions;
@@ -3097,6 +3109,16 @@ html[data-defense-started="true"] .idle-return-toast {
   display: grid;
   place-items: center;
   overflow: hidden;
+  /* THE fix for "the stick only moves left and right". `touch-action` is NOT inherited and is
+     resolved from the element the touch STARTS on. #movement-actions carried `none`, but the pad
+     sits on top of it, so every touch began on THIS element with the initial `auto` and the browser
+     kept vertical panning for itself: a downward drag scrolled/over-scrolled the page instead of
+     reaching updateJoystick(), while horizontal drags survived because there is nothing to pan
+     horizontally. Measured before the fix: computed touchAction was `auto` on the pad and `none`
+     on the wrapper, at all three viewports. Pointer-based tests never caught it — a mouse drag is
+     not a pan gesture. */
+  touch-action: none;
+  overscroll-behavior: contain;
   border: 2px solid rgb(137 173 201 / .62);
   border-radius: 50%;
   background:
@@ -3137,42 +3159,12 @@ html[data-defense-started="true"] .idle-return-toast {
   box-shadow: inset 0 0 .65rem rgb(255 255 255 / .15), 0 .35rem .7rem #000;
 }
 
-/* Octant ring: retained, VISIBLE, pointer-active, keyboard-focusable. These are simultaneously
-   the accessible fallback the browser suite asserts and the pad's own legend. They were
-   `opacity: 0; pointer-events: none` and revealed only on :focus-visible, which made them a
-   hidden keyboard affordance; now they are a real control at every viewport.
-
-   z-index 3 puts them ABOVE the drag disc so a deliberate press on a labelled control wins --
-   that ordering is why onMoveControlDown() hit-tests [data-move] FIRST (§3.2). Requirement C1
-   keeps them clear of the centre point so a drag starting at the centre is never intercepted. */
-#movement-actions > button[data-move] {
-  position: absolute;
-  z-index: 3;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0;
-  opacity: 1;
-  pointer-events: auto;
-  border-radius: 50%;
-  font-size: 1rem;
-  font-weight: 900;
-}
-#movement-actions > button[data-move="N"] { top: 0; left: calc(50% - 22px); }
-#movement-actions > button[data-move="S"] { bottom: 0; left: calc(50% - 22px); }
-#movement-actions > button[data-move="W"] { top: calc(50% - 22px); left: 0; }
-#movement-actions > button[data-move="E"] { top: calc(50% - 22px); right: 0; }
-/* C1: IDLE VACATES THE CENTRE for the SE ring slot -- the only one of eight unoccupied by
-   N/W/E/S. It previously parked at `top/left: calc(50% - 22px)`, exactly where the octant drag
-   test presses, so with the ring pointer-active every centre-start drag would have resolved to
-   MOVE IDLE and no drag could begin. DOM order is untouched (C2): position is CSS-only. */
-#movement-actions > button[data-move="IDLE"] { right: 2%; bottom: 2%; top: auto; left: auto; }
-#movement-actions > button[data-move]:focus-visible {
-  z-index: 4;
-  outline: 2px solid var(--lantern-focus);
-  outline-offset: 2px;
-}
+/* KEYPAD RETIRED. The five `[data-move]` ring buttons (N/W/IDLE/E/S) are gone from the markup, so
+   their absolute-positioned, `z-index: 3` boxes are gone with them. They sat on the pad's north,
+   south, east and west edges and were hit-tested BEFORE the drag surface, which is why an edge-
+   started drag was swallowed by a button instead of moving the stick. Movement is now: drag the
+   pad, or use the keyboard (WASD / arrows, two keys for a diagonal) via KEY_DIRECTIONS in app.js.
+   The keyboard path never went through these buttons, so retiring them costs no input modality. */
 
 .defense-cutscene[data-nonblocking="true"] {
   inset: auto 18vw max(8.6rem, calc(var(--defense-safe-bottom) + 8rem));
