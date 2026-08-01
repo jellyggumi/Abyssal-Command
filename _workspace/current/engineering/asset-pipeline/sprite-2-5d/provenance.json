@@ -63,12 +63,16 @@
   "runtimeReceipt": {
     "runtimeEligible": true,
     "route": "sprite-2-5d.html",
+    "verifiedRuntimeRevision": "3d02fbce",
+    "browserContractRevision": "3a46dc94",
     "localBrowserChecks": [
       "all five runtime asset requests succeeded",
       "body entered data-game-state=running",
       "390x844 and 844x390 layouts had no horizontal overflow",
-      "keyboard and pointer controls responded",
-      "game-over restart restored wave 1, score 0, and health 100",
+      "keyboard, pointer, and semantic button controls responded",
+      "game-over stopped animation work and restart restored one running loop at wave 1, score 0, and health 100",
+      "persisted pagehide/pageshow restored a changing canvas without duplicate animation loops",
+      "reduced-motion preserved the normal wave intermission duration",
       "no console or page errors"
     ],
     "deployedVerification": "pending Pages release"
