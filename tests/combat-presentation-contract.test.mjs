@@ -2927,3 +2927,290 @@ test("pickup model selection preserves the legacy kind mapping and honours an au
     adapter.dispose();
   }
 });
+
+// --- Arrival entry presentation ------------------------------------------------------
+// `skydrop` and `emerge` are RENDER-SPACE vertical offsets, the same shape as knockback: the
+// authoritative position is committed every frame and the offset decays to exactly zero. What
+// these assert is that the offset EXISTS, points the right way, is scaled by the body's own
+// silhouette, never outlasts the arming window the simulation promised, and leaves no residue.
+
+/** Places one arrived body and returns its record plus the y the actor sync committed. */
+async function arrivalHarness(RealtimeBattle, { reducedMotion = false } = {}) {
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  adapter.reducedMotion = reducedMotion;
+  adapter.reconcileActors({ tick: 1, enemies: [{ id: "arriving", kind: "rusher", x: 12000, y: 6000 }] });
+  await settleLoadedActors(adapter, ["arriving"]);
+  const record = adapter.actors.get("arriving");
+  return { adapter, record, baseY: record.root.position.y };
+}
+
+function spawnEvent(overrides = {}) {
+  return {
+    type: "ENEMY_SPAWNED",
+    entityId: "arriving",
+    enemyType: "rusher",
+    arrivalFormation: "skydrop",
+    grade: "SHADOW",
+    telegraphTicks: 90,
+    arrivalDistance: 2100,
+    ...overrides,
+  };
+}
+
+/**
+ * One frame of entry: re-commit the authoritative y, then apply the offset on top of it.
+ *
+ * `elapsedMs` is relative to the entry's own `startMs`, which registerArrivalEntry stamps from
+ * `performance.now()` -- a wall-clock value in the hundreds by the time a test runs. Passing an
+ * absolute 0 here would clamp progress to 0 on every sample and quietly assert nothing.
+ */
+function entryOffsetAt(adapter, record, baseY, elapsedMs, startMs = 0) {
+  record.root.position.y = baseY;
+  adapter.applyArrivalEntries(startMs + elapsedMs);
+  return record.root.position.y - baseY;
+}
+
+/** The wall-clock stamp registerArrivalEntry() gave the live entry. */
+function entryStart(adapter, entityId = "arriving") {
+  return adapter.arrivalEntries.get(entityId)?.startMs ?? 0;
+}
+
+test("a sky-dropped body enters above its authoritative position and lands exactly on it", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const { adapter, record, baseY } = await arrivalHarness(RealtimeBattle);
+  adapter.collectFeedback({ tick: 2, commander: { x: 9000, y: 6000 }, events: [spawnEvent()] });
+
+  const t0 = entryStart(adapter);
+  const start = entryOffsetAt(adapter, record, baseY, 0, t0);
+  assert.ok(start > 0, `a fall must begin above the ground, got ${start}`);
+  // Scaled by the body's own fitted height, not by a per-kind constant.
+  assertNear(start, 4.5 * record.targetHeight, "the drop height is 4.5 silhouettes of this body");
+
+  const mid = entryOffsetAt(adapter, record, baseY, 260, t0);
+  assert.ok(mid > 0 && mid < start, `the fall must be descending at the midpoint, got ${mid}`);
+  // Gravity holds height early and loses it late: at the halfway point more than half the drop
+  // must remain, which a linear descent would fail.
+  assert.ok(mid > start * 0.5, `the fall must accelerate rather than travel linearly, got ${mid} of ${start}`);
+
+  // Landing is exact, and the entry retires itself rather than leaking a residual offset.
+  // Sampled one millisecond PAST the duration: `startMs` is a live performance.now() reading, so
+  // `startMs + 520 - startMs` is not reliably 520 in floating point and a sample taken exactly on
+  // the boundary can land at progress 0.9999... -- a flake, not a contract.
+  const landed = entryOffsetAt(adapter, record, baseY, 521, t0);
+  assert.equal(landed, 0, "a completed fall must leave the body exactly on its authoritative position");
+  assert.equal(adapter.arrivalEntries.size, 0, "a completed entry must retire itself");
+  adapter.dispose();
+});
+
+test("an emerging body enters below the floor and rises onto its authoritative position", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const { adapter, record, baseY } = await arrivalHarness(RealtimeBattle);
+  adapter.collectFeedback({
+    tick: 2,
+    commander: { x: 9000, y: 6000 },
+    events: [spawnEvent({ arrivalFormation: "emerge" })],
+  });
+
+  const t0 = entryStart(adapter);
+  const start = entryOffsetAt(adapter, record, baseY, 0, t0);
+  assert.ok(start < 0, `an emergence must begin below the floor, got ${start}`);
+  assertNear(start, -1.15 * record.targetHeight, "the burial depth is 1.15 silhouettes of this body");
+
+  // The opposite easing to the fall: a rise clears the floor immediately and then settles, so at
+  // the halfway point most of the depth is already gone.
+  const mid = entryOffsetAt(adapter, record, baseY, 310, t0);
+  assert.ok(mid < 0 && mid > start, `the rise must be ascending at the midpoint, got ${mid}`);
+  assert.ok(mid > start * 0.5, `the rise must decelerate rather than travel linearly, got ${mid} of ${start}`);
+
+  assert.equal(entryOffsetAt(adapter, record, baseY, 621, t0), 0, "a completed rise must land exactly");
+  assert.equal(adapter.arrivalEntries.size, 0, "a completed rise must retire itself");
+  adapter.dispose();
+});
+
+test("an entry never outlasts the arming window the simulation advertised", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const { adapter, record, baseY } = await arrivalHarness(RealtimeBattle);
+  // 12 ticks is 200ms at 60Hz -- shorter than the authored 520ms fall. A body still falling after
+  // its telegraph would be animating something the simulation already allows to attack.
+  adapter.collectFeedback({
+    tick: 2,
+    commander: { x: 9000, y: 6000 },
+    events: [spawnEvent({ telegraphTicks: 12 })],
+  });
+  const t0 = entryStart(adapter);
+  assert.equal(adapter.arrivalEntries.get("arriving").durationMs, 200, "the telegraph must cap the entry");
+  assert.equal(entryOffsetAt(adapter, record, baseY, 201, t0), 0, "the body must be grounded when its telegraph ends");
+  assert.equal(adapter.arrivalEntries.size, 0, "the capped entry must retire with its telegraph");
+  adapter.dispose();
+});
+
+test("an edge arrival has no vertical entry at all", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const { adapter, record, baseY } = await arrivalHarness(RealtimeBattle);
+  // `encircle` arrives on the ground and `lane` / `abreast` walk in, so none of the three has a
+  // vertical story. An unmapped formation must be a silent no-op, not a zero-height entry record.
+  for (const arrivalFormation of ["lane", "abreast", "encircle", undefined]) {
+    adapter.collectFeedback({
+      tick: 2,
+      commander: { x: 9000, y: 6000 },
+      events: [spawnEvent({ arrivalFormation, grade: "BASIC", telegraphTicks: 30 })],
+    });
+    assert.equal(adapter.arrivalEntries.size, 0, `${arrivalFormation} must not register an entry`);
+    assert.equal(entryOffsetAt(adapter, record, baseY, 0), 0, `${arrivalFormation} must not displace the body`);
+  }
+  adapter.dispose();
+});
+
+test("reduced motion resolves an arrival instantly and a runtime toggle sweeps one mid-fall", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const reduced = await arrivalHarness(RealtimeBattle, { reducedMotion: true });
+  reduced.adapter.collectFeedback({ tick: 2, commander: { x: 9000, y: 6000 }, events: [spawnEvent()] });
+  assert.equal(reduced.adapter.arrivalEntries.size, 0, "reduced motion must not admit an entry");
+  assert.equal(
+    entryOffsetAt(reduced.adapter, reduced.record, reduced.baseY, 0),
+    0,
+    "under reduced motion the body is at its authoritative position from the first frame",
+  );
+  reduced.adapter.dispose();
+
+  // A toggle mid-fall must land the body at once rather than leaving it hanging in the air until
+  // its entry happens to expire -- the same rule setReducedMotion already applies to knockback.
+  const live = await arrivalHarness(RealtimeBattle);
+  live.adapter.collectFeedback({ tick: 2, commander: { x: 9000, y: 6000 }, events: [spawnEvent()] });
+  const liveStart = entryStart(live.adapter);
+  assert.ok(
+    entryOffsetAt(live.adapter, live.record, live.baseY, 100, liveStart) > 0,
+    "the fall must be live before the toggle",
+  );
+  live.adapter.setReducedMotion(true);
+  assert.equal(live.adapter.arrivalEntries.size, 0, "enabling reduced motion must sweep an active entry");
+  assert.equal(
+    entryOffsetAt(live.adapter, live.record, live.baseY, 140, liveStart),
+    0,
+    "the swept body must be grounded",
+  );
+  live.adapter.dispose();
+});
+
+test("dispose clears arrival entries so a retired body cannot leak an offset", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const { adapter } = await arrivalHarness(RealtimeBattle);
+  adapter.collectFeedback({ tick: 2, commander: { x: 9000, y: 6000 }, events: [spawnEvent()] });
+  assert.equal(adapter.arrivalEntries.size, 1, "the entry must be live before dispose");
+  adapter.dispose();
+  assert.equal(adapter.arrivalEntries.size, 0, "dispose must clear every tracked entry");
+});
+
+// --- Knockback weight ----------------------------------------------------------------
+// Knockback was a flat 0.12 / 0.26 for every body, so a 4.5u boss recoiled exactly as far as a
+// 1.45u companion and weight did not read at all. It now scales by the STRUCK body's silhouette
+// through the same reference `motionProfileFor()` uses. These assert the curve, its bounds, and
+// that the offset stays a render-space nudge rather than becoming a position.
+
+async function knockbackHarness(RealtimeBattle) {
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  const snapshot = {
+    tick: 1,
+    enemies: [
+      { id: "attacker", kind: "rusher", x: 10000, y: 6000, elevation: 0 },
+      { id: "grunt", kind: "rusher", x: 12000, y: 6000, elevation: 0 },
+      // actorModelPath only starts a boss load for a catalog-backed id, so this fixture stays on
+      // the same public boss lookup path production uses.
+      { id: "warden", class: "boss", bossId: "s1-cinder-warden", x: 12000, y: 7000, elevation: 0 },
+    ],
+  };
+  adapter.reconcileActors(snapshot);
+  await settleLoadedActors(adapter, ["attacker", "grunt", "warden"]);
+  // Models load asynchronously, so the FIRST reconcile had no root to place. Without this second
+  // pass every body sits at the world origin, the attacker-to-target axis has zero length, and
+  // registerImpactFeedback declines to register any knockback -- the test would then be asserting
+  // against an impact that never happened.
+  adapter.reconcileActors(snapshot);
+  return adapter;
+}
+
+function strike(adapter, targetId, nowMs) {
+  adapter.registerImpactFeedback(
+    { type: "MELEE_IMPACT", sourceId: "attacker", targetId, heavy: true },
+    nowMs,
+    [],
+  );
+  return adapter.knockbacks.get(targetId) ?? null;
+}
+
+test("knockback distance is scaled by the struck body's own silhouette", async () => {
+  const { RealtimeBattle, knockbackMassScale } = await rendererModule;
+  const adapter = await knockbackHarness(RealtimeBattle);
+
+  const grunt = strike(adapter, "grunt", 0);
+  const warden = strike(adapter, "warden", 0);
+  assert.ok(grunt, "a struck grunt must register a knockback");
+  assert.ok(warden, "a struck boss must register a knockback");
+
+  // The whole point: the heaviest body in the game must visibly resist what moves a grunt.
+  assert.ok(
+    warden.distance < grunt.distance * 0.7,
+    `a boss must resist: boss ${warden.distance} vs grunt ${grunt.distance}`,
+  );
+  // A boss must still MOVE. Zero displacement reads as a missed hit, which is a worse defect
+  // than a small one -- that is what the lower bound exists to prevent.
+  assert.ok(warden.distance > 0, "a boss must still register a visible recoil");
+
+  assertNear(
+    grunt.distance,
+    0.26 * knockbackMassScale(1.7),
+    "the reference silhouette keeps the authored heavy distance",
+  );
+  assertNear(
+    warden.distance,
+    0.26 * knockbackMassScale(4.5),
+    "a boss consumes the authored mass curve",
+  );
+  adapter.dispose();
+});
+
+test("the reference silhouette is an exact identity, so the common body is unchanged", async () => {
+  const { knockbackMassScale, MOTION_PROFILE_REFERENCE_HEIGHT } = await rendererModule;
+  // 1.7 is TARGET_HEIGHT.enemy and the reference the curve is written against. Anything other
+  // than exactly 1 here would silently re-tune every ordinary enemy in the game.
+  assert.equal(knockbackMassScale(MOTION_PROFILE_REFERENCE_HEIGHT), 1);
+});
+
+test("the mass curve is monotonic, bounded, and total", async () => {
+  const { knockbackMassScale } = await rendererModule;
+  const heights = [0.7, 1.45, 1.55, 1.7, 1.8, 2.2, 4.5];
+  const scales = heights.map((height) => knockbackMassScale(height));
+  for (let index = 1; index < scales.length; index += 1) {
+    assert.ok(
+      scales[index] <= scales[index - 1],
+      `heavier bodies must never recoil further: ${heights[index]} scored ${scales[index]}`,
+    );
+  }
+  // Bounded at both extremes, including inputs no catalog body has.
+  for (const height of [0.0001, 1e6, Number.NaN, undefined, null]) {
+    const scale = knockbackMassScale(height);
+    assert.ok(Number.isFinite(scale) && scale >= 0.45 && scale <= 1.15, `unbounded scale for ${height}: ${scale}`);
+  }
+});
+
+test("the heaviest possible recoil stays a render nudge rather than a position", async () => {
+  const { knockbackMassScale } = await rendererModule;
+  // The lightest knockable body takes the largest multiplier, so this is the worst case in the
+  // game. updateActorFollow() re-commits the authoritative position every frame; the offset only
+  // stays legible as "recoil" while it is small against the body it is applied to.
+  const lightest = 1.45;
+  const worstCase = 0.26 * knockbackMassScale(lightest);
+  assert.ok(
+    worstCase / lightest < 0.25,
+    `worst-case recoil ${worstCase} is ${(worstCase / lightest * 100).toFixed(1)}% of a ${lightest}u body`,
+  );
+});
+
+test("reduced motion registers no knockback at all", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = await knockbackHarness(RealtimeBattle);
+  adapter.reducedMotion = true;
+  assert.equal(strike(adapter, "grunt", 0), null, "reduced motion must not displace a struck body");
+  assert.equal(adapter.knockbacks.size, 0, "no knockback record may survive under reduced motion");
+  adapter.dispose();
+});

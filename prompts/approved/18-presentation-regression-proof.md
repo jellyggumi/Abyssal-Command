@@ -27,11 +27,11 @@ tests/audio-sample-hybrid.test.mjs                 procedural fallback, sample m
 tests/battle-session-cutscene-audio.test.mjs       cutscene ordering, pause/resume, stale dismissal
 ```
 
-**Baseline recorded 2026-07-31 [OBSERVED]**, re-measured on `main` — the ten suites above run
-together in one command. The arrival-entry slice (+6) and the knockback-weight slice (+5) are
-authored on `feat/arrival-choreography` and are NOT merged here, so `main` measures 130 and will
-measure 141 when that branch lands (130 + 6 + 5). An earlier revision of this file recorded 140 as
-though both slices had landed; that number was never measurable on any ref.
+**Baseline recorded 2026-07-31 [OBSERVED]**, re-measured on this branch — the ten suites above run
+together in one command. `main` measures 130; the arrival-entry slice adds six contracts and the
+knockback-weight slice five, so this branch measures 141 (130 + 6 + 5). Both numbers are measured,
+not derived: 130 on `main` at `d34a3d30`, 141 here. An earlier revision recorded 140 as though both
+slices had already landed -- a count no ref could produce.
 
 ```
 node --test tests/combat-presentation-contract.test.mjs tests/world-presentation-contract.test.mjs \
@@ -40,7 +40,7 @@ node --test tests/combat-presentation-contract.test.mjs tests/world-presentation
   tests/aoe-burst-wide-hit-contract.test.mjs tests/audio-feedback-runtime.test.mjs \
   tests/audio-sample-hybrid.test.mjs tests/battle-session-cutscene-audio.test.mjs
 
-tests 130 · pass 130 · fail 0 · cancelled 0 · skipped 0 · todo 0 · duration_ms 15430
+tests 141 · pass 141 · fail 0 · cancelled 0 · skipped 0 · todo 0 · duration_ms 14716
 ```
 
 Expected, non-failing stderr in that baseline — do **not** "fix" these, and do not let them mask a
@@ -65,7 +65,7 @@ already red be silently absorbed into a green claim.
 **ACTION:**
 
 1. Re-run the ten-suite presentation gate above and record `tests / pass / fail / duration_ms`
-   verbatim. Compare against the baseline: 130 / 130 / 0 / ~15.4 s on `main`.
+   verbatim. Compare against the baseline: 141 / 141 / 0 / ~14.7 s on this branch.
 2. If the change touched simulation state — arrival formations, `ENEMY_SPAWNED` payload, anything
    that draws from the RNG — run `node --test 'tests/**/*.test.mjs'` with the quoted glob and report
    `getRunDigest()` on `${fixtureSeed}` for all three stages, before and after.
@@ -106,7 +106,7 @@ the artifact tree without chat history.
 - Report the exact command and its observed output, not a paraphrase.
 
 **DONE WHEN:**
-The ten-suite gate is re-run with its counts recorded and reconciled against 130/130/0 on `main`, any
+The ten-suite gate is re-run with its counts recorded and reconciled against 141/141/0, any
 simulation-touching change reports before/after digests for all three stages, a covering assertion is
 named, browser proof artifacts exist for anything headless cannot see, all three quality tiers are
 verified, and unverified items are listed with reasons.

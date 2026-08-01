@@ -667,6 +667,11 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
  */
 async function verifyWorldHudOverlay(browser, hosting, campaign) {
   const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
+  // Same runner slowdown `:329-335` documents (rafMean ~95.8 ms in CI against ~16 ms
+  // locally, ~6x). Stock 30 s was measured failing here on `d34a3d30`:
+  // `locator.click: Timeout 30000ms exceeded` at `#start-defense`. A per-suite default is
+  // a property of the RUNNER, not of each function, so every context in this file carries it.
+  context.setDefaultTimeout(90_000);
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
@@ -907,6 +912,11 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
  */
 async function verifyBossMeshRegression(browser, hosting) {
   const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
+  // Same runner slowdown `:329-335` documents (rafMean ~95.8 ms in CI against ~16 ms
+  // locally, ~6x). Stock 30 s was measured failing here on `d34a3d30`:
+  // `locator.click: Timeout 30000ms exceeded` at `#start-defense`. A per-suite default is
+  // a property of the RUNNER, not of each function, so every context in this file carries it.
+  context.setDefaultTimeout(90_000);
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
@@ -1098,6 +1108,11 @@ async function verifyBossMeshRegression(browser, hosting) {
  */
 async function verifyStanceSwitchFeedback(browser, hosting, campaign) {
   const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
+  // Same runner slowdown `:329-335` documents (rafMean ~95.8 ms in CI against ~16 ms
+  // locally, ~6x). Stock 30 s was measured failing here on `d34a3d30`:
+  // `locator.click: Timeout 30000ms exceeded` at `#start-defense`. A per-suite default is
+  // a property of the RUNNER, not of each function, so every context in this file carries it.
+  context.setDefaultTimeout(90_000);
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
@@ -1216,6 +1231,11 @@ async function verifyXpProgressBar(browser, hosting, campaign) {
   // these, which proves the cost is wired from the catalog and not fabricated.
   const XP_GROWTH = [30, 55, 85, 120, 160, 205, 255, 310];
   const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
+  // Same runner slowdown `:329-335` documents (rafMean ~95.8 ms in CI against ~16 ms
+  // locally, ~6x). Stock 30 s was measured failing here on `d34a3d30`:
+  // `locator.click: Timeout 30000ms exceeded` at `#start-defense`. A per-suite default is
+  // a property of the RUNNER, not of each function, so every context in this file carries it.
+  context.setDefaultTimeout(90_000);
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
@@ -1313,6 +1333,11 @@ async function verifyPassiveBadges(browser, hosting, campaign) {
   const PASSIVE_BOONS = { "eclipse-edge": "+180 공격", "soul-magnet": "+1500 회수", "ward-binder": "+120 내구" };
   const ACTIVE_IDS = ["rift-bolt", "soul-lance", "grave-pulse", "void-aegis", "shadow-step"];
   const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
+  // Same runner slowdown `:329-335` documents (rafMean ~95.8 ms in CI against ~16 ms
+  // locally, ~6x). Stock 30 s was measured failing here on `d34a3d30`:
+  // `locator.click: Timeout 30000ms exceeded` at `#start-defense`. A per-suite default is
+  // a property of the RUNNER, not of each function, so every context in this file carries it.
+  context.setDefaultTimeout(90_000);
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(`page: ${error.message}`));

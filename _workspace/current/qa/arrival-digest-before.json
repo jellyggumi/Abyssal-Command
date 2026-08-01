@@ -1,0 +1,124 @@
+{
+  "generatedAt": "2026-07-31T03:22:31.487Z",
+  "ticks": 3600,
+  "stages": [
+    "cinder-span",
+    "abyss-chancel",
+    "echo-throne"
+  ],
+  "seeds": [
+    1,
+    7,
+    42
+  ],
+  "rows": [
+    {
+      "stageId": "cinder-span",
+      "seed": 1,
+      "ticks": 3600,
+      "digestSha256_16": "7b788fa5281b3b07",
+      "digestBytes": 20172,
+      "tick": 529,
+      "waveVariantId": "0:normal:cinder-span-w0-normal-primary:rusherx7:W:-218:low-hp-focus:encounter-path:cinder-span:cinder-relay-crossing:w|1020:normal:cinder-span-w1-normal-primary:flankerx6:SW:216:flank:encounter-path:cinder-span:cinder-relay-crossing:sw|2040:big:cinder-span-w2-big-primary:rangedx8+rusherx5:W:-223:gate-pressure:encounter-path:cinder-span:cinder-relay-crossing:w|3060:mid:cinder-span-w3-mid-primary:rusherx4:SW:-295:elite-escort:encounter-path:cinder-span:cinder-relay-crossing:sw|4080:normal:cinder-span-w4-normal-remix:flankerx4+rangedx3:W:-98:flank:encounter-path:cinder-span:cinder-relay-crossing:w|5100:normal:cinder-span-w5-normal-remix:rangedx6+rusherx3:SW:-36:resource-denial:encounter-path:cinder-span:cinder-forge-stand:sw|6120:big:cinder-span-w6-big-primary:rusherx9+flankerx5:W:18:gate-pressure:encounter-path:cinder-span:cinder-forge-stand:w|7140:mid:cinder-span-w7-mid-primary:flankerx4:SW:85:elite-escort:encounter-path:cinder-span:cinder-forge-stand:sw|8160:normal:cinder-span-w8-normal-primary:rangedx10:W:-105:player-pursuit:encounter-path:cinder-span:cinder-forge-stand:w|9180:big:cinder-span-w9-big-primary:rusherx10+flankerx5:SW:-129:gate-pressure:encounter-path:cinder-span:cinder-forge-stand:sw",
+      "waveVariantSha256_16": "2b9389a1ae98eb94",
+      "enemyCount": 3,
+      "terminal": null
+    },
+    {
+      "stageId": "cinder-span",
+      "seed": 7,
+      "ticks": 3600,
+      "digestSha256_16": "95f7e140196f7c3f",
+      "digestBytes": 20172,
+      "tick": 459,
+      "waveVariantId": "0:normal:cinder-span-w0-normal-remix:rusherx5+flankerx2:W:10:player-pursuit:encounter-path:cinder-span:cinder-relay-crossing:w|1020:normal:cinder-span-w1-normal-primary:flankerx6:SW:-262:flank:encounter-path:cinder-span:cinder-relay-crossing:sw|2040:big:cinder-span-w2-big-primary:rangedx8+rusherx5:W:129:gate-pressure:encounter-path:cinder-span:cinder-relay-crossing:w|3060:mid:cinder-span-w3-mid-remix:rusherx3+flankerx1:SW:34:elite-escort:encounter-path:cinder-span:cinder-relay-crossing:sw|4080:normal:cinder-span-w4-normal-primary:flankerx7:W:-197:flank:encounter-path:cinder-span:cinder-relay-crossing:w|5100:normal:cinder-span-w5-normal-primary:rangedx9:SW:29:player-pursuit:encounter-path:cinder-span:cinder-forge-stand:sw|6120:big:cinder-span-w6-big-primary:rusherx9+flankerx5:W:-40:gate-pressure:encounter-path:cinder-span:cinder-forge-stand:w|7140:mid:cinder-span-w7-mid-remix:flankerx2+rangedx2:SW:-46:elite-escort:encounter-path:cinder-span:cinder-forge-stand:sw|8160:normal:cinder-span-w8-normal-remix:rangedx6+rusherx3:W:-253:player-pursuit:encounter-path:cinder-span:cinder-forge-stand:w|9180:big:cinder-span-w9-big-primary:rusherx10+flankerx5:SW:-240:gate-pressure:encounter-path:cinder-span:cinder-forge-stand:sw",
+      "waveVariantSha256_16": "0455b8a8d17b8f82",
+      "enemyCount": 3,
+      "terminal": null
+    },
+    {
+      "stageId": "cinder-span",
+      "seed": 42,
+      "ticks": 3600,
+      "digestSha256_16": "79b7374c2cdf3a86",
+      "digestBytes": 19773,
+      "tick": 457,
+      "waveVariantId": "0:normal:cinder-span-w0-normal-primary:rusherx7:W:-244:gate-pressure:encounter-path:cinder-span:cinder-relay-crossing:w|1020:normal:cinder-span-w1-normal-primary:flankerx6:SW:171:low-hp-focus:encounter-path:cinder-span:cinder-relay-crossing:sw|2040:big:cinder-span-w2-big-primary:rangedx8+rusherx5:W:30:gate-pressure:encounter-path:cinder-span:cinder-relay-crossing:w|3060:mid:cinder-span-w3-mid-primary:rusherx4:SW:180:elite-escort:encounter-path:cinder-span:cinder-relay-crossing:sw|4080:normal:cinder-span-w4-normal-remix:flankerx4+rangedx3:W:-182:flank:encounter-path:cinder-span:cinder-relay-crossing:w|5100:normal:cinder-span-w5-normal-primary:rangedx9:SW:120:player-pursuit:encounter-path:cinder-span:cinder-forge-stand:sw|6120:big:cinder-span-w6-big-primary:rusherx9+flankerx5:W:75:gate-pressure:encounter-path:cinder-span:cinder-forge-stand:w|7140:mid:cinder-span-w7-mid-remix:flankerx2+rangedx2:SW:13:elite-escort:encounter-path:cinder-span:cinder-forge-stand:sw|8160:normal:cinder-span-w8-normal-remix:rangedx6+rusherx3:W:187:resource-denial:encounter-path:cinder-span:cinder-forge-stand:w|9180:big:cinder-span-w9-big-remix:flankerx8+rusherx6:SW:45:gate-pressure:encounter-path:cinder-span:cinder-forge-stand:sw",
+      "waveVariantSha256_16": "9fd3b3ab7511cae9",
+      "enemyCount": 3,
+      "terminal": null
+    },
+    {
+      "stageId": "abyss-chancel",
+      "seed": 1,
+      "ticks": 3600,
+      "digestSha256_16": "e2e70f983747b1e7",
+      "digestBytes": 21722,
+      "tick": 579,
+      "waveVariantId": "0:normal:abyss-chancel-w0-normal-primary:rangedx7:W:222:player-pursuit:encounter-path:abyss-chancel:chancel-nave-advance:w|1050:big:abyss-chancel-w1-big-primary:flankerx6+rusherx5:SW:504:flank:encounter-path:abyss-chancel:chancel-nave-advance:sw|2100:normal:abyss-chancel-w2-normal-primary:rusherx7:NW:-93:low-hp-focus:encounter-path:abyss-chancel:chancel-nave-advance:nw|3150:mid:abyss-chancel-w3-mid-primary:guardianx1:W:-415:elite-escort:encounter-path:abyss-chancel:chancel-nave-advance:w|4200:normal:abyss-chancel-w4-normal-remix:rangedx5+flankerx2:SW:348:resource-denial:encounter-path:abyss-chancel:chancel-transept-lock:sw|5250:big:abyss-chancel-w5-big-remix:rusherx8+flankerx4:NW:-368:flank:encounter-path:abyss-chancel:chancel-transept-lock:nw|6300:normal:abyss-chancel-w6-normal-primary:rusherx8:W:402:low-hp-focus:encounter-path:abyss-chancel:chancel-transept-lock:w|7350:mid:abyss-chancel-w7-mid-primary:guardianx1:SW:424:elite-escort:encounter-path:abyss-chancel:chancel-transept-lock:sw|8400:normal:abyss-chancel-w8-normal-primary:rangedx9:NW:343:player-pursuit:encounter-path:abyss-chancel:chancel-transept-lock:nw|9450:big:abyss-chancel-w9-big-primary:flankerx7+rusherx6:W:-428:flank:encounter-path:abyss-chancel:chancel-transept-lock:w",
+      "waveVariantSha256_16": "7d0fe0ec67ea757e",
+      "enemyCount": 4,
+      "terminal": null
+    },
+    {
+      "stageId": "abyss-chancel",
+      "seed": 7,
+      "ticks": 3600,
+      "digestSha256_16": "252c9d1e5ea4d037",
+      "digestBytes": 21313,
+      "tick": 577,
+      "waveVariantId": "0:normal:abyss-chancel-w0-normal-remix:rangedx5+flankerx2:W:637:player-pursuit:encounter-path:abyss-chancel:chancel-nave-advance:w|1050:big:abyss-chancel-w1-big-primary:flankerx6+rusherx5:SW:-122:flank:encounter-path:abyss-chancel:chancel-nave-advance:sw|2100:normal:abyss-chancel-w2-normal-primary:rusherx7:NW:-180:player-pursuit:encounter-path:abyss-chancel:chancel-nave-advance:nw|3150:mid:abyss-chancel-w3-mid-remix:rangedx4:W:-226:elite-escort:encounter-path:abyss-chancel:chancel-nave-advance:w|4200:normal:abyss-chancel-w4-normal-primary:rangedx8:SW:-285:resource-denial:encounter-path:abyss-chancel:chancel-transept-lock:sw|5250:big:abyss-chancel-w5-big-primary:flankerx6+rusherx5:NW:109:flank:encounter-path:abyss-chancel:chancel-transept-lock:nw|6300:normal:abyss-chancel-w6-normal-primary:rusherx8:W:78:low-hp-focus:encounter-path:abyss-chancel:chancel-transept-lock:w|7350:mid:abyss-chancel-w7-mid-remix:rangedx4:SW:-568:elite-escort:encounter-path:abyss-chancel:chancel-transept-lock:sw|8400:normal:abyss-chancel-w8-normal-remix:rangedx6+flankerx2:NW:517:player-pursuit:encounter-path:abyss-chancel:chancel-transept-lock:nw|9450:big:abyss-chancel-w9-big-primary:flankerx7+rusherx6:W:640:flank:encounter-path:abyss-chancel:chancel-transept-lock:w",
+      "waveVariantSha256_16": "0c4292e4921dd416",
+      "enemyCount": 4,
+      "terminal": null
+    },
+    {
+      "stageId": "abyss-chancel",
+      "seed": 42,
+      "ticks": 3600,
+      "digestSha256_16": "a05f119b8cf6476c",
+      "digestBytes": 13868,
+      "tick": 834,
+      "waveVariantId": "0:normal:abyss-chancel-w0-normal-primary:rangedx7:W:-503:resource-denial:encounter-path:abyss-chancel:chancel-nave-advance:w|1050:big:abyss-chancel-w1-big-primary:flankerx6+rusherx5:SW:-212:flank:encounter-path:abyss-chancel:chancel-nave-advance:sw|2100:normal:abyss-chancel-w2-normal-primary:rusherx7:NW:503:player-pursuit:encounter-path:abyss-chancel:chancel-nave-advance:nw|3150:mid:abyss-chancel-w3-mid-primary:guardianx1:W:-523:elite-escort:encounter-path:abyss-chancel:chancel-nave-advance:w|4200:normal:abyss-chancel-w4-normal-remix:rangedx5+flankerx2:SW:69:resource-denial:encounter-path:abyss-chancel:chancel-transept-lock:sw|5250:big:abyss-chancel-w5-big-primary:flankerx6+rusherx5:NW:-348:flank:encounter-path:abyss-chancel:chancel-transept-lock:nw|6300:normal:abyss-chancel-w6-normal-primary:rusherx8:W:412:player-pursuit:encounter-path:abyss-chancel:chancel-transept-lock:w|7350:mid:abyss-chancel-w7-mid-remix:rangedx4:SW:202:elite-escort:encounter-path:abyss-chancel:chancel-transept-lock:sw|8400:normal:abyss-chancel-w8-normal-remix:rangedx6+flankerx2:NW:-4:resource-denial:encounter-path:abyss-chancel:chancel-transept-lock:nw|9450:big:abyss-chancel-w9-big-remix:rusherx9+flankerx5:W:474:flank:encounter-path:abyss-chancel:chancel-transept-lock:w",
+      "waveVariantSha256_16": "7fc706a6d86ba077",
+      "enemyCount": 0,
+      "terminal": null
+    },
+    {
+      "stageId": "echo-throne",
+      "seed": 1,
+      "ticks": 3600,
+      "digestSha256_16": "8a65770373006f22",
+      "digestBytes": 16441,
+      "tick": 457,
+      "waveVariantId": "0:normal:echo-throne-w0-normal-primary:flankerx4:W:161:low-hp-focus:encounter-path:echo-throne:throne-aisle-break:w|981:normal:echo-throne-w1-normal-primary:rangedx6:SW:109:resource-denial:encounter-path:echo-throne:throne-aisle-break:sw|1962:big:echo-throne-w2-big-primary:guardianx2+flankerx3:NW:-23:gate-pressure:encounter-path:echo-throne:throne-aisle-break:nw|2943:mid:echo-throne-w3-mid-primary:flankerx2:W:91:elite-escort:encounter-path:echo-throne:throne-aisle-break:w|3924:normal:echo-throne-w4-normal-remix:rangedx6:SW:300:resource-denial:encounter-path:echo-throne:throne-aisle-break:sw|4905:normal:echo-throne-w5-normal-remix:guardianx1+flankerx2:NW:19:elite-escort:encounter-path:echo-throne:throne-aisle-break:nw|5886:big:echo-throne-w6-big-primary:flankerx5+rangedx5:W:140:gate-pressure:encounter-path:echo-throne:throne-dais-stand:w|6867:mid:echo-throne-w7-mid-primary:rangedx3:SW:-63:elite-escort:encounter-path:echo-throne:throne-dais-stand:sw|7848:normal:echo-throne-w8-normal-primary:guardianx2:NW:303:gate-pressure:encounter-path:echo-throne:throne-dais-stand:nw|8829:normal:echo-throne-w9-normal-primary:flankerx5:W:22:low-hp-focus:encounter-path:echo-throne:throne-dais-stand:w|9810:big:echo-throne-w10-big-remix:guardianx2+rangedx5:SW:-334:gate-pressure:encounter-path:echo-throne:throne-dais-stand:sw",
+      "waveVariantSha256_16": "73964d3608d560d6",
+      "enemyCount": 1,
+      "terminal": null
+    },
+    {
+      "stageId": "echo-throne",
+      "seed": 7,
+      "ticks": 3600,
+      "digestSha256_16": "ca8498753a9b5d57",
+      "digestBytes": 14135,
+      "tick": 583,
+      "waveVariantId": "0:normal:echo-throne-w0-normal-remix:flankerx3+rangedx2:W:102:low-hp-focus:encounter-path:echo-throne:throne-aisle-break:w|981:normal:echo-throne-w1-normal-primary:rangedx6:SW:402:resource-denial:encounter-path:echo-throne:throne-aisle-break:sw|1962:big:echo-throne-w2-big-primary:guardianx2+flankerx3:NW:4:gate-pressure:encounter-path:echo-throne:throne-aisle-break:nw|2943:mid:echo-throne-w3-mid-remix:flankerx2:W:-386:elite-escort:encounter-path:echo-throne:throne-aisle-break:w|3924:normal:echo-throne-w4-normal-primary:rangedx6:SW:0:resource-denial:encounter-path:echo-throne:throne-aisle-break:sw|4905:normal:echo-throne-w5-normal-primary:guardianx2:NW:286:gate-pressure:encounter-path:echo-throne:throne-aisle-break:nw|5886:big:echo-throne-w6-big-primary:flankerx5+rangedx5:W:379:gate-pressure:encounter-path:echo-throne:throne-dais-stand:w|6867:mid:echo-throne-w7-mid-remix:rangedx3:SW:-256:elite-escort:encounter-path:echo-throne:throne-dais-stand:sw|7848:normal:echo-throne-w8-normal-remix:guardianx1+flankerx2:NW:53:gate-pressure:encounter-path:echo-throne:throne-dais-stand:nw|8829:normal:echo-throne-w9-normal-primary:flankerx5:W:-139:flank:encounter-path:echo-throne:throne-dais-stand:w|9810:big:echo-throne-w10-big-primary:rangedx8+guardianx2:SW:154:gate-pressure:encounter-path:echo-throne:throne-dais-stand:sw",
+      "waveVariantSha256_16": "78fa93a50759b79d",
+      "enemyCount": 0,
+      "terminal": null
+    },
+    {
+      "stageId": "echo-throne",
+      "seed": 42,
+      "ticks": 3600,
+      "digestSha256_16": "bddb466db9f860c2",
+      "digestBytes": 16527,
+      "tick": 457,
+      "waveVariantId": "0:normal:echo-throne-w0-normal-primary:flankerx4:W:369:flank:encounter-path:echo-throne:throne-aisle-break:w|981:normal:echo-throne-w1-normal-primary:rangedx6:SW:-248:player-pursuit:encounter-path:echo-throne:throne-aisle-break:sw|1962:big:echo-throne-w2-big-primary:guardianx2+flankerx3:NW:90:gate-pressure:encounter-path:echo-throne:throne-aisle-break:nw|2943:mid:echo-throne-w3-mid-primary:flankerx2:W:181:elite-escort:encounter-path:echo-throne:throne-aisle-break:w|3924:normal:echo-throne-w4-normal-remix:rangedx6:SW:189:resource-denial:encounter-path:echo-throne:throne-aisle-break:sw|4905:normal:echo-throne-w5-normal-primary:guardianx2:NW:217:gate-pressure:encounter-path:echo-throne:throne-aisle-break:nw|5886:big:echo-throne-w6-big-primary:flankerx5+rangedx5:W:-99:gate-pressure:encounter-path:echo-throne:throne-dais-stand:w|6867:mid:echo-throne-w7-mid-remix:rangedx3:SW:-32:elite-escort:encounter-path:echo-throne:throne-dais-stand:sw|7848:normal:echo-throne-w8-normal-remix:guardianx1+flankerx2:NW:-400:elite-escort:encounter-path:echo-throne:throne-dais-stand:nw|8829:normal:echo-throne-w9-normal-remix:flankerx4+rangedx2:W:232:low-hp-focus:encounter-path:echo-throne:throne-dais-stand:w|9810:big:echo-throne-w10-big-remix:guardianx2+rangedx5:SW:-391:gate-pressure:encounter-path:echo-throne:throne-dais-stand:sw",
+      "waveVariantSha256_16": "d16de1adc9c2ed66",
+      "enemyCount": 1,
+      "terminal": null
+    }
+  ]
+}

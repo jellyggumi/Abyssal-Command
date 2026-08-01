@@ -587,6 +587,267 @@ function spawnPoint(direction, laneOffset) {
   return { x: 500, y: clamp(ARENA.gateY + laneOffset, 1000, ARENA.height - 1000) };
 }
 
+/* ===========================================================================================
+ * ARRIVAL CHOREOGRAPHY
+ *
+ * Before this, every non-elite body entered at an arena EDGE and same-wave bodies were spaced
+ * `spawnIndex * 200` along one lane, so a wave read as a single-file column walking in. The
+ * formations below change WHERE a body appears; how it appears there is renderer work.
+ *
+ * DETERMINISM. Formation is drawn from `run.arrivalRng`, its OWN derived stream, for the same
+ * reason `combatRng` / `dropRng` / `surpriseRng` / `gimmickRng` exist: `run.rng` is the
+ * wave-schedule and growth-offer stream and every draw on it is positional, so one extra
+ * `rngNext` there would shift wave composition, timing jitter, lane offset, spawn direction,
+ * policy selection and every growth offer, for every seed on every stage. Drawing here cannot
+ * shift any of that. RNG state is never serialised into the snapshot, so the stream itself adds
+ * nothing to the digest — only the spawn coordinates it produces do.
+ *
+ * FAIRNESS. `encircle` / `emerge` / `skydrop` place a body inside the commander's own space, so
+ * each carries an arming window: `ARRIVAL_TELEGRAPH_TICKS` is written into BOTH `attackCooldown`
+ * and `rangedCooldown` at spawn, and is emitted on ENEMY_SPAWNED as `telegraphTicks` so the cue
+ * the player sees is exactly the window the rule enforces. The nearest placement radius is
+ * ARRIVAL_NEAR_RADIUS_MIN, exactly twice the largest contact range in the catalog
+ * (guardian 540 + commander 360 = 900), and inside COMMANDER.basicRange 6000 so the player can
+ * answer immediately rather than watch something walk in from off-screen.
+ *
+ * BUDGET. The renderer's `spawn` VFX family admits 4 live records
+ * (`NEW_VFX_FAMILY_LIVE_BUDGET` in battle-realtime-three.js), so at most
+ * ARRIVAL_NEAR_CAP bodies per wave take a near-player formation; the remainder fall back to
+ * `lane`. That keeps the worst case inside the renderer's authored budget by construction
+ * instead of by hope.
+ * =========================================================================================== */
+
+/** `lane` is the pre-existing behaviour and MUST stay byte-identical to it. */
+const ARRIVAL_FORMATIONS = freeze(["lane", "abreast", "encircle", "emerge", "skydrop"]);
+
+/**
+ * Grade selects the renderer's pool exemption and its telegraph fallback
+ * (`isCriticalVfxEvent`, `resolveVfxLifetimeTicks`). SHADOW is reserved for an arrival the
+ * player must act on before it lands; grading an edge walk-in SHADOW would make every arrival
+ * un-evictable and starve a 40-slot pool.
+ */
+const ARRIVAL_GRADES = freeze({
+  lane: "BASIC",
+  abreast: "BASIC",
+  encircle: "SHADOW",
+  emerge: "SHADOW",
+  skydrop: "SHADOW",
+});
+
+/** The renderer's authored arrival tiers: 30 / 60 / 90 by grade. */
+const ARRIVAL_TELEGRAPH_TICKS = freeze({
+  lane: 30,
+  abreast: 30,
+  encircle: 60,
+  emerge: 90,
+  skydrop: 90,
+});
+
+/** Formations that place a body inside the commander's space rather than at an arena edge. */
+const ARRIVAL_NEAR_FORMATIONS = freeze(["encircle", "emerge", "skydrop"]);
+/** Equals the renderer's `spawn` family live budget. */
+const ARRIVAL_NEAR_CAP = 4;
+/** Perpendicular spacing for `abreast`, replacing the 200-unit along-lane stagger. */
+const ARRIVAL_ABREAST_SPACING = 900;
+const ARRIVAL_NEAR_RADIUS_MIN = 1800;
+const ARRIVAL_NEAR_RADIUS_MAX = 2600;
+/** Full circle in 1/1000 turn units, so the angle stays integer arithmetic like the rest of the sim. */
+const ARRIVAL_TURN = 1000;
+
+/**
+ * Formation candidates per wave kind. Wave 0 is deliberately excluded from near-player
+ * formations by `rollWaveArrival`: ambushing the player on the opening beat, before the stage
+ * intro dolly has even released the camera, reads as a bug rather than as pressure.
+ *
+ * `skydrop` is offered on normal waves as well as big ones. Confined to `big` it was effectively
+ * unreachable — a big wave must ALSO contain a player-facing body (roughly half of waves) for a
+ * near formation to survive ARRIVAL_NEAR_POLICIES, and across 84 enqueued waves that combination
+ * never once landed on it. A formation that never fires is a stub, not a feature.
+ *
+ * `emerge` stays exclusive to `big`, so erupting out of the floor remains the heaviest arrival in
+ * the game and does not become the ordinary case.
+ */
+const ARRIVAL_CANDIDATES = freeze({
+  normal: freeze(["lane", "abreast", "encircle", "skydrop"]),
+  big: freeze(["abreast", "encircle", "emerge", "skydrop"]),
+});
+
+/** A statement body announces itself from above; it is one spawn, so it cannot flood the family. */
+const ARRIVAL_MIDBOSS_FORMATION = "skydrop";
+
+/**
+ * Policies whose objective IS the player side, and therefore the only policies allowed to arrive
+ * inside the commander's space.
+ *
+ * This is a gameplay rule, not a filter for tidiness. `gate-pressure` exists to walk the lane and
+ * reach the gate; dropping it next to the commander skips the entire approach the defense loop is
+ * built on, and when the commander happens to be standing near the gate it lands the body at its
+ * objective for free. `flank`'s whole identity is taking the authored flank route, so it keeps its
+ * lane. `elite-escort` must stay with its leader.
+ *
+ * `pressureTarget()` is the corroborating source: these three are exactly the policies it resolves
+ * to the player side rather than to the gate. `resource-denial` belongs here because the echoes it
+ * denies drop where enemies died — which is wherever the player has been fighting.
+ *
+ * Measured frequency over 84 enqueued waves (3 stages x seeds 1/7/42, 9000-tick windows):
+ * flank 31, gate-pressure 24, elite-escort 18, player-pursuit 18, resource-denial 17,
+ * low-hp-focus 8. Restricting to the three below leaves roughly half of all waves able to ambush,
+ * which is what keeps the choreography visible without letting it dissolve the gate-defense loop.
+ */
+const ARRIVAL_NEAR_POLICIES = freeze(["player-pursuit", "low-hp-focus", "resource-denial"]);
+
+/** Near-player arrival is only legal for a body that actually came for the player. */
+function arrivalAllowsNear(policyId) {
+  return ARRIVAL_NEAR_POLICIES.includes(policyId);
+}
+
+function arrivalGradeFor(formation) {
+  return ARRIVAL_GRADES[formation] || "BASIC";
+}
+
+function arrivalTelegraphTicksFor(formation) {
+  return ARRIVAL_TELEGRAPH_TICKS[formation] ?? ARRIVAL_TELEGRAPH_TICKS.lane;
+}
+
+function isNearArrival(formation) {
+  return ARRIVAL_NEAR_FORMATIONS.includes(formation);
+}
+
+/**
+ * Formations available to a wave with no player-facing body. Drawing `emerge` for a wave of pure
+ * gate-pressure bodies would waste the draw: every member would fall back to `lane` under
+ * ARRIVAL_NEAR_POLICIES and the wave would read exactly as it did before formations existed.
+ */
+const ARRIVAL_EDGE_CANDIDATES = freeze(["lane", "abreast"]);
+
+/**
+ * Draws one formation for a wave. Advances `run.arrivalRng` exactly once per wave, whatever the
+ * outcome, so the stream position depends only on how many waves have been enqueued — not on
+ * which branch was taken. A branch-dependent draw count would make the stream depend on stage
+ * content and silently desynchronise two runs that enqueued the same number of waves.
+ *
+ * `nearEligibleCount` is the number of bodies in this wave whose policy actually hunts the player
+ * side. Conditioning the candidate set on it is what keeps near-player formations from becoming
+ * vanishingly rare once ARRIVAL_NEAR_POLICIES is enforced: the roll offers an ambush only to a
+ * wave that contains something capable of performing one.
+ */
+function rollWaveArrival(run, wave, nearEligibleCount) {
+  run.arrivalRng = rngNext(run.arrivalRng);
+  if (wave.waveIndex === 0) return "lane";
+  const candidates = nearEligibleCount > 0
+    ? ARRIVAL_CANDIDATES[wave.kind === "big" ? "big" : "normal"]
+    : ARRIVAL_EDGE_CANDIDATES;
+  return candidates[run.arrivalRng % candidates.length];
+}
+
+/**
+ * Resolves the spawn coordinate for one body.
+ *
+ * `lane` returns exactly what `spawnPoint` always returned, so a wave that draws `lane` is
+ * indistinguishable from the pre-change runtime.
+ */
+function arrivalPoint(run, { formation, direction, laneOffset, memberIndex, memberCount, angleSeed }) {
+  if (formation === "abreast") {
+    // Same edge, spread ACROSS the lane instead of stacked along it. Centring on the row means
+    // the wave's midpoint stays on the authored lane, so the encounter path still receives the
+    // body where it expects to.
+    const centred = memberIndex - (memberCount - 1) / 2;
+    return spawnPoint(direction, Math.round(laneOffset + centred * ARRIVAL_ABREAST_SPACING));
+  }
+  if (!isNearArrival(formation)) return spawnPoint(direction, laneOffset);
+
+  const anchor = run.commander;
+  // `encircle` distributes the ring evenly and offsets it by the draw, so the ring is a ring
+  // rather than a clump; `emerge` and `skydrop` scatter, because a perfect circle erupting from
+  // the floor reads as a mechanism instead of an ambush.
+  const step = memberCount > 0 ? Math.trunc(ARRIVAL_TURN / memberCount) : ARRIVAL_TURN;
+  const turn = formation === "encircle"
+    ? (angleSeed + memberIndex * step) % ARRIVAL_TURN
+    : (angleSeed + memberIndex * 337) % ARRIVAL_TURN;
+  const radians = (turn / ARRIVAL_TURN) * Math.PI * 2;
+  const span = ARRIVAL_NEAR_RADIUS_MAX - ARRIVAL_NEAR_RADIUS_MIN;
+  const radius = formation === "encircle"
+    ? ARRIVAL_NEAR_RADIUS_MAX
+    : ARRIVAL_NEAR_RADIUS_MIN + ((angleSeed + memberIndex * 211) % (span + 1));
+  // Clamping to the arena can pull a point back INSIDE the fairness floor when the commander is
+  // fighting near a wall — the ring intersects the boundary, the clamp collapses that arc onto
+  // the edge, and the body lands on top of the player. Measured at 808 units before this guard,
+  // against an authored floor of ARRIVAL_NEAR_RADIUS_MIN.
+  //
+  // So the angle is a preference, not a promise: try it, and if the clamp ate the distance, try
+  // the opposite side, which by construction points back into the arena. The final fallback keeps
+  // the authored angle rather than inventing a third one, because a body that cannot be placed
+  // legally at all is a stage-geometry problem the placement step should surface, not something
+  // to hide with an unbounded search.
+  const placeAt = (angle) => ({
+    x: clamp(Math.round(anchor.x + Math.cos(angle) * radius), 500, ARENA.width - 500),
+    y: clamp(Math.round(anchor.y + Math.sin(angle) * radius), 500, ARENA.height - 500),
+  });
+  const primary = placeAt(radians);
+  if (Math.hypot(primary.x - anchor.x, primary.y - anchor.y) >= ARRIVAL_NEAR_RADIUS_MIN) return primary;
+  const opposite = placeAt(radians + Math.PI);
+  return Math.hypot(opposite.x - anchor.x, opposite.y - anchor.y)
+    >= Math.hypot(primary.x - anchor.x, primary.y - anchor.y)
+    ? opposite
+    : primary;
+}
+
+/**
+ * Places a near-player arrival so the fairness floor survives TERRAIN RESOLUTION, not just the
+ * arena clamp.
+ *
+ * `arrivalPoint` guarantees its own output clears ARRIVAL_NEAR_RADIUS_MIN, but `placeOnTerrain`
+ * then runs up to four `pushOutsideObstacle` passes, and nothing about that push knows where the
+ * commander is -- an obstacle sitting between the ring and the player shoves the body INWARD.
+ * Measured on `cinder-span` seed 1: a skydrop emitted `arrivalDistance` 1273 against a floor of
+ * 1800, with the commander 460 units from the right wall so the ring crossed the boundary and the
+ * surviving arc was pinned against obstacles. The body was NOT on a clamp edge, which is what
+ * ruled the clamp out and named the terrain push instead.
+ *
+ * The retry is deterministic and bounded: the authored angle first, then the same radius rotated
+ * by a fixed sequence. A brute sweep of that ring found a legal spot at 2601 for the failing case,
+ * so a short list suffices; the sequence is fixed rather than random because two runs on one seed
+ * must place identically.
+ *
+ * If every candidate fails, the LEAST BAD one is used rather than a fabricated position. That is a
+ * stage-geometry problem and the contract test is the right place for it to surface -- silently
+ * teleporting the body somewhere legal would hide an unplayable arena.
+ */
+const ARRIVAL_RETRY_TURNS = Object.freeze([0, 500, 250, 750, 125, 375, 625, 875]);
+function placeNearArrival(run, entity, point, params) {
+  placeOnTerrain(run, entity, point);
+  const anchor = run.commander;
+  const reached = () => Math.hypot(entity.x - anchor.x, entity.y - anchor.y);
+  // `supportMeshId` is carried with the coordinates because `placeOnTerrain` sets it from the
+  // resolved point and DELETES it where nothing supports that spot. Restoring x/y/elevation alone
+  // would leave the last candidate's support id attached to the best candidate's position.
+  const snap = () => ({
+    x: entity.x,
+    y: entity.y,
+    elevation: entity.elevation,
+    supportMeshId: entity.supportMeshId,
+    distance: reached(),
+  });
+  const restore = (state) => {
+    entity.x = state.x;
+    entity.y = state.y;
+    entity.elevation = state.elevation;
+    if (state.supportMeshId === undefined) delete entity.supportMeshId;
+    else entity.supportMeshId = state.supportMeshId;
+  };
+  let best = snap();
+  if (best.distance >= ARRIVAL_NEAR_RADIUS_MIN) return;
+  for (const turnOffset of ARRIVAL_RETRY_TURNS) {
+    if (turnOffset === 0) continue;
+    const candidate = arrivalPoint(run, { ...params, angleSeed: (params.angleSeed + turnOffset) % ARRIVAL_TURN });
+    placeOnTerrain(run, entity, candidate);
+    const current = snap();
+    if (current.distance > best.distance) best = current;
+    if (current.distance >= ARRIVAL_NEAR_RADIUS_MIN) return;
+  }
+  restore(best);
+}
+
 /** Legacy saves may retain policy-derived lanes. New authored waves must resolve one immutable path. */
 function legacyLaneRoute(tactics, policyId, laneOffset) {
   if (policyId === "flank" && tactics.flank) {
@@ -995,7 +1256,26 @@ function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
   const direction = spawnOpt.direction || "W";
   const laneOffset = spawnOpt.laneOffset || 0;
   const routeId = spawnOpt.routeId || null;
-  const point = elite ? { x: 14000, y: ARENA.gateY } : spawnPoint(direction, laneOffset);
+  // Arrival choreography. An elite keeps its fixed authored staging point, and any caller that
+  // passes no `arrival` (legacy saves, direct spawns, tests) resolves to `lane` — the exact
+  // coordinate this line produced before formations existed.
+  const arrival = spawnOpt.arrival || null;
+  const route = spawnRoute(run, routeId, policyId, laneOffset);
+  const formation = elite ? "lane" : (ARRIVAL_FORMATIONS.includes(arrival?.formation) ? arrival.formation : "lane");
+  const nearArrival = isNearArrival(formation);
+  const telegraphTicks = arrivalTelegraphTicksFor(formation);
+  // Held in a named binding because `placeNearArrival` re-derives candidate angles from the SAME
+  // params, so the retry stays on the authored radius and formation instead of inventing a
+  // placement the choreography never described.
+  const arrivalParams = {
+    formation,
+    direction,
+    laneOffset,
+    memberIndex: Number.isInteger(arrival?.memberIndex) ? arrival.memberIndex : 0,
+    memberCount: Number.isInteger(arrival?.memberCount) && arrival.memberCount > 0 ? arrival.memberCount : 1,
+    angleSeed: Number.isInteger(arrival?.angleSeed) ? arrival.angleSeed : 0,
+  };
+  const point = elite ? { x: 14000, y: ARENA.gateY } : arrivalPoint(run, arrivalParams);
   // Mid-boss (미들 웨이브 리더): an ordinary, NON-elite enemy carrying MIDBOSS_PROFILE multipliers.
   // Keeping it non-elite is deliberate — elite spawns drive the extraction/capture flow, while a
   // mid-boss only has to be a mid-wave damage sponge that the gate-defense clear check must wait on.
@@ -1012,10 +1292,14 @@ function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
     midbossId: midboss?.id ?? null,
     radius: midboss ? bp(data.radius, midboss.radiusBp) : data.radius,
     stageEliteId: elite ? run.stage.eliteId : null,
-    rangedCooldown: 0,
+    // A near-player arrival is locked out of BOTH contact and projectile paths for its full
+    // telegraph. `moveEnemies` decrements each cooldown once per tick and the attack path
+    // returns early while either is above zero, so this is the arming window the emitted
+    // `telegraphTicks` promises — not a decorative delay.
+    rangedCooldown: nearArrival ? telegraphTicks : 0,
     projectileTicks: data.projectileTicks ?? 120,
     projectileRange: data.projectileRange ?? 0,
-    attackCooldown: 0,
+    attackCooldown: nearArrival ? telegraphTicks : 0,
     attackTicks: data.attackTicks ?? (type === "guardian" ? 90 : type === "ranged" ? 120 : 60),
     policyId,
     policyIntent: policy?.intent || null,
@@ -1026,12 +1310,27 @@ function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
     element: elementOf(data.element),
     patternId: data.patternId ?? null,
     routeId,
-    route: spawnRoute(run, routeId, policyId, laneOffset),
-    waypointIndex: 0,
+    route,
+    // A body that erupted, dropped, or encircled has ALREADY completed its approach. Leaving
+    // waypointIndex at 0 would send it walking back to a west entry waypoint it materialised
+    // past, which reads as a retreat. Consuming the route hands it straight to policy targeting
+    // (`getTargetPosition` falls through to player-pursuit / gate / denial) while the authored
+    // route stays intact on the body and in the event for the encounter contract.
+    waypointIndex: nearArrival ? route.length : 0,
+    // NO arrival fields are stored on the body. Actors are serialised into `getRunSnapshot`, so
+    // an always-present `arrivalFormation` would move the digest of every run including one whose
+    // every wave drew `lane` -- i.e. it would break byte-identity for runs this feature does not
+    // actually change. Same conditional-presence discipline `abyssDepth`, `measurementProfileId`
+    // and `buffs` follow. The formation is emitted on ENEMY_SPAWNED instead: events are not part
+    // of the snapshot, and the renderer already consumes that event.
     encounterObjectiveId: spawnOpt.objectiveId || null,
     waveIndex: Number.isInteger(spawnOpt.waveIndex) ? spawnOpt.waveIndex : null,
   });
-  placeOnTerrain(run, enemy, point);
+  // A near-player arrival re-checks the fairness floor AFTER terrain resolution; every other
+  // formation walks in from a lane edge, where the floor does not apply and the plain placement is
+  // byte-identical to before this branch.
+  if (nearArrival) placeNearArrival(run, enemy, point, arrivalParams);
+  else placeOnTerrain(run, enemy, point);
   run.enemies.push(enemy);
   const spawnEvent = emit(run, "ENEMY_SPAWNED", {
     entityId: enemy.id,
@@ -1044,6 +1343,26 @@ function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
     route: clone(enemy.route),
     objectiveId: enemy.encounterObjectiveId,
     waveIndex: enemy.waveIndex,
+    // The renderer has always branched on these two (`isCriticalVfxEvent` exempts an arrival
+    // only at grade SHADOW; `resolveVfxLifetimeTicks` prefers `telegraphTicks` over its table),
+    // but nothing emitted them, so the graded-arrival path was unreachable and every arrival
+    // resolved to the 30-tick fallback and stayed evictable. Emitting them here is what turns
+    // that existing routing on. `telegraphTicks` is the SAME number the cooldown lockout above
+    // uses, so the cue length and the rule cannot disagree.
+    arrivalFormation: formation,
+    grade: arrivalGradeFor(formation),
+    telegraphTicks,
+    // Where the body was PLACED, relative to the commander, at the instant it arrived.
+    //
+    // The fairness floor is a placement guarantee, not a permanent standoff: the body starts
+    // outside ARRIVAL_NEAR_RADIUS_MIN and is then free to close, which is the whole point of an
+    // ambush. Reading that guarantee off a later snapshot measures how far it has already walked
+    // and reports a violation that never happened. Stating it on the event pins it to the only
+    // moment it is actually claimed.
+    //
+    // The renderer needs the same number: an `emerge` rise and a `skydrop` fall are scaled from
+    // the arrival offset, so this is load-bearing for presentation, not test scaffolding.
+    arrivalDistance: Math.round(Math.hypot(enemy.x - run.commander.x, enemy.y - run.commander.y)),
   });
   spawnEvent.spawnEventId = spawnEvent.eventId;
   enemy.spawnEventId = spawnEvent.eventId;
@@ -1273,6 +1592,20 @@ function enqueueEncounterWave(run, wave, retryAttempt = null) {
     objectiveId,
     retryAttempt,
   });
+  // Resolve each body's policy once, up front. Two things depend on it: the formation DRAW (a
+  // wave with nothing player-facing is not offered an ambush it cannot perform) and the
+  // near-player budget, which is divided among ELIGIBLE bodies rather than among every body in
+  // the wave — otherwise the ring would be spaced for members that never arrive, leaving a gap
+  // wherever a gate-bound body was skipped.
+  const members = wave.composition.flatMap(({ enemy, count }) => {
+    const policyId = enemy === wave.type ? wave.policyId : (ENEMIES[enemy]?.policyId || wave.policyId);
+    return Array.from({ length: count }, () => ({ enemy, policyId }));
+  });
+  const nearEligibleCount = members.filter(({ policyId }) => arrivalAllowsNear(policyId)).length;
+  // One draw per wave, on the derived arrival stream. See the ARRIVAL CHOREOGRAPHY block.
+  const formation = rollWaveArrival(run, wave, nearEligibleCount);
+  const angleSeed = run.arrivalRng % ARRIVAL_TURN;
+  const memberCount = members.length;
   if (wave.midboss) {
     // Statement enemies must enter on the authored wave beat. Queuing the
     // mid-boss behind leftovers from the previous wave hides the cue and can
@@ -1285,27 +1618,59 @@ function enqueueEncounterWave(run, wave, retryAttempt = null) {
       objectiveId,
       waveIndex: wave.waveIndex,
       midboss: wave.midboss,
+      // A mid-boss always makes its own entrance rather than inheriting the wave's formation:
+      // it is one body, so it cannot flood the renderer's 4-slot `spawn` family, and burying a
+      // statement entrance inside a lane column is exactly the readability defect this work
+      // exists to fix. It still obeys the policy rule -- a gate-bound mid-boss walks its lane.
+      arrival: {
+        formation: arrivalAllowsNear(wave.midboss.policyId) ? ARRIVAL_MIDBOSS_FORMATION : "lane",
+        memberIndex: 0,
+        memberCount: 1,
+        angleSeed,
+      },
     });
   }
+  const nearCount = isNearArrival(formation) ? Math.min(ARRIVAL_NEAR_CAP, nearEligibleCount) : 0;
+
   const pending = [];
   let spawnIndex = 0;
-  wave.composition.forEach(({ enemy, count }) => {
-    const policyId = enemy === wave.type ? wave.policyId : (ENEMIES[enemy]?.policyId || wave.policyId);
-    for (let index = 0; index < count; index += 1) {
-      pending.push({
-        waveIndex: wave.waveIndex,
-        objectiveId,
-        type: enemy,
-        spawnOpt: {
-          direction: wave.direction,
-          laneOffset: wave.laneOffset + spawnIndex * 200,
-          policyId,
-          routeId: wave.routeId || null,
+  let nearIndex = 0;
+  for (const { enemy, policyId } of members) {
+    // A member takes the wave's NEAR formation only if it came for the player and the wave's
+    // near-player budget still has room. Both failures degrade that member to `lane`:
+    //   1. a non-player-facing policy (see ARRIVAL_NEAR_POLICIES) arriving on top of the
+    //      commander would skip the objective the policy exists to pursue;
+    //   2. the budget goes to the FIRST eligible bodies, so a large wave reads as an ambush
+    //      followed by a push and the renderer never sees more than ARRIVAL_NEAR_CAP cues.
+    // An EDGE formation (`lane`, `abreast`) is unconditional: it changes where a body enters the
+    // arena, not what it skips, so no policy has a reason to opt out of it.
+    const takesNear = isNearArrival(formation) && arrivalAllowsNear(policyId) && nearIndex < nearCount;
+    const memberFormation = isNearArrival(formation) ? (takesNear ? formation : "lane") : formation;
+    // Near members index into the RING (0..nearCount-1); lane and abreast members index into the
+    // wave, because their spacing is along or across the authored lane.
+    const memberIndex = takesNear ? nearIndex : spawnIndex;
+    if (takesNear) nearIndex += 1;
+    pending.push({
+      waveIndex: wave.waveIndex,
+      objectiveId,
+      type: enemy,
+      spawnOpt: {
+        direction: wave.direction,
+        // `abreast` spreads across the lane inside arrivalPoint(), so the along-lane stagger
+        // that produced the single-file column is not applied to it.
+        laneOffset: memberFormation === "abreast" ? wave.laneOffset : wave.laneOffset + spawnIndex * 200,
+        policyId,
+        routeId: wave.routeId || null,
+        arrival: {
+          formation: memberFormation,
+          memberIndex,
+          memberCount: takesNear ? nearCount : memberCount,
+          angleSeed,
         },
-      });
-      spawnIndex += 1;
-    }
-  });
+      },
+    });
+    spawnIndex += 1;
+  }
   encounter.spawnQueue.push(...pending);
   if (!encounter.startedWaveIndices.includes(wave.waveIndex)) {
     encounter.startedWaveIndices.push(wave.waveIndex);
@@ -4711,6 +5076,11 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     // MurmurHash3 finalizer, distinct from combatRng's 0x9e3779b9, the surprise roll's
     // 0x6d2b79f5, and gimmickRng's 0xc2b2ae35.
     dropRng: rngNext(unsignedSeed ^ 0x85ebca6b),
+    // Arrival choreography draws on its own derived stream for the same reason `dropRng` does.
+    // 0x27d4eb2f is Knuth's 32-bit mixing constant, distinct from combatRng's 0x9e3779b9,
+    // dropRng's 0x85ebca6b, the surprise roll's 0x6d2b79f5, and gimmickRng's 0xc2b2ae35, so no
+    // two streams can alias at any seed.
+    arrivalRng: rngNext(unsignedSeed ^ 0x27d4eb2f),
     nextId: 0,
     buffs: [],
     eventSequence: 0,
@@ -4968,6 +5338,9 @@ export function advanceDefenseRun(run, steps = 1) {
   // `objectiveRoute`, `engaged`, and `combatRng`. A pre-cycle-10 save has neither field, both
   // guards fire, and it rehydrates to a run seeded identically to a fresh one at the same seed.
   if (!Number.isInteger(next.dropRng)) next.dropRng = rngNext(next.seed ^ 0x85ebca6b);
+  // Same guard for the arrival stream: a save written before arrival choreography existed has no
+  // `arrivalRng`, and rehydrates to the value a fresh run at the same seed would carry.
+  if (!Number.isInteger(next.arrivalRng)) next.arrivalRng = rngNext(next.seed ^ 0x27d4eb2f);
   if (!Array.isArray(next.buffs)) next.buffs = [];
   ensureEncounterState(next);
   if (!next.objectives.route) {
@@ -5137,4 +5510,14 @@ export {
   COMPANION_CAPACITY_BASE,
   EXTRACTION,
   GRADE_COMPANION_MULTIPLIERS,
+  // Arrival choreography budgets. Exported rather than restated in tests: a copied constant
+  // drifts silently the moment the authored value moves, which is exactly how a budget check
+  // stops checking anything.
+  ARRIVAL_FORMATIONS,
+  ARRIVAL_GRADES,
+  ARRIVAL_TELEGRAPH_TICKS,
+  ARRIVAL_NEAR_FORMATIONS,
+  ARRIVAL_NEAR_CAP,
+  ARRIVAL_NEAR_RADIUS_MIN,
+  ARRIVAL_NEAR_RADIUS_MAX,
 };
