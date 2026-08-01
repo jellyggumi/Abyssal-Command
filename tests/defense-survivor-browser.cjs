@@ -326,6 +326,14 @@ async function waitForGrowthOfferThroughCutscenes(page, report, {
 
 async function verifyPlaythroughJourney(browser, hosting, campaign) {
   const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 390, height: 844 }, hasTouch: true });
+  // The CI runner measures rafMean ~95.8 ms against ~16 ms locally -- about 6x slower, ~10 fps
+  // -- which `defense-phone-battle-hud-browser.test.cjs:48-59` documents and answers with
+  // `setDefaultTimeout(90_000)`; `progression-mobile-ui-browser.cjs:104` does the same. This
+  // file was never given that treatment and still runs on Playwright's stock 30 s, so the
+  // `defenseFeedback === "lore"` wait below -- which needs input to round-trip through a
+  // simulation tick, exactly the kind that starves first -- timed out at 30000 ms on
+  // `1a91effc` while both hardened suites passed. Same reasoning, same value.
+  context.setDefaultTimeout(90_000);
   const page = await context.newPage();
   const report = { events: [], errors: [] };
   page.on("pageerror", (error) => report.errors.push({ kind: "page", message: error.message }));
