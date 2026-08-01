@@ -653,49 +653,49 @@
       "testDisposition": "delete"
     },
     {
-      "disposition": "delete",
+      "disposition": "retain",
       "currentPath": "assets/images/sprite-2-5d/cinder-court-backdrop.png",
-      "replacementPath": null,
+      "replacementPath": "assets/images/sprite-2-5d/cinder-court-backdrop.png",
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
+      "runtimeReference": true,
+      "testDisposition": "retain"
     },
     {
-      "disposition": "delete",
+      "disposition": "retain",
       "currentPath": "assets/images/sprite-2-5d/ember-cohort/manifest.json",
-      "replacementPath": null,
+      "replacementPath": "assets/images/sprite-2-5d/ember-cohort/manifest.json",
       "extension": ".json",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
+      "runtimeReference": true,
+      "testDisposition": "retain"
     },
     {
-      "disposition": "delete",
+      "disposition": "retain",
       "currentPath": "assets/images/sprite-2-5d/ember-cohort/sprite-sheet.png",
-      "replacementPath": null,
+      "replacementPath": "assets/images/sprite-2-5d/ember-cohort/sprite-sheet.png",
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
+      "runtimeReference": true,
+      "testDisposition": "retain"
     },
     {
-      "disposition": "delete",
+      "disposition": "retain",
       "currentPath": "assets/images/sprite-2-5d/warden/manifest.json",
-      "replacementPath": null,
+      "replacementPath": "assets/images/sprite-2-5d/warden/manifest.json",
       "extension": ".json",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
+      "runtimeReference": true,
+      "testDisposition": "retain"
     },
     {
-      "disposition": "delete",
+      "disposition": "retain",
       "currentPath": "assets/images/sprite-2-5d/warden/sprite-sheet.png",
-      "replacementPath": null,
+      "replacementPath": "assets/images/sprite-2-5d/warden/sprite-sheet.png",
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
+      "runtimeReference": true,
+      "testDisposition": "retain"
     },
     {
       "disposition": "delete",

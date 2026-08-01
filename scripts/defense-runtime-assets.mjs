@@ -16,6 +16,12 @@ export const RETAINED_ASSET_PATHS = Object.freeze([
   "assets/images/battle/ui/hud/stat-commander.webp",
   "assets/images/battle/ui/hud/stat-echo-xp.webp",
   "assets/images/battle/ui/hud/stat-gate-integrity.webp",
+  // Standalone sprite-based Cinder Court route.
+  "assets/images/sprite-2-5d/cinder-court-backdrop.png",
+  "assets/images/sprite-2-5d/warden/manifest.json",
+  "assets/images/sprite-2-5d/warden/sprite-sheet.png",
+  "assets/images/sprite-2-5d/ember-cohort/manifest.json",
+  "assets/images/sprite-2-5d/ember-cohort/sprite-sheet.png",
   // Live terrain, NPC, bosses, and props are loaded directly from their
   // generated mesh outputs.
   //
