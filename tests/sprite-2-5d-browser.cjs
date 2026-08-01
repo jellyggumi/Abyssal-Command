@@ -38,6 +38,7 @@ Object.defineProperty(window, "__sprite2dRuntimeTest", {
       playerY: player.y,
       playerHealth: player.health,
       playerClip: player.clipName,
+      playerAttackId: player.attackId,
       loopRunning,
       animationFrameId,
     }),
@@ -281,6 +282,9 @@ async function verifyViewport(browser, hosting, viewport) {
     const afterMovement = await canvasDigest(page, playerRegion);
     assert.notEqual(afterMovement.hash, beforeMovement.hash, "holding a movement key must visibly move the rendered Warden");
 
+    await page.evaluate(() => document.activeElement instanceof HTMLElement && document.activeElement.blur());
+    assert.equal(await page.evaluate(() => Boolean(document.activeElement?.closest?.("[data-control]"))), false, "global Space attack setup must keep focus away from game controls");
+    const beforeGlobalSpace = await runtimeSnapshot(page);
     const beforeAttack = await canvasDigest(page, playerRegion);
     const strikeRegion = { x: 890, y: 530, width: 40, height: 120 };
     const beforeStrike = await canvasDigest(page, strikeRegion);
@@ -295,6 +299,8 @@ async function verifyViewport(browser, hosting, viewport) {
     }
     assert.notEqual(duringAttack.hash, beforeAttack.hash, "the keyboard attack must visibly change the rendered combat frame");
     assert.equal(strikeRendered, true, "the keyboard attack must render visible strike feedback beyond the Warden sprite bounds");
+    const afterGlobalSpace = await runtimeSnapshot(page);
+    assert.equal(afterGlobalSpace.playerAttackId, beforeGlobalSpace.playerAttackId + 1, "global Space away from controls must queue exactly one player attack");
 
     await page.locator("#sprite-2-5d-restart").evaluate((button) => button.click());
     await stepFrames(page, 1);
@@ -324,6 +330,22 @@ async function verifyViewport(browser, hosting, viewport) {
     const afterNudgeSettles = await runtimeSnapshot(page);
     assert.equal(afterNudgeSettles.playerX, afterSemanticNudge.playerX, "a semantic direction nudge must not become held movement");
 
+    await page.locator("#sprite-2-5d-restart").evaluate((button) => button.click());
+    await stepFrames(page, 1);
+    const beforeFocusedSpace = await runtimeSnapshot(page);
+    await rightControl.focus();
+    await page.keyboard.press("Space");
+    await stepFrames(page, 1);
+    const afterFocusedSpace = await runtimeSnapshot(page);
+    assert.equal(afterFocusedSpace.playerX, beforeFocusedSpace.playerX + 34, "native Space on a focused direction control must apply one bounded nudge");
+    assert.equal(afterFocusedSpace.playerY, beforeFocusedSpace.playerY, "focused direction Space must preserve the orthogonal player axis");
+    assert.equal(afterFocusedSpace.playerAttackId, beforeFocusedSpace.playerAttackId, "focused direction Space must not leak into the global player attack");
+    assert.notEqual(afterFocusedSpace.playerClip, "attack", "focused direction Space must not enter the attack animation");
+    await stepFrames(page, 1);
+    const afterFocusedSpaceSettles = await runtimeSnapshot(page);
+    assert.equal(afterFocusedSpaceSettles.playerX, afterFocusedSpace.playerX, "focused direction Space must nudge once instead of becoming held movement");
+    assert.equal(afterFocusedSpaceSettles.playerAttackId, beforeFocusedSpace.playerAttackId, "settling a focused direction Space nudge must not queue a delayed attack");
+
 
     await rightControl.scrollIntoViewIfNeeded();
     const controlBox = await rightControl.boundingBox();
@@ -335,7 +357,7 @@ async function verifyViewport(browser, hosting, viewport) {
     assert.equal(await rightControl.evaluate((control) => control.classList.contains("is-active")), false, "pointerup must release the movement control");
     await stepFrames(page, 1);
     const afterPointerClick = await runtimeSnapshot(page);
-    assert.equal(afterPointerClick.playerX, afterNudgeSettles.playerX, "the detail-1 pointer click must not add a second semantic direction nudge");
+    assert.equal(afterPointerClick.playerX, afterFocusedSpaceSettles.playerX, "the detail-1 pointer click must not add a second semantic direction nudge");
 
     await page.locator("#sprite-2-5d-restart").evaluate((button) => button.click());
     await stepFrames(page, 1);
