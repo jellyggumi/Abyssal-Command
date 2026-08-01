@@ -619,6 +619,7 @@ test("stable combat control IDs remain unique and their native keyboard activati
     // Accept the offer states as terminal conditions, clear whichever appeared, and re-wait --
     // bounded by construction rather than by the timeout ceiling. The assertion after the loop
     // still fails if resume genuinely does not restore the active state.
+    let clearedOffer = false;
     for (let attempt = 0; attempt < 4; attempt += 1) {
       await run.page.waitForFunction(() => {
         const state = document.querySelector("#defense-battle-surface")?.dataset.defenseState;
@@ -628,7 +629,10 @@ test("stable combat control IDs remain unique and their native keyboard activati
       const pick = run.page
         .locator("#defense-growth-offer [data-pick], #defense-reward-offer [data-pick]")
         .first();
-      if (await pick.isVisible().catch(() => false)) await pick.click();
+      if (await pick.isVisible().catch(() => false)) {
+        await pick.click();
+        clearedOffer = true;
+      }
       await run.page.locator("#defense-growth-offer").waitFor({ state: "hidden" }).catch(() => {});
     }
     assert.equal(
@@ -636,6 +640,23 @@ test("stable combat control IDs remain unique and their native keyboard activati
       "active",
       "resuming must return the surface to the active state once no offer is pending",
     );
+    // Clearing an offer requires CLICKING its pick button, which moves focus off the pause
+    // control -- so the focus claim below would then be measuring the offer's focus handling
+    // rather than resume's. That is not a product defect and not something to assert around:
+    // it is a destroyed precondition. Re-run the pause round-trip once on the now-clean state so
+    // the assertion tests what it means to test. Observed as `'' !== 'toggle-pause'` once the
+    // guard above stopped the 90 s hang -- the hang was hiding this, not preventing it.
+    if (clearedOffer) {
+      await pause.focus();
+      await run.page.keyboard.press("Enter");
+      await run.page.locator("#defense-pause-overlay").waitFor({ state: "visible" });
+      await run.page.keyboard.press("Space");
+      await run.page.locator("#defense-pause-overlay").waitFor({ state: "detached" });
+      await run.page.waitForFunction(() => {
+        const state = document.querySelector("#defense-battle-surface")?.dataset.defenseState;
+        return state === "active" || state === "growth" || state === "reward";
+      });
+    }
     const focusedAfterResume = await run.page.evaluate(() => ({
       id: document.activeElement?.id ?? "",
       tagName: document.activeElement?.tagName ?? "",
