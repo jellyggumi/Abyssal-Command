@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#070b12" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      name="description"
+      content="Defend the Cinder Court in a standalone sprite-based Abyssal Lantern arena."
+    />
+    <title>Abyssal Lantern — Cinder Court</title>
+    <link rel="stylesheet" href="sprite-2-5d.css" />
+  </head>
+  <body data-game-state="loading">
+    <main class="game-page" aria-labelledby="game-title">
+      <header class="game-header">
+        <div>
+          <p class="eyebrow">Abyssal Lantern · Field Record 07</p>
+          <h1 id="game-title">Hold the Cinder Court</h1>
+        </div>
+        <p id="sprite-2-5d-status" class="status" role="status" aria-live="polite">
+          Loading combatants…
+        </p>
+      </header>
+
+      <section class="game-layout" aria-label="Cinder Court defense arena">
+        <div class="arena-column">
+          <div class="arena-frame" id="sprite-2-5d-game" data-runtime="loading">
+            <canvas
+              id="sprite-2-5d-canvas"
+              width="1536"
+              height="1024"
+              aria-label="Cinder Court defense arena. Move the Dusk Warden, attack Ember Cohort enemies, and survive escalating waves."
+              role="img"
+            ></canvas>
+
+            <div class="load-panel" id="sprite-2-5d-loading" aria-live="polite">
+              <span class="load-sigil" aria-hidden="true"></span>
+              <strong>Opening the court</strong>
+              <span>Validating sprite manifests and image sheets…</span>
+            </div>
+
+            <section class="game-over-panel" id="sprite-2-5d-game-over" aria-labelledby="game-over-title" hidden>
+              <p class="eyebrow">The lantern gutters</p>
+              <h2 id="game-over-title">The court is overrun</h2>
+              <p id="sprite-2-5d-final-score">Score 0 · Wave 1</p>
+              <button class="restart-button" id="sprite-2-5d-restart" type="button">
+                Rekindle <kbd>R</kbd>
+              </button>
+            </section>
+          </div>
+
+          <div class="arena-caption" aria-hidden="true">
+            <span>Cinder Court · Lower Reliquary</span>
+            <span>Fixed simulation · 60 Hz</span>
+          </div>
+        </div>
+
+        <aside class="command-panel" aria-label="Battle status and controls">
+          <section class="hud-card" aria-labelledby="battle-status-title">
+            <div class="section-heading">
+              <p class="eyebrow">Live telemetry</p>
+              <h2 id="battle-status-title">Warden status</h2>
+            </div>
+
+            <div class="health-row">
+              <span>Lantern integrity</span>
+              <output id="sprite-2-5d-health-value" for="sprite-2-5d-health">100 / 100</output>
+            </div>
+            <div
+              class="health-meter"
+              id="sprite-2-5d-health"
+              role="meter"
+              aria-label="Player health"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="100"
+            >
+              <span id="sprite-2-5d-health-fill"></span>
+            </div>
+
+            <dl class="telemetry-grid">
+              <div>
+                <dt>Wave</dt>
+                <dd id="sprite-2-5d-wave">1</dd>
+              </div>
+              <div>
+                <dt>Score</dt>
+                <dd id="sprite-2-5d-score">0</dd>
+              </div>
+              <div>
+                <dt>Hostiles</dt>
+                <dd id="sprite-2-5d-enemies">0</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="controls-card" aria-labelledby="controls-title">
+            <div class="section-heading controls-heading">
+              <div>
+                <p class="eyebrow">Touch command</p>
+                <h2 id="controls-title">Battle controls</h2>
+              </div>
+              <span class="ready-dot" aria-hidden="true"></span>
+            </div>
+
+            <div class="touch-controls" id="sprite-2-5d-touch-controls" aria-label="On-screen game controls">
+              <div class="direction-pad" aria-label="Directional pad">
+                <button type="button" class="control-button direction up" data-control="up" aria-label="Move up" disabled>
+                  <span aria-hidden="true">▲</span>
+                </button>
+                <button type="button" class="control-button direction left" data-control="left" aria-label="Move left" disabled>
+                  <span aria-hidden="true">◀</span>
+                </button>
+                <span class="pad-core" aria-hidden="true"></span>
+                <button type="button" class="control-button direction right" data-control="right" aria-label="Move right" disabled>
+                  <span aria-hidden="true">▶</span>
+                </button>
+                <button type="button" class="control-button direction down" data-control="down" aria-label="Move down" disabled>
+                  <span aria-hidden="true">▼</span>
+                </button>
+              </div>
+
+              <button type="button" class="control-button attack-control" data-control="attack" aria-label="Attack" disabled>
+                <span class="attack-glyph" aria-hidden="true"></span>
+                <span>Strike</span>
+              </button>
+            </div>
+
+            <div class="control-legend" aria-label="Keyboard controls">
+              <span><kbd>WASD</kbd> / <kbd>Arrows</kbd> Move</span>
+              <span><kbd>Space</kbd> Strike</span>
+              <span><kbd>R</kbd> Restart</span>
+            </div>
+          </section>
+
+          <p class="mission-note">
+            Break the Ember Cohort before they surround the lantern. Each cleared wave calls a stronger host.
+          </p>
+        </aside>
+      </section>
+    </main>
+
+    <noscript>
+      <p class="noscript">JavaScript is required to enter the Cinder Court.</p>
+    </noscript>
+    <script type="module" src="sprite-2-5d.js"></script>
+  </body>
+</html>
