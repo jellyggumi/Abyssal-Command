@@ -599,26 +599,23 @@ test("stable combat control IDs remain unique and their native keyboard activati
     );
     await run.page.keyboard.press("Space");
     await run.page.locator("#defense-pause-overlay").waitFor({ state: "detached" });
-    // This wait can never terminate while a growth offer is pending, so it hangs for the full
-    // 90 s rather than running slow. `app.js:3219-3229` recomputes `defenseState` from the
-    // snapshot EVERY frame:
-    //
-    //   userPaused ? "paused" : terminal ? … : growthOffer ? "growth" : … : "active"
-    //
-    // so `"active"` is reachable only when no offer is pending, and the direct write of
-    // `"active"` on unpause (`app.js:3984`) is overwritten by the next frame. The Enter/Space
-    // pause round-trip above accrues ticks, so a level-up can surface an offer during it; the
-    // simulation then returns early while the offer is open and nothing auto-clears it.
-    //
-    // This is the exact site the CI stack named on four consecutive red runs, with
-    // `waitForFunction: Timeout 90000ms exceeded`. Identified by SYMBOL rather than line: the
-    // `defenseState === "active"` wait immediately after the Enter/Space pause round-trip. This
-    // file renumbered three times in two days (the stacks read `:570`, then `:586`, then `:602`),
-    // so a line citation here would have rotted before the fix landed.
-    //
-    // Accept the offer states as terminal conditions, clear whichever appeared, and re-wait --
-    // bounded by construction rather than by the timeout ceiling. The assertion after the loop
-    // still fails if resume genuinely does not restore the active state.
+    // FOCUS FIRST, STATE SECOND. app.js hands focus back to #toggle-pause on resume, but the
+    // state wait below may have to CLICK a pending growth/reward offer to let the run leave
+    // "growth" — and that click legitimately takes focus, leaving BODY behind. Asserting focus
+    // after the offer dance measured the click, not the resume, and failed with
+    // `got BODY#` on CI. Both claims still hold; only their order was wrong.
+    const focusedAfterResume = await run.page.evaluate(() => ({
+      id: document.activeElement?.id ?? "",
+      tagName: document.activeElement?.tagName ?? "",
+    }));
+    assert.equal(
+      focusedAfterResume.id,
+      "toggle-pause",
+      `resuming must return focus to the live pause control, got ${focusedAfterResume.tagName}#${focusedAfterResume.id}`,
+    );
+    // `data-defense-state` is resolved paused > terminal > growth > reward > starting > active
+    // (app.js), so a pending offer parks it off "active". Accept the offer states, clear whichever
+    // appeared, and re-wait — bounded by attempts rather than by the timeout ceiling.
     for (let attempt = 0; attempt < 4; attempt += 1) {
       await run.page.waitForFunction(() => {
         const state = document.querySelector("#defense-battle-surface")?.dataset.defenseState;
@@ -629,22 +626,9 @@ test("stable combat control IDs remain unique and their native keyboard activati
         .locator("#defense-growth-offer [data-pick], #defense-reward-offer [data-pick]")
         .first();
       if (await pick.isVisible().catch(() => false)) await pick.click();
-      await run.page.locator("#defense-growth-offer").waitFor({ state: "hidden" }).catch(() => {});
     }
-    assert.equal(
-      await run.surface.getAttribute("data-defense-state"),
-      "active",
-      "resuming must return the surface to the active state once no offer is pending",
-    );
-    const focusedAfterResume = await run.page.evaluate(() => ({
-      id: document.activeElement?.id ?? "",
-      tagName: document.activeElement?.tagName ?? "",
-    }));
-    assert.equal(
-      focusedAfterResume.id,
-      "toggle-pause",
-      `resuming must return focus to the live pause control, got ${focusedAfterResume.tagName}#${focusedAfterResume.id}`,
-    );
+    assert.equal(await run.surface.getAttribute("data-defense-state"), "active",
+      "resuming must return the run to the active state");
     assert.deepEqual(run.browserErrors, [], "keyboard control activation emitted browser errors");
   } finally {
     await run.context.close();
