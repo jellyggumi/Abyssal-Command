@@ -107,6 +107,10 @@ const controlHeld = {
   left: 0,
   right: 0,
 };
+const semanticNudge = {
+  x: 0,
+  y: 0,
+};
 
 const pointerBindings = new Map();
 const renderActors = [];
@@ -122,6 +126,7 @@ const SPAWN_POINTS = [
 ];
 let attackQueued = false;
 let animationFrameId = 0;
+let loopRunning = false;
 
 function setControlsEnabled(enabled) {
   for (let index = 0; index < controlButtons.length; index += 1) {
@@ -135,6 +140,30 @@ function setMode(mode) {
   gameRoot.dataset.runtime = mode;
   setControlsEnabled(mode === "running" || mode === "wave-clear");
 }
+function isActiveMode() {
+  return state.mode === "running" || state.mode === "wave-clear";
+}
+
+function startLoop() {
+  if (loopRunning || document.hidden || !isActiveMode()) {
+    return;
+  }
+  state.lastTimestamp = 0;
+  state.accumulator = 0;
+  loopRunning = true;
+  animationFrameId = requestAnimationFrame(frame);
+}
+
+function stopLoop() {
+  if (animationFrameId !== 0) {
+    cancelAnimationFrame(animationFrameId);
+  }
+  animationFrameId = 0;
+  loopRunning = false;
+  state.lastTimestamp = 0;
+  state.accumulator = 0;
+}
+
 
 function announce(message) {
   statusNode.textContent = message;
@@ -173,7 +202,7 @@ function validateManifest(label, manifest, sheetImage) {
   for (let clipIndex = 0; clipIndex < requiredClips.length; clipIndex += 1) {
     const clipName = requiredClips[clipIndex];
     const clip = manifest.animations && manifest.animations[clipName];
-    if (!clip || !Number.isInteger(clip.frames) || clip.frames < 1 || clip.rects.length !== clip.frames) {
+    if (!clip || !Number.isInteger(clip.frames) || clip.frames < 1 || !Array.isArray(clip.rects) || clip.rects.length !== clip.frames) {
       throw new Error(`${label} ${clipName} has an invalid frame contract.`);
     }
     if (!Number.isFinite(clip.fps) || clip.fps <= 0 || typeof clip.loop !== "boolean") {
@@ -285,6 +314,8 @@ function clearInput() {
   controlHeld.down = 0;
   controlHeld.left = 0;
   controlHeld.right = 0;
+  semanticNudge.x = 0;
+  semanticNudge.y = 0;
   pointerBindings.clear();
   attackQueued = false;
   for (let index = 0; index < controlButtons.length; index += 1) {
@@ -323,6 +354,7 @@ function restartGame() {
   gameOverPanel.hidden = true;
   startWave(1);
   updateHud();
+  startLoop();
 }
 
 function spawnEnemy() {
@@ -421,6 +453,18 @@ function updatePlayer(deltaTime) {
   } else {
     player.moving = false;
   }
+  if (semanticNudge.x !== 0 || semanticNudge.y !== 0) {
+    player.x += semanticNudge.x * 34;
+    player.y += semanticNudge.y * 23;
+    player.moving = true;
+    if (semanticNudge.x !== 0) {
+      player.facing = semanticNudge.x > 0 ? 1 : -1;
+    }
+    semanticNudge.x = 0;
+    semanticNudge.y = 0;
+    clampToArena(player, 34);
+  }
+
 
   if (attackQueued && player.attackCooldown <= 0 && player.clipName !== "attack") {
     player.attackId += 1;
@@ -568,7 +612,7 @@ function updateWave(deltaTime) {
   }
 
   if (state.pendingSpawns === 0 && state.livingEnemies === 0) {
-    state.intermission = state.reducedMotion ? 1.15 : 2.15;
+    state.intermission = 2.15;
     setMode("wave-clear");
     state.hudDirty = true;
     announce(`Wave ${state.wave} secured. The next cohort is gathering.`);
@@ -734,7 +778,18 @@ function updateHud() {
   state.hudDirty = false;
 }
 
+function queueSemanticNudge(controlName) {
+  if (controlName === "up") semanticNudge.y = Math.max(-1, semanticNudge.y - 1);
+  if (controlName === "down") semanticNudge.y = Math.min(1, semanticNudge.y + 1);
+  if (controlName === "left") semanticNudge.x = Math.max(-1, semanticNudge.x - 1);
+  if (controlName === "right") semanticNudge.x = Math.min(1, semanticNudge.x + 1);
+}
+
 function frame(timestamp) {
+  if (!loopRunning) {
+    return;
+  }
+  animationFrameId = 0;
   if (state.lastTimestamp === 0) {
     state.lastTimestamp = timestamp;
   }
@@ -753,7 +808,11 @@ function frame(timestamp) {
   }
 
   render();
-  animationFrameId = requestAnimationFrame(frame);
+  if (loopRunning && isActiveMode() && !document.hidden) {
+    animationFrameId = requestAnimationFrame(frame);
+  } else {
+    stopLoop();
+  }
 }
 
 function controlNameForCode(code) {
@@ -833,6 +892,17 @@ for (let buttonIndex = 0; buttonIndex < controlButtons.length; buttonIndex += 1)
   button.addEventListener("pointerup", releasePointer);
   button.addEventListener("pointercancel", releasePointer);
   button.addEventListener("lostpointercapture", releasePointer);
+  button.addEventListener("click", (event) => {
+    if (event.detail !== 0 || !isActiveMode()) {
+      return;
+    }
+    const controlName = button.dataset.control;
+    if (controlName === "attack") {
+      attackQueued = true;
+    } else {
+      queueSemanticNudge(controlName);
+    }
+  });
 }
 
 touchControls.addEventListener("touchmove", (event) => {
@@ -845,9 +915,11 @@ window.addEventListener("keydown", handleKeyDown);
 window.addEventListener("keyup", handleKeyUp);
 window.addEventListener("blur", clearInput);
 document.addEventListener("visibilitychange", () => {
-  state.lastTimestamp = performance.now();
   if (document.hidden) {
     clearInput();
+    stopLoop();
+  } else {
+    startLoop();
   }
 });
 restartButton.addEventListener("click", restartGame);
@@ -858,7 +930,6 @@ reducedMotionQuery.addEventListener("change", (event) => {
 async function boot() {
   setControlsEnabled(false);
   render();
-  animationFrameId = requestAnimationFrame(frame);
 
   try {
     await loadAssets();
@@ -874,11 +945,21 @@ async function boot() {
       : "An unknown asset loading error occurred.";
     announce("Game assets failed validation. Reload after checking the sprite bundle files.");
     console.error("[sprite-2-5d] Asset initialization failed:", error);
+    stopLoop();
+    render();
   }
 }
 
 boot();
 
 window.addEventListener("pagehide", () => {
-  cancelAnimationFrame(animationFrameId);
-}, { once: true });
+  clearInput();
+  stopLoop();
+});
+window.addEventListener("pageshow", (event) => {
+  if (event.persisted && isActiveMode()) {
+    state.lastTimestamp = 0;
+    state.accumulator = 0;
+    startLoop();
+  }
+});
