@@ -64,7 +64,7 @@
     "runtimeEligible": true,
     "route": "sprite-2-5d.html",
     "verifiedRuntimeRevision": "a8c14a8e",
-    "browserContractRevision": "01d66ca8",
+    "browserContractRevision": "11155ba0",
     "localBrowserChecks": [
       "all five runtime asset requests succeeded",
       "body entered data-game-state=running",
