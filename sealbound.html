@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#080b12" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      name="description"
+      content="Seal three illustrated abyssal fronts before the lantern's integrity is consumed."
+    />
+    <title>Abyssal Lantern: Sealbound</title>
+    <link rel="stylesheet" href="sealbound.css" />
+  </head>
+  <body data-game-state="loading">
+    <main id="sealbound-app" class="sealbound-app" aria-labelledby="sealbound-title">
+      <header class="sealbound-header">
+        <div class="brand-lockup">
+          <img
+            class="brand-mark"
+            src="assets/icons/icon-192.png"
+            alt=""
+            width="192"
+            height="192"
+          />
+          <div>
+            <p class="eyebrow">Abyssal Lantern · Sealbound protocol</p>
+            <h1 id="sealbound-title">Sealbound</h1>
+          </div>
+        </div>
+        <p id="sealbound-status" class="live-status" role="status" aria-live="polite">
+          The three fronts are opening.
+        </p>
+      </header>
+
+      <section class="sealbound-layout" aria-label="Sealbound battle command">
+        <div class="battle-column">
+          <nav id="sealbound-fronts" class="front-selector" aria-label="Choose an abyssal front">
+            <button
+              id="sealbound-front-0"
+              class="front-tab is-selected"
+              type="button"
+              data-front-index="0"
+              data-front-id="cinder-span"
+              aria-controls="sealbound-stage"
+              aria-pressed="true"
+            >
+              <span class="front-number" aria-hidden="true">01</span>
+              <span class="front-label">Cinder Span</span>
+              <span class="front-state" data-front-state="0">Contested</span>
+            </button>
+            <button
+              id="sealbound-front-1"
+              class="front-tab"
+              type="button"
+              data-front-index="1"
+              data-front-id="abyss-chancel"
+              aria-controls="sealbound-stage"
+              aria-pressed="false"
+            >
+              <span class="front-number" aria-hidden="true">02</span>
+              <span class="front-label">Abyss Chancel</span>
+              <span class="front-state" data-front-state="1">Contested</span>
+            </button>
+            <button
+              id="sealbound-front-2"
+              class="front-tab"
+              type="button"
+              data-front-index="2"
+              data-front-id="echo-throne"
+              aria-controls="sealbound-stage"
+              aria-pressed="false"
+            >
+              <span class="front-number" aria-hidden="true">03</span>
+              <span class="front-label">Echo Throne</span>
+              <span class="front-state" data-front-state="2">Contested</span>
+            </button>
+          </nav>
+
+          <section
+            id="sealbound-stage"
+            class="stage-composition"
+            data-front="cinder-span"
+            aria-labelledby="sealbound-stage-name"
+          >
+            <div class="front-scene is-active" data-front-scene="cinder-span" aria-hidden="true"></div>
+            <div class="front-scene" data-front-scene="abyss-chancel" aria-hidden="true"></div>
+            <div class="front-scene" data-front-scene="echo-throne" aria-hidden="true"></div>
+            <div class="stage-vignette" aria-hidden="true"></div>
+            <div class="stage-depth stage-depth--far" aria-hidden="true"></div>
+            <div class="stage-depth stage-depth--near" aria-hidden="true"></div>
+
+            <div id="sealbound-warden" class="combatant combatant--warden" data-sprite="warden" aria-hidden="true">
+              <span class="sprite-cell"><span class="sprite-sheet"></span></span>
+              <span class="combatant-shadow"></span>
+            </div>
+            <div class="cohort-rank" aria-hidden="true">
+              <div class="combatant combatant--cohort cohort-one" data-sprite="ember-cohort">
+                <span class="sprite-cell"><span class="sprite-sheet"></span></span>
+                <span class="combatant-shadow"></span>
+              </div>
+              <div class="combatant combatant--cohort cohort-two" data-sprite="ember-cohort">
+                <span class="sprite-cell"><span class="sprite-sheet"></span></span>
+                <span class="combatant-shadow"></span>
+              </div>
+              <div class="combatant combatant--cohort cohort-three" data-sprite="ember-cohort">
+                <span class="sprite-cell"><span class="sprite-sheet"></span></span>
+                <span class="combatant-shadow"></span>
+              </div>
+            </div>
+
+            <div id="sealbound-seal" class="seal-sigil" data-seal-state="sealed" aria-hidden="true">
+              <span class="seal-ring"></span>
+              <span class="seal-core"></span>
+            </div>
+
+            <div class="stage-readout">
+              <div>
+                <p class="eyebrow">Active front</p>
+                <h2 id="sealbound-stage-name">Cinder Span</h2>
+                <p id="sealbound-threat-name">Ash Vanguard · 60 resolve</p>
+              </div>
+              <p id="sealbound-seal-label" class="seal-label" data-seal-label>Seal locked</p>
+            </div>
+
+            <section id="sealbound-outcome" class="outcome-panel" aria-labelledby="sealbound-outcome-title" hidden>
+              <img
+                class="outcome-crest"
+                src="assets/icons/icon-512.png"
+                alt=""
+                width="512"
+                height="512"
+              />
+              <p id="sealbound-outcome-kicker" class="eyebrow">Protocol complete</p>
+              <h2 id="sealbound-outcome-title">The abyss is sealed</h2>
+              <p id="sealbound-outcome-message">All three lantern seals answer the Warden.</p>
+              <button id="sealbound-outcome-restart" class="restart-button" type="button">
+                Rekindle the route <kbd>R</kbd>
+              </button>
+            </section>
+          </section>
+        </div>
+
+        <aside class="command-column" aria-label="Integrity, threat, and abilities">
+          <section class="telemetry-card" aria-labelledby="sealbound-telemetry-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Lantern telemetry</p>
+                <h2 id="sealbound-telemetry-title">Command state</h2>
+              </div>
+              <img
+                class="telemetry-icon"
+                src="assets/icons/icon-192.png"
+                alt=""
+                width="48"
+                height="48"
+              />
+            </div>
+
+            <div class="meter-heading">
+              <span>Integrity</span>
+              <output id="sealbound-integrity-value" for="sealbound-integrity">100 / 100</output>
+            </div>
+            <div
+              id="sealbound-integrity"
+              class="meter integrity-meter"
+              role="progressbar"
+              aria-label="Lantern integrity"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="100"
+            >
+              <span id="sealbound-integrity-fill" class="meter-fill"></span>
+            </div>
+
+            <div class="meter-heading">
+              <span>Seal energy</span>
+              <output id="sealbound-energy-value" for="sealbound-energy">3.0 / 6</output>
+            </div>
+            <div
+              id="sealbound-energy"
+              class="meter energy-meter"
+              role="progressbar"
+              aria-label="Seal energy"
+              aria-valuemin="0"
+              aria-valuemax="6"
+              aria-valuenow="3"
+            >
+              <span id="sealbound-energy-fill" class="meter-fill"></span>
+            </div>
+
+            <div class="meter-heading pressure-heading">
+              <span>Front pressure</span>
+              <output id="sealbound-pressure-value" for="sealbound-pressure">0%</output>
+            </div>
+            <div
+              id="sealbound-pressure"
+              class="meter pressure-meter"
+              role="progressbar"
+              aria-label="Selected front pressure"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            >
+              <span id="sealbound-pressure-fill" class="meter-fill"></span>
+            </div>
+
+            <dl class="seal-counts">
+              <div><dt>Fronts cleared</dt><dd id="sealbound-clears">0 / 3</dd></div>
+              <div><dt>Seals captured</dt><dd id="sealbound-captures">0 / 3</dd></div>
+              <div><dt>Simulation</dt><dd>60 Hz fixed</dd></div>
+            </dl>
+          </section>
+
+          <section class="ability-card" aria-labelledby="sealbound-abilities-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Warden commands</p>
+                <h2 id="sealbound-abilities-title">Seal arts</h2>
+              </div>
+              <span class="ready-light" aria-hidden="true"></span>
+            </div>
+
+            <div id="sealbound-abilities" class="ability-grid" aria-label="Combat abilities">
+              <button
+                id="sealbound-ability-crescent"
+                class="ability-button"
+                type="button"
+                data-ability="crescent"
+                aria-describedby="sealbound-crescent-detail"
+              >
+                <span class="ability-key" aria-hidden="true">Q</span>
+                <span class="ability-name">Crescent</span>
+                <span id="sealbound-crescent-detail" class="ability-detail">26 strike · 1 energy</span>
+              </button>
+              <button
+                id="sealbound-ability-rift-lance"
+                class="ability-button"
+                type="button"
+                data-ability="rift-lance"
+                aria-describedby="sealbound-rift-detail"
+              >
+                <span class="ability-key" aria-hidden="true">W</span>
+                <span class="ability-name">Rift Lance</span>
+                <span id="sealbound-rift-detail" class="ability-detail">58 strike · 2 energy</span>
+              </button>
+              <button
+                id="sealbound-ability-bind-seal"
+                class="ability-button ability-button--seal"
+                type="button"
+                data-ability="bind-seal"
+                aria-describedby="sealbound-bind-detail"
+                disabled
+              >
+                <span class="ability-key" aria-hidden="true">E</span>
+                <span class="ability-name">Bind Seal</span>
+                <span id="sealbound-bind-detail" class="ability-detail">Exposed seal · 3 energy</span>
+              </button>
+            </div>
+
+            <div class="keyboard-legend" aria-label="Keyboard controls">
+              <span><kbd>1</kbd>–<kbd>3</kbd> Select front</span>
+              <span><kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd> Use art</span>
+              <span><kbd>R</kbd> Restart</span>
+            </div>
+            <button id="sealbound-restart" class="text-restart" type="button">
+              Restart protocol <kbd>R</kbd>
+            </button>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <noscript>
+      <p class="noscript">JavaScript is required to enter the Sealbound protocol.</p>
+    </noscript>
+    <script src="sealbound.js" defer></script>
+  </body>
+</html>
