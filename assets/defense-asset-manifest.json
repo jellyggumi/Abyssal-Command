@@ -563,31 +563,31 @@
       "testDisposition": "delete"
     },
     {
-      "disposition": "delete",
+      "disposition": "retain",
       "currentPath": "assets/images/battle/ui/stages/abyss-chancel.png",
-      "replacementPath": null,
+      "replacementPath": "assets/images/battle/ui/stages/abyss-chancel.png",
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
+      "runtimeReference": true,
+      "testDisposition": "retain"
     },
     {
-      "disposition": "delete",
+      "disposition": "retain",
       "currentPath": "assets/images/battle/ui/stages/cinder-span.png",
-      "replacementPath": null,
+      "replacementPath": "assets/images/battle/ui/stages/cinder-span.png",
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
+      "runtimeReference": true,
+      "testDisposition": "retain"
     },
     {
-      "disposition": "delete",
+      "disposition": "retain",
       "currentPath": "assets/images/battle/ui/stages/echo-throne-steps.png",
-      "replacementPath": null,
+      "replacementPath": "assets/images/battle/ui/stages/echo-throne-steps.png",
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
+      "runtimeReference": true,
+      "testDisposition": "retain"
     },
     {
       "disposition": "delete",

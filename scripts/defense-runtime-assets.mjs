@@ -16,6 +16,10 @@ export const RETAINED_ASSET_PATHS = Object.freeze([
   "assets/images/battle/ui/hud/stat-commander.webp",
   "assets/images/battle/ui/hud/stat-echo-xp.webp",
   "assets/images/battle/ui/hud/stat-gate-integrity.webp",
+  // Standalone Sealbound route illustrated fronts.
+  "assets/images/battle/ui/stages/cinder-span.png",
+  "assets/images/battle/ui/stages/abyss-chancel.png",
+  "assets/images/battle/ui/stages/echo-throne-steps.png",
   // Standalone sprite-based Cinder Court route.
   "assets/images/sprite-2-5d/cinder-court-backdrop.png",
   "assets/images/sprite-2-5d/warden/manifest.json",

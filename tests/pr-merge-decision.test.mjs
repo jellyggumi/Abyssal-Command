@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
@@ -381,4 +382,42 @@ test("renderComment reports the validated sha and run link only when given them"
   assert.doesNotMatch(bare, /Run log/);
   // Called with no options at all by the CLI path when the payload omits both.
   assert.doesNotThrow(() => renderComment(decision));
+});
+
+test("the PR guard runs the Sealbound browser contract once in route order", async () => {
+  const workflow = await readFile(
+    new URL("../.github/workflows/pr-guard.yml", import.meta.url),
+    "utf8",
+  );
+  const browserGate = workflow.match(
+    /^      - name: Gate — browser contract\n(?<body>[\s\S]*?)(?=^      - name: Decide$)/m,
+  );
+  assert.ok(browserGate, "PR guard must define the browser contract gate before Decide");
+
+  const commands = browserGate.groups.body
+    .match(/^\s*node tests\/\S+.*$/gm)
+    ?.map((command) => command.trim()) ?? [];
+  const spriteCommand = "node tests/sprite-2-5d-browser.cjs > results/browser/sprite-2-5d-browser.txt || status=failed";
+  const sealboundCommand = "node tests/sealbound-browser.cjs > results/browser/sealbound-browser.txt || status=failed";
+  const performanceCommand = "node tests/defense-performance-browser.cjs > results/browser/defense-performance-browser.txt || status=failed";
+
+  assert.deepEqual(
+    commands.filter((command) => command.startsWith("node tests/sealbound-browser.cjs")),
+    [sealboundCommand],
+    "browser gate must run the exact Sealbound command once",
+  );
+  const sealboundIndex = commands.indexOf(sealboundCommand);
+  assert.deepEqual(
+    commands.slice(sealboundIndex - 1, sealboundIndex + 2),
+    [spriteCommand, sealboundCommand, performanceCommand],
+    "Sealbound must run immediately after sprite-2.5D and before defense performance",
+  );
+  const browserGateLines = browserGate.groups.body.split("\n").map((line) => line.trim());
+  const receiptCommand = `printf '{"gate":"browser_contract","status":"%s"}\\n' "$status" > results/browser_contract.json`;
+  const receiptIndex = browserGateLines.indexOf(receiptCommand);
+  assert.deepEqual(
+    browserGateLines.slice(receiptIndex, receiptIndex + 2),
+    [receiptCommand, `test "$status" = passed`],
+    "browser gate must fail the step immediately after recording a failed aggregate receipt",
+  );
 });
