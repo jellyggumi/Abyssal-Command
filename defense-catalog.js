@@ -59,6 +59,23 @@ export const COMBAT_TARGETING = freeze({
 });
 
 /**
+ * Slice-2 direct combat verbs. Contacts resolve when the player input is consumed by the
+ * simulation; the renderer only observes the resulting action/contact events.
+ */
+export const DIRECT_COMBAT = freeze({
+  comboWindowTicks: 30,
+  /** Sustained in-contact ready-to-ready cadence for the complete LIGHT_1 → LIGHT_2 → LIGHT_3 chain. */
+  lightReadyToReadyTicks: 28,
+  light: freeze([
+    freeze({ id: "LIGHT_1", damageBp: 7000, reach: 900, maxTargets: 3, recoveryTicks: 6 }),
+    freeze({ id: "LIGHT_2", damageBp: 9000, reach: 1000, maxTargets: 4, recoveryTicks: 7 }),
+    freeze({ id: "LIGHT_3", damageBp: 12000, reach: 1200, maxTargets: 5, recoveryTicks: 12 }),
+  ]),
+  heavy: freeze({ id: "HEAVY", damageBp: 18000, reach: 1400, maxTargets: 5, recoveryTicks: 20 }),
+  dash: freeze({ distance: 1800, recoveryTicks: 8, iFrameTicks: 6, charges: 2, rechargeTicks: 90 }),
+});
+
+/**
  * Aim-biased target selection (core-loop-legion-spec.md §5). An optional player aim vector WEIGHTS
  * candidate selection instead of replacing it:
  *
@@ -1326,7 +1343,7 @@ export const MIDBOSS_PROFILE = freeze({
    * Mid-boss HP is a share of the wave CLEAR BUDGET (see PLAYER_BASELINE_DPS below), not a multiple
    * of its base class: a guardian-based mid-boss at a flat 3.2x on a scale-240 stage was a 57k-HP
    * wall that stalled the whole gate-defense hold during measurement. At 60% of one cadence slot it
-   * is ~10-12 s of focused fire for the floor player, with escorts sized inside the same budget.
+   * is ~10-12 s of sustained in-contact direct-light fire, with escorts sized inside the same budget.
    */
   hpBudgetBp: 6000,
   damageBp: 16000,
@@ -1360,18 +1377,23 @@ export const STAGE_WAVE_DOCTRINE = freeze({
  *   waveHp               = clearableHp * WAVE_PRESSURE_BP * kind.countBp
  *   count                = waveHp / (enemyHp * stageScale / 100)
  *
- * PLAYER_BASELINE_DPS is the shipped bare commander's single-target output
- * (COMMANDER.basicDamage 900 per COMMANDER.basicCooldown 24 ticks = 2250/s), so the budget is the
- * FLOOR case: companions, items, rewards, skill ranks and meta progression are all headroom on top.
- * WAVE_PRESSURE_BP leaves that headroom deliberately — a normal wave asks for 55% of the floor
- * player's clear capacity in one cadence slot, so a well-played wave clears (and pays the
+ * PLAYER_BASELINE_DPS is sustained in-contact direct LIGHT_1 → LIGHT_2 → LIGHT_3 output:
+ * the 70% + 90% + 120% hits against COMMANDER.basicDamage total 2520 damage, completed
+ * ready-to-ready every 28 ticks. At 60 ticks per second, that is 5400 single-target DPS.
+ * Companions, items, rewards, skill ranks and meta progression are additional headroom.
+ * WAVE_PRESSURE_BP preserves that headroom deliberately — a normal wave asks for 55% of the
+ * sustained direct-light clear capacity in one cadence slot, so a well-played wave clears (and pays the
  * WAVE_CLEARED recovery) while a sloppy one leaks into the next wave.
  *
  * The critical property for a 10-13 wave stage: because the divisor carries `stageScale`, late
  * stages field FEWER, TOUGHER bodies instead of the same count at 2.4x HP, which is what made the
  * long format unclearable at gate-zenith during measurement.
  */
-export const PLAYER_BASELINE_DPS = 2250;
+export const PLAYER_BASELINE_DPS = (
+  COMMANDER.basicDamage
+  * DIRECT_COMBAT.light.reduce((totalDamageBp, action) => totalDamageBp + action.damageBp, 0)
+  * TICK_RATE
+) / (10000 * DIRECT_COMBAT.lightReadyToReadyTicks);
 export const WAVE_PRESSURE_BP = 5500;
 /** Builds one stage's authored, doctrine-driven wave plan. Deterministic and data-only. */
 function buildDoctrineWavePlan(stageId, doctrine, tactics, stageScale) {

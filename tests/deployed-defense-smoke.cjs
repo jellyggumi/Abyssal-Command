@@ -80,9 +80,51 @@ async function run() {
       await page.locator("#start-defense").click();
       const surface = page.locator('#defense-battle-surface[data-defense-started="true"]');
       await surface.waitFor({ state: "attached", timeout: 15_000 });
-      const before = await surface.getAttribute("data-defense-input-seq");
-      await page.keyboard.press("ArrowRight");
-      await page.waitForFunction((value) => document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq !== value, before);
+      const startupCutscenes = [];
+      for (let dismissal = 0; dismissal < 4; dismissal += 1) {
+        const dismiss = page.locator("#defense-cutscene-overlay [data-cutscene-dismiss]").first();
+        if (!await dismiss.isVisible().catch(() => false)) break;
+        startupCutscenes.push(await page.locator("#defense-cutscene-overlay").getAttribute("data-cutscene-event"));
+        await dismiss.click();
+      }
+      assert.equal(
+        await page.locator("#defense-cutscene-overlay [data-cutscene-dismiss]").first().isVisible().catch(() => false),
+        false,
+        "visible startup cutscenes must be dismissed before direct input",
+      );
+      const activeSurface = page.locator('#defense-battle-surface[data-defense-state="active"]');
+      await activeSurface.waitFor({ state: "attached", timeout: 15_000 });
+      const lightControl = page.locator('#manual-attack[data-combat-verb="ATTACK_LIGHT"]');
+      await lightControl.waitFor({ state: "visible", timeout: 15_000 });
+      assert.equal(await lightControl.count(), 1, "the public direct-light control must be unique");
+      const inputBefore = Number(await activeSurface.getAttribute("data-defense-input-seq"));
+      assert.equal(Number.isInteger(inputBefore), true, "active battle must expose an integer public input sequence");
+      const expectedInputSeq = inputBefore + 1;
+      await lightControl.click();
+      await page.waitForFunction(
+        ({ expected }) => Number(document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq) === expected,
+        { expected: expectedInputSeq },
+        { timeout: 15_000 },
+      );
+      const directLight = await page.evaluate((expected) => {
+        const battleSurface = document.querySelector("#defense-battle-surface");
+        return {
+          attackSeq: Number(battleSurface?.dataset.defenseAttack),
+          combatVerb: battleSurface?.dataset.defenseCombatVerb,
+          inputSeq: Number(battleSurface?.dataset.defenseInputSeq),
+          expectedInputSeq: expected,
+        };
+      }, expectedInputSeq);
+      assert.deepEqual(
+        directLight,
+        {
+          attackSeq: expectedInputSeq,
+          combatVerb: "ATTACK_LIGHT",
+          inputSeq: expectedInputSeq,
+          expectedInputSeq,
+        },
+        "the native light control must advance exactly one public input and route ATTACK_LIGHT",
+      );
       const invariant = await page.evaluate(() => ({
         surface: Boolean(document.querySelector("#defense-battle-surface")),
         canvas: Boolean(document.querySelector("#defense-canvas")),
@@ -92,7 +134,6 @@ async function run() {
       assert.equal(invariant.surface, true, "battle surface must exist");
       assert.equal(invariant.canvas, true, "battle canvas must exist");
       assert.equal(invariant.overflow, true, "battle must not overflow viewport");
-
       const spriteResponse = await page.goto(absolute("sprite-2-5d.html"), { waitUntil: "load" });
       assert(spriteResponse?.ok(), `${width}x${height} sprite route response must succeed`);
       await page.locator('body[data-game-state="running"]').waitFor({ state: "attached", timeout: 15_000 });
@@ -110,7 +151,13 @@ async function run() {
       assert.equal(spriteInvariant.controlsEnabled, true, "deployed sprite controls must enable after asset validation");
       assert.equal(spriteInvariant.horizontalOverflow, false, "deployed sprite route must not overflow horizontally");
       assert.deepEqual(errors, [], "deployed browser emitted errors");
-      results.sessions.push({ viewport: `${width}x${height}`, ...invariant, sprite: spriteInvariant });
+      results.sessions.push({
+        viewport: `${width}x${height}`,
+        ...invariant,
+        startupCutscenes,
+        directLight,
+        sprite: spriteInvariant,
+      });
       await context.close();
     }
     results.pass = true;

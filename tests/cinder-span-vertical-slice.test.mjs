@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   COMMANDER,
   CINDER_SPAN_SURPRISE_TABLE,
+  DIRECT_COMBAT,
   STAGE_BY_ID,
 } from "../defense-catalog.js";
 import {
@@ -56,13 +57,29 @@ test("fresh Cinder exposes one ready authored starter skill and replays its cast
   assert.equal(rejection?.reason, "SKILL_NOT_READY_OR_UNAVAILABLE", "unknown skill ids must remain rejected");
 });
 
-function advanceCollectingEvents(run, steps) {
+function queueDirectAttackWhenAvailable(run) {
+  const snapshot = getRunSnapshot(run);
+  if (snapshot.growthOffer || snapshot.commander.verbState !== "IDLE") return run;
+
+  const reach = DIRECT_COMBAT.light[0].reach;
+  const targetInMelee = snapshot.enemies.some((enemy) => {
+    if (enemy.hp <= 0) return false;
+    const contactDistance = snapshot.commander.radius + enemy.radius + reach;
+    return (enemy.x - snapshot.commander.x) ** 2 + (enemy.y - snapshot.commander.y) ** 2 <= contactDistance ** 2;
+  });
+  return targetInMelee ? queueInput(run, "ATTACK_LIGHT") : run;
+}
+
+function advanceCollectingEvents(run, steps, { engageDirectCombat = false } = {}) {
   let next = run;
   const events = [];
   for (let step = 0; step < steps; step += 1) {
     const beforeAdvance = getRunSnapshot(next);
     if (beforeAdvance.growthOffer) {
       next = queueInput(next, "GROWTH_OFFER_SELECTED", { skillId: beforeAdvance.growthOffer.choices[0] });
+    }
+    else if (engageDirectCombat) {
+      next = queueDirectAttackWhenAvailable(next);
     }
     next = advanceDefenseRun(next, 1);
     const snapshot = getRunSnapshot(next);
@@ -78,6 +95,7 @@ function authoredWaveSelections(seed) {
   const { events } = advanceCollectingEvents(
     createDefenseRun({ stageId: STAGE_ID, seed }),
     lastSlotTick + maximumJitter + 1,
+    { engageDirectCombat: true },
   );
   return events.filter(({ type }) => type === "WAVE_VARIANT_STARTED");
 }
@@ -119,7 +137,7 @@ function normalizedWaveSelections(selections) {
 function findCriticalDamage() {
   for (let seed = 1; seed <= MAX_CRITICAL_SEEDS; seed += 1) {
     const run = createDefenseRun({ stageId: STAGE_ID, seed });
-    const result = advanceCollectingEvents(run, MAX_CRITICAL_TICKS);
+    const result = advanceCollectingEvents(run, MAX_CRITICAL_TICKS, { engageDirectCombat: true });
     const event = result.events.find(({ type }) => type === "CRITICAL_HIT");
     if (event) return { seed, event };
   }
@@ -153,6 +171,7 @@ test("Cinder Span critical damage exposes its source and authored chance and mul
   const replay = advanceCollectingEvents(
     createDefenseRun({ stageId: STAGE_ID, seed }),
     MAX_CRITICAL_TICKS,
+    { engageDirectCombat: true },
   ).events.find(({ type }) => type === "CRITICAL_HIT");
 
   assert.deepEqual(event, replay, "a seed must replay the same critical resolution event");

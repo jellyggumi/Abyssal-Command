@@ -35,6 +35,7 @@ const REQUIRED_FILES = [
   "manifest.json",
   "icon.svg",
   "privacy.html",
+  "abyssal-oneline.html",
   "abbysal-oneline.html",
   "vendor/three.module.js",
   "vendor/three.core.js",
@@ -125,26 +126,38 @@ function main() {
   if (!directory) throw new Error("Usage: pages-artifact-smoke.cjs --dir <Pages artifact directory>");
   const root = resolve(directory);
   for (const file of REQUIRED_FILES) assert.ok(existsSync(resolve(root, file)), `missing Pages artifact file: ${file}`);
-  const oneline = readFileSync(resolve(root, "abbysal-oneline.html"), "utf8");
+  const oneline = readFileSync(resolve(root, "abyssal-oneline.html"), "utf8");
   const markup = oneline.replace(/<!--[\s\S]*?-->/g, "");
   const openingTags = [...markup.matchAll(/<([a-z][\w:-]*)\b(?:[^"'<>]|"[^"]*"|'[^']*')*>/gi)];
 
   assert.ok(
     openingTags.some(([tag, name]) => name.toLowerCase() === "html"
       && /\blang\s*=\s*(?:"ko(?:-[a-z]{2,4})?"|'ko(?:-[a-z]{2,4})?'|ko(?:-[a-z]{2,4})?(?=[\s/>]))/i.test(tag)),
-    "abbysal-oneline.html must declare Korean content",
+    "abyssal-oneline.html must declare Korean content",
   );
   assert.ok(
     !openingTags.some(([, name]) => name.toLowerCase() === "script"),
-    "abbysal-oneline.html must not include scripts",
+    "abyssal-oneline.html must not include scripts",
   );
   assert.ok(
     !openingTags.some(([, name]) => name.toLowerCase() === "base"),
-    "abbysal-oneline.html must not include a base element",
+    "abyssal-oneline.html must not include a base element",
   );
   assert.ok(
     !openingTags.some(([tag]) => /\son[\w:-]*/i.test(tag.replace(/"[^"]*"|'[^']*'/g, ""))),
-    "abbysal-oneline.html must not include inline event handlers",
+    "abyssal-oneline.html must not include inline event handlers",
+  );
+  const legacyOneline = readFileSync(resolve(root, "abbysal-oneline.html"), "utf8");
+  assert.match(
+    legacyOneline,
+    /<meta\b[^>]*\bhttp-equiv\s*=\s*(?:"refresh"|'refresh'|refresh(?=[\s/>]))[^>]*\bcontent\s*=\s*(?:"0\s*;\s*url\s*=\s*abyssal-oneline\.html"|'0\s*;\s*url\s*=\s*abyssal-oneline\.html'|0\s*;\s*url\s*=\s*abyssal-oneline\.html(?=[\s/>]))[^>]*>/i,
+    "abbysal-oneline.html must redirect to abyssal-oneline.html",
+  );
+  assert.doesNotMatch(legacyOneline, /<script\b/i, "abbysal-oneline.html must not include scripts");
+  assert.doesNotMatch(
+    legacyOneline,
+    /<title\b[^>]*>[\s\S]*?abbysal-oneline/i,
+    "abbysal-oneline.html must not expose the typo in its document title",
   );
 
   const allowedDependencies = new Set(REQUIRED_FILES);
@@ -157,7 +170,7 @@ function main() {
       const dependency = value.split(/[?#]/, 1)[0];
       assert.ok(
         allowedDependencies.has(dependency),
-        `abbysal-oneline.html has unexpected ${attribute.toLowerCase()} dependency on <${name}>: ${value}`,
+        `abyssal-oneline.html has unexpected ${attribute.toLowerCase()} dependency on <${name}>: ${value}`,
       );
     }
   }

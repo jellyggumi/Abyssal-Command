@@ -11,6 +11,7 @@ import * as THREE from "../vendor/three.module.js";
 import { RealtimeBattle } from "../battle-realtime-three.js";
 import { BattleVisualizer } from "../battle-visualizer.js";
 import { STAGES } from "../defense-catalog.js";
+import { advanceDefenseRun, createDefenseRun, getRunDigest, getRunSnapshot } from "../defense-run-simulation.js";
 
 const TEST_ROOT = fileURLToPath(new URL("../", import.meta.url));
 const CONTENT_TYPES = Object.freeze({
@@ -489,6 +490,22 @@ test("Canvas fallback remount forgets prior event identities and pending input f
 
   adapter.dispose();
   reference.dispose();
+});
+
+test("BattleVisualizer public snapshot rendering preserves simulation state and digest", () => {
+  const run = advanceDefenseRun(createDefenseRun({ stageId: "cinder-span", seed: 443 }), 1);
+  const beforeDigest = getRunDigest(run);
+  const simulationSnapshot = getRunSnapshot(run);
+  const beforeSnapshot = structuredClone(simulationSnapshot);
+  const canvas = cameraCanvas();
+  const adapter = new BattleVisualizer().mount({ canvas, viewport: canvas });
+
+  adapter.renderSnapshot(simulationSnapshot, { viewport: canvas });
+
+  assert.ok(canvas.calls.length > 0, "the public render boundary must project the supplied snapshot");
+  assert.deepEqual(simulationSnapshot, beforeSnapshot, "renderSnapshot must leave the supplied simulation snapshot untouched");
+  assert.equal(getRunDigest(run), beforeDigest, "renderer presentation must not alter the authoritative run digest");
+  adapter.dispose();
 });
 
 test("RealtimeBattle reconciles a supplied snapshot into its real Three.js scene graph without mutation", () => {

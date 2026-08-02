@@ -275,6 +275,17 @@ function causalSource(event) {
   };
 }
 
+function isWaveClearRewardMirror(event, events) {
+  if (event.type !== "WAVE_CLEARED") return false;
+  return events.some((candidate) => (
+    candidate.type === "ENCOUNTER_REWARD_GRANTED"
+    && candidate.rewardType === "wave-recovery"
+    && candidate.tick === event.tick
+    && candidate.waveIndex === event.waveIndex
+    && candidate.gateRecovered === event.gateRecovered
+  ));
+}
+
 function buildCompositeRecord(before, after, events, target) {
   const from = before[target];
   const to = after[target];
@@ -282,12 +293,18 @@ function buildCompositeRecord(before, after, events, target) {
   const afterMax = target === "gate" ? after.gateMax : after.commanderMax;
   const max = Math.max(beforeMax, afterMax);
   const signals = events
-    .map((event) => ({ cause: eventCauseForTarget(event, target), event }))
+    .map((event) => ({
+      cause: eventCauseForTarget(event, target),
+      event,
+      zeroDeltaMirror: isWaveClearRewardMirror(event, events),
+    }))
     .filter(({ cause }) => cause !== null);
-  const deltaFor = ({ event, cause }) => cause === "TERRAIN_RECOVERY"
-    ? (target === "gate" ? event.gateRecovery : event.commanderRecovery)
-    : cause === "WAVE_CLEARED" || cause === "ENCOUNTER_REWARD_GRANTED"
-      ? (target === "gate" ? event.gateRecovered : event.commanderRecovered)
+  const deltaFor = ({ event, cause, zeroDeltaMirror }) => zeroDeltaMirror
+    ? 0
+    : cause === "TERRAIN_RECOVERY"
+      ? (target === "gate" ? event.gateRecovery : event.commanderRecovery)
+      : cause === "WAVE_CLEARED" || cause === "ENCOUNTER_REWARD_GRANTED"
+        ? (target === "gate" ? event.gateRecovered : event.commanderRecovered)
       : cause === "SKILL_SELECTED_PASSIVE_INTEGRITY"
         // Rank-aware, mirroring `applySkillRankEffects`: a passive grants its full authored
         // `maxIntegrity` at rank 1 and SKILL_RANK_PASSIVE_SHARE of it on every rank-up. Reading

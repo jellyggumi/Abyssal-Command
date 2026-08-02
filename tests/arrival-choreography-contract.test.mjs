@@ -12,6 +12,7 @@
 // silently invalidating the assertion.
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { DIRECT_COMBAT } from "../defense-catalog.js";
 import {
   ARRIVAL_FORMATIONS,
   ARRIVAL_GRADES,
@@ -40,12 +41,29 @@ const SEEDS = [1, 7, 42];
 const WINDOW_TICKS = 9000;
 
 /**
- * Drives a run, answering growth offers so the window reaches later waves.
+ * Drives a run, resolving growth offers and issuing legal in-range light attacks so the window
+ * reaches later waves without the commander being defeated by unattended enemies.
  *
  * A bare `advanceDefenseRun(run, n)` STOPS at the first growth offer, around tick 460-830 on
  * these stages, which is before wave 1 spawns. A test built on that would never reach a
  * formation and would pass against a completely unwired feature.
  */
+function squaredDistance(left, right) {
+  return (left.x - right.x) ** 2 + (left.y - right.y) ** 2;
+}
+
+function queueDirectAttackWhenAvailable(run) {
+  const snapshot = getRunSnapshot(run);
+  if (snapshot.growthOffer || snapshot.commander.verbState !== "IDLE") return run;
+  const reach = DIRECT_COMBAT.light[0].reach;
+  const targetInMelee = snapshot.enemies.some((enemy) => {
+    if (enemy.hp <= 0) return false;
+    const contactDistance = snapshot.commander.radius + enemy.radius + reach;
+    return squaredDistance(enemy, snapshot.commander) <= contactDistance ** 2;
+  });
+  return targetInMelee ? queueInput(run, "ATTACK_LIGHT") : run;
+}
+
 function driveCollectingSpawns(stageId, seed, ticks) {
   let run = createDefenseRun({ stageId, seed });
   const spawns = [];
@@ -58,7 +76,7 @@ function driveCollectingSpawns(stageId, seed, ticks) {
   for (let step = 0; step < ticks && !isTerminalRun(run); step += 1) {
     const before = getRunSnapshot(run);
     if (before.growthOffer) run = queueInput(run, "SKILL_SELECTED", { skillId: before.growthOffer.choices[0] });
-    run = advanceDefenseRun(run, 1);
+    run = advanceDefenseRun(queueDirectAttackWhenAvailable(run), 1);
     const after = getRunSnapshot(run);
     for (const event of after.events) {
       if (event.type !== "ENEMY_SPAWNED" || seen.has(event.entityId)) continue;

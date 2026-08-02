@@ -68,7 +68,11 @@ function startServer() {
  * against real WebGL in a fresh browser context.
  */
 async function seededWorldHudCampaign() {
-  const campaignState = await import("../campaign-state.js");
+  const [campaignState, rpgCatalog, stageStoryCatalog] = await Promise.all([
+    import("../campaign-state.js"),
+    import("../rpg-catalog.js"),
+    import("../stage-story-catalog.js"),
+  ]);
   let campaign = campaignState.createCampaign({ campaignId: "defense-0-1", resetEpoch: 0 });
   campaign = campaignState.captureElite(campaign, "s1-ember-hunter", "ember-cohort");
   campaign = campaignState.captureElite(campaign, "s2-veil-sentinel", "rift-lens");
@@ -76,12 +80,50 @@ async function seededWorldHudCampaign() {
   campaign = campaignState.setCompanionLoadout(campaign, ["ember-cohort", "rift-lens", "throne-echo"]);
   const payload = campaignState.serializeCampaign(campaign);
   const text = JSON.stringify(payload);
+  const companionLoadout = campaign.companionLoadout.prototypeIds;
+  const equipTiers = (ownerId) => Object.fromEntries(
+    rpgCatalog.EQUIPMENT_SLOTS.map((slot) => [slot, campaignState.equipmentTierIndexFor(campaign, ownerId, slot)]),
+  );
+  const stableRunSeed = (stageId) => {
+    const attempt = campaign.attemptsByStage[stageId] ?? 0;
+    const source = `${campaign.campaignId}:${campaign.resetEpoch}:${stageId}:${attempt}`;
+    let hash = 0x811c9dc5;
+    for (const character of source) {
+      hash ^= character.charCodeAt(0);
+      hash = Math.imul(hash, 0x01000193);
+    }
+    return (hash >>> 0) || 1;
+  };
+  const stageId = "cinder-span";
+  const cinderStarterSkillId = stageStoryCatalog.stageStoryFor(stageId)?.extractionReward?.skillId ?? null;
+  const runOptions = {
+    stageId,
+    seed: stableRunSeed(stageId),
+    abyssDepth: 0,
+    companionLoadout,
+    rewardIds: campaign.rewardIds ?? [],
+    wardenProgress: campaign.wardenProgress,
+    wardenEquipment: equipTiers("warden"),
+    companionEquipment: Object.fromEntries(companionLoadout.map((id) => [id, equipTiers(id)])),
+    extractedSkillRanks: Object.fromEntries(
+      (campaign.storyProgress?.activeSkillLoadout ?? []).map((skillId) => [
+        skillId,
+        campaign.storyProgress?.extractedSkillLevels?.[skillId] ?? 1,
+      ]),
+    ),
+    initialSkillIds: stageId === "cinder-span" && campaign.resolvedIds.length === 0
+      ? [cinderStarterSkillId]
+      : [],
+    formation: campaign.companionFormation,
+    carryOver: campaign.stageCarryOver ?? null,
+  };
   return {
     encoded: JSON.stringify({
       version: campaignState.RULES_VERSION,
       hash: `sha256-${createHash("sha256").update(text).digest("hex")}`,
       payload,
     }),
+    runOptions,
   };
 }
 
@@ -719,117 +761,364 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
     await page.locator("#start-defense").click();
     await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
 
-    // Drive the live loop entirely inside the page: repeatedly dismiss the
-    // stage-entry cutscene and click through growth offers (both otherwise
-    // block real-time tick advancement — see advanceDefenseRun()'s
-    // `if (next.growthOffer) { ...; break; }`) while a MutationObserver
-    // records every .world-damage-number's real rendered (computed, not
-    // inline) transform + its .world-damage-number-rise text at the moment
-    // each is inserted — reading computed style is what actually would have
-    // caught Bug #2 (a co-animated transform silently replaces the whole
-    // computed value; the inline style string alone would look correct even
-    // under the bug).
-    const drive = await page.evaluate(async () => {
+    // Drive the deterministic clock from the test, but every game command remains a
+    // normal browser control interaction. Commander auto-attacks are intentionally
+    // retired, so a clock-only run can no longer clear the gate-defense wave.
+    await page.evaluate(() => {
       const overlay = document.querySelector("#world-hud-overlay");
-      const damageSamples = [];
+      if (!overlay) throw new Error("world HUD overlay missing");
+      window.__worldHudDamageSamples = [];
       const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
           for (const node of mutation.addedNodes) {
             if (!(node instanceof HTMLElement) || !node.classList.contains("world-damage-number")) continue;
             const rise = node.querySelector(".world-damage-number-rise");
-            damageSamples.push({
+            window.__worldHudDamageSamples.push({
               computedTransform: getComputedStyle(node).transform,
               inlineTransform: node.style.transform,
               riseText: rise?.textContent ?? null,
+              eventId: node.dataset.defenseEventId ?? null,
+              eventType: node.dataset.defenseEventType ?? null,
             });
           }
         }
       });
       observer.observe(overlay, { childList: true });
-
-      // Deterministic frame-pump drive (see the controllable rAF init script
-      // above). Each __pumpFrame(100) advances EXACTLY 100 ms of GAME-time
-      // (elapsed = min(100, frameDuration), frameDuration pinned to 100), so the
-      // elite-candidate state — reached only after the gate-defense ->
-      // echo-recovery objective chain defeats the stage-1 elite, ~17-18 s of
-      // game-time — is a pure function of pump COUNT, never of the CI runner's
-      // real frame rate. The old fixed 32 s WALL-CLOCK budget failed in CI
-      // precisely because loop() clamps game-time to min(100, frameDuration) per
-      // frame: on a slow software-WebGL runner a frame takes far longer than
-      // 100 ms, so 32 s of wall-clock yielded well under 18 s of game-time and
-      // the capture prompt never appeared. Pumping decouples the two entirely.
-      // Pumping ~6 sim ticks/frame (100 ms / STEP_MS, STEP_MS = 1000/60) also
-      // deliberately drives loop()'s multi-tick catch-up + frameEvents path —
-      // the exact slow-frame path CI hits — so this is MORE faithful to the CI
-      // scenario, not less.
-      const FRAME_MS = 100;
-      // Elite candidate needs ~17-18 s game-time (~1062 ticks) => ~180 pumps at
-      // 100 ms each. This cap is 200 s of GAME-time (>10x margin) — a game-time
-      // bound, not a wall-clock bound, so no runner slowness can defeat it:
-      // 2000 pumps is always exactly 200 s of game-time. It only trips if the
-      // capture prompt genuinely never renders (a real Bug #4 regression),
-      // which is exactly what the assertion below is here to catch.
-      const MAX_PUMPS = 2000;
-      let initialCapturePromptText = null;
-      let initialCapturePromptState = null;
-      let extractionReadyPromptText = null;
-      let holdingCapturePromptText = null;
-      let extractionReadyPromptState = null;
-      let bindStarted = false;
-      let nameplateTransform = null;
-      const clickedOfferKeys = new Set();
-      let pumps = 0;
-      while (pumps < MAX_PUMPS) {
-        const cutsceneDismiss = document.querySelector("#defense-cutscene-overlay [data-cutscene-dismiss]");
-        if (cutsceneDismiss) cutsceneDismiss.click();
-        const growthOffer = document.querySelector("#defense-growth-offer");
-        if (growthOffer) {
-          const offerKey = growthOffer.dataset.offer ?? "";
-          const button = growthOffer.querySelector("button[data-pick]");
-          if (button && !clickedOfferKeys.has(offerKey)) {
-            clickedOfferKeys.add(offerKey);
-            button.click();
-          }
-        }
-        if (nameplateTransform === null) {
-          const nameplate = overlay.querySelector("[data-world-nameplate]");
-          if (nameplate && nameplate.style.transform) nameplateTransform = nameplate.style.transform;
-        }
-        const prompt = overlay.querySelector(".world-capture-prompt");
-        const promptText = prompt?.textContent?.trim();
-        if (promptText) {
-          const extractAction = document.querySelector("#extract-elite");
-          const promptState = extractAction
-            ? {
-              disabled: extractAction.disabled,
-              ariaDisabled: extractAction.getAttribute("aria-disabled"),
-            }
-            : null;
-          if (initialCapturePromptText === null) {
-            initialCapturePromptText = promptText;
-            initialCapturePromptState = promptState;
-          }
-          if (!bindStarted && promptText.startsWith("Bind 대기") && extractAction && !extractAction.disabled && extractAction.getAttribute("aria-disabled") === "false") {
-            extractAction.click();
-            bindStarted = true;
-          }
-          if (promptText.startsWith("결속 홀드")) holdingCapturePromptText = holdingCapturePromptText ?? promptText;
-          if (promptText.startsWith("추출 가능")) {
-            extractionReadyPromptText = promptText;
-            extractionReadyPromptState = promptState;
-          }
-        }
-        if (nameplateTransform !== null && damageSamples.length >= 4 && extractionReadyPromptText !== null) break;
-        window.__pumpFrame(FRAME_MS);
-        pumps += 1;
-        // Yield a macrotask so the childList MutationObserver microtask (which
-        // records each damage number's COMPUTED transform at insertion) and any
-        // pending style/layout work settle before the next iteration reads DOM.
-        await new Promise((resolve) => setTimeout(resolve, 0));
-      }
-      observer.disconnect();
-      return { nameplateTransform, damageSamples, initialCapturePromptText, initialCapturePromptState, holdingCapturePromptText, extractionReadyPromptText, extractionReadyPromptState, bindStarted, pumps, gameTimeMs: pumps * FRAME_MS };
+      window.__stopWorldHudDamageObserver = () => observer.disconnect();
     });
+    const readWorldHud = () => page.evaluate(() => {
+      const overlay = document.querySelector("#world-hud-overlay");
+      const prompt = overlay?.querySelector(".world-capture-prompt");
+      const extractAction = document.querySelector("#extract-elite");
+      const nameplate = overlay?.querySelector("[data-world-nameplate]");
+      return {
+        nameplateCount: overlay?.querySelectorAll("[data-world-nameplate]").length ?? 0,
+        damageSamples: window.__worldHudDamageSamples ?? [],
+        nameplateTransform: nameplate?.style.transform ?? null,
+        promptText: prompt?.textContent?.trim() ?? null,
+        promptState: extractAction ? {
+          disabled: extractAction.disabled,
+          ariaDisabled: extractAction.getAttribute("aria-disabled"),
+        } : null,
+        battleState: document.querySelector("#defense-battle-surface")?.dataset.defenseState ?? null,
+        stageId: document.querySelector("#defense-battle-surface")?.dataset.stageId ?? null,
+        objectivePhase: document.querySelector("#defense-battle-surface")?.dataset.objectivePhase ?? null,
+        status: document.querySelector("#battle-status")?.textContent?.trim() ?? null,
+      };
+    });
+    // Mirror the public command stream with the same deterministic simulation.
+    // The browser still owns the live run; this mirror only selects legal native
+    // controls from the authored objective and exact direct-combat reach rules.
+    await page.evaluate(async (runOptions) => {
+      const { createDefenseRun, advanceDefenseRun, getRunSnapshot, queueInput } = await import("/defense-run-simulation.js");
+      const { DIRECT_COMBAT, OCTANT_VECTORS } = await import("/defense-catalog.js");
+      const nearestLivingEnemy = (snapshot) => {
+        const distance = (entry) => (entry.x - snapshot.commander.x) ** 2 + (entry.y - snapshot.commander.y) ** 2;
+        return snapshot.enemies.filter((enemy) => enemy.hp > 0).sort((left, right) => distance(left) - distance(right))[0] ?? null;
+      };
+      let bindingRoute = false;
+      const objectiveTarget = (snapshot) => {
+        const boss = snapshot.enemies.find((enemy) => enemy.class === "boss" && enemy.hp > 0) ?? null;
+        if (boss) return boss;
+        if (bindingRoute) return snapshot.tactics.extraction ?? snapshot.tactics.occupation;
+        return nearestLivingEnemy(snapshot)
+          ?? (snapshot.objectives.phase === "occupation" ? snapshot.tactics.occupation : null)
+          ?? (snapshot.objectives.phase === "extraction" ? snapshot.tactics.extraction : null);
+      };
+      const objectiveOctant = (snapshot) => {
+        const target = objectiveTarget(snapshot);
+        if (!target) return "IDLE";
+        const dx = target.x - snapshot.commander.x;
+        const dy = target.y - snapshot.commander.y;
+        if (target.radius && Math.hypot(dx, dy) < target.radius * 0.5) return "IDLE";
+        const length = Math.hypot(dx, dy) || 1;
+        let best = "IDLE";
+        let bestDot = -Infinity;
+        for (const [name, vector] of Object.entries(OCTANT_VECTORS)) {
+          if (name === "IDLE") continue;
+          const vectorLength = Math.hypot(vector.x, vector.y) || 1;
+          const dot = (dx / length) * (vector.x / vectorLength) + (dy / length) * (vector.y / vectorLength);
+          if (dot > bestDot) { bestDot = dot; best = name; }
+        }
+        return best;
+      };
+      const canQueueDirectLight = (snapshot) => {
+        if (snapshot.commander.verbState !== "IDLE") return false;
+        const reach = DIRECT_COMBAT.light[0].reach;
+        const boss = snapshot.enemies.find((enemy) => enemy.class === "boss" && enemy.hp > 0);
+        const targets = boss ? [boss] : snapshot.enemies.filter((enemy) => enemy.hp > 0);
+        return targets.some((enemy) => (enemy.x - snapshot.commander.x) ** 2 + (enemy.y - snapshot.commander.y) ** 2
+          <= (snapshot.commander.radius + enemy.radius + reach) ** 2);
+      };
+      const canQueueDash = (snapshot) => {
+        const boss = snapshot.enemies.find((enemy) => enemy.class === "boss" && enemy.hp > 0);
+        if (!boss || snapshot.commander.verbState !== "IDLE" || snapshot.commander.dashCharges <= 0
+          || objectiveOctant(snapshot) === "IDLE") return false;
+        const reach = snapshot.commander.radius + boss.radius + DIRECT_COMBAT.light[0].reach;
+        return (boss.x - snapshot.commander.x) ** 2 + (boss.y - snapshot.commander.y) ** 2 > reach ** 2;
+      };
+      let run = createDefenseRun(runOptions);
+      const evidence = {
+        acceptedDirectAttacks: 0, bossContacted: false, bossMeleeImpactEventIds: new Set(), rejectedDirectAttacks: [], rejectedDashes: [], bossIds: new Set(),
+        growthSelections: [],
+      };
+      const inspect = () => {
+        const snapshot = getRunSnapshot(run);
+        for (const enemy of snapshot.enemies) {
+          if (enemy.class === "boss" && enemy.hp > 0) evidence.bossIds.add(enemy.id);
+        }
+        return snapshot;
+      };
+      const queuedInputs = [];
+      const queue = (type, payload) => {
+        queuedInputs.push({ type, payload });
+        run = queueInput(run, type, payload);
+      };
+      window.__survivorObjectiveRoute = {
+        decide() {
+          const snapshot = inspect();
+          const bossDash = canQueueDash(snapshot) ? { type: "DASH", octant: objectiveOctant(snapshot) } : null;
+          return {
+            octant: objectiveOctant(snapshot),
+            canQueueDirectLight: canQueueDirectLight(snapshot),
+            canQueueDash: Boolean(bossDash),
+            bossDash,
+            growthOffer: Boolean(snapshot.growthOffer),
+          };
+        },
+        queueMove: (octant) => queue("MOVE", octant),
+        queueGrowth: (skillId) => {
+          const offer = inspect().growthOffer;
+          if (!offer) throw new Error(`native growth selection ${skillId} had no matching mirror offer at tick ${inspect().tick}`);
+          evidence.growthSelections.push({ skillId, choices: offer.choices, tick: inspect().tick });
+          queue("SKILL_SELECTED", { skillId });
+          return true;
+        },
+        queueExtraction: () => {
+          const candidate = inspect().eliteCandidate;
+          if (candidate) queue("EXTRACT_ELITE", { enemyId: candidate.enemyId });
+        },
+        beginBinding: () => { bindingRoute = true; },
+        queueDash: () => {
+          const snapshot = inspect();
+          if (!canQueueDash(snapshot)) return false;
+          queue("DASH");
+          return true;
+        },
+        queueLight: () => {
+          const snapshot = inspect();
+          if (!canQueueDirectLight(snapshot)) return false;
+          queue("ATTACK_LIGHT");
+          return true;
+        },
+        advance(ticks) {
+          for (let tick = 0; tick < ticks; tick += 1) {
+            run = advanceDefenseRun(run, 1);
+            const snapshot = inspect();
+            evidence.acceptedDirectAttacks += snapshot.events.filter((event) =>
+              event.type === "INPUT_ACCEPTED" && event.inputType === "ATTACK_LIGHT").length;
+            evidence.rejectedDirectAttacks.push(...snapshot.events.filter((event) =>
+              event.type === "INPUT_REJECTED" && event.inputType === "ATTACK_LIGHT"
+              && ["STALE_DIRECT_INPUT", "DIRECT_ACTION_OUT_OF_RANGE", "DIRECT_ACTION_NO_TARGET"].includes(event.reason)));
+            evidence.rejectedDashes.push(...snapshot.events.filter((event) =>
+              event.type === "INPUT_REJECTED" && event.inputType === "DASH"));
+            if (snapshot.events.some((event) => event.type === "MELEE_IMPACT"
+              && event.sourceId === "commander" && evidence.bossIds.has(event.targetId))) {
+              evidence.bossContacted = true;
+              snapshot.events
+                .filter((event) => event.type === "MELEE_IMPACT" && event.sourceId === "commander"
+                  && evidence.bossIds.has(event.targetId) && event.eventId)
+                .forEach((event) => evidence.bossMeleeImpactEventIds.add(event.eventId));
+            }
+          }
+        },
+        evidence: () => {
+          const snapshot = inspect();
+          return {
+            acceptedDirectAttacks: evidence.acceptedDirectAttacks,
+            bossContacted: evidence.bossContacted,
+            bossMeleeImpactEventIds: [...evidence.bossMeleeImpactEventIds],
+            rejectedDirectAttacks: evidence.rejectedDirectAttacks,
+            rejectedDashes: evidence.rejectedDashes,
+            growthSelections: evidence.growthSelections,
+            queuedInputs,
+            phase: snapshot.objectives.phase,
+            tick: snapshot.tick,
+            level: snapshot.commander.level,
+          };
+        },
+      };
+      window.__survivorNativeInputs = [];
+      window.__survivorNativeInputObserver = (event) => window.__survivorNativeInputs.push({
+        ...event.detail,
+        move: document.querySelector("#defense-battle-surface")?.dataset.defenseMove ?? null,
+        skill: document.querySelector("#defense-battle-surface")?.dataset.defenseSkill ?? null,
+      });
+      window.addEventListener("abyssal:defense-input-feedback", window.__survivorNativeInputObserver);
+    }, campaign.runOptions);
+    const FRAME_MS = 100;
+    const TICK_FRAME_MS = FRAME_MS / 6;
+    const MAX_PUMPS = 2000;
+    let mirrorAccumulator = 0;
+    let mirrorFrameStarted = false;
+    let initialCapturePromptText = null;
+    let initialCapturePromptState = null;
+    let extractionReadyPromptText = null;
+    let holdingCapturePromptText = null;
+    let extractionReadyPromptState = null;
+    let bindStarted = false;
+    let worldHud = await readWorldHud();
+    let pumps = 0;
+    let extractionClaimed = false;
+    let issuedLegalAttacks = 0;
+    let heldMovementKeys = [];
+    const movementKeys = {
+      IDLE: [],
+      N: ["w"],
+      NE: ["w", "d"],
+      E: ["d"],
+      SE: ["s", "d"],
+      S: ["s"],
+      SW: ["s", "a"],
+      W: ["a"],
+      NW: ["w", "a"],
+    };
+    const heldOctant = () => {
+      const vertical = heldMovementKeys.includes("w") ? "N" : heldMovementKeys.includes("s") ? "S" : "";
+      const horizontal = heldMovementKeys.includes("a") ? "W" : heldMovementKeys.includes("d") ? "E" : "";
+      return `${vertical}${horizontal}` || "IDLE";
+    };
+    const queueHeldMovement = () => page.evaluate((octant) => window.__survivorObjectiveRoute.queueMove(octant), heldOctant());
+    const setMovementDirection = async (octant) => {
+      const nextKeys = movementKeys[octant];
+      assert.ok(nextKeys, `objective driver produced unsupported movement octant ${String(octant)}`);
+      if (heldMovementKeys.join(",") === nextKeys.join(",")) return;
+      for (const key of [...heldMovementKeys]) {
+        await page.keyboard.up(key);
+        heldMovementKeys = heldMovementKeys.filter((held) => held !== key);
+        await queueHeldMovement();
+      }
+      for (const key of nextKeys) {
+        await page.keyboard.down(key);
+        heldMovementKeys.push(key);
+        await queueHeldMovement();
+      }
+    };
+    while (pumps < MAX_PUMPS) {
+      const routeDecision = await page.evaluate(() => window.__survivorObjectiveRoute.decide());
+      await setMovementDirection(routeDecision.octant);
+      const cutsceneDismiss = page.locator("#defense-cutscene-overlay [data-cutscene-dismiss]");
+      if (await cutsceneDismiss.isVisible().catch(() => false)) await cutsceneDismiss.press("Enter");
+      const growthOffer = page.locator("#defense-growth-offer");
+      if (await growthOffer.isVisible().catch(() => false)) {
+        const button = growthOffer.locator("button[data-pick]").first();
+        if (await button.isVisible().catch(() => false)) {
+          const skillId = await button.getAttribute("data-pick");
+          assert.ok(skillId, "a native growth button must name its selected skill");
+          await button.click();
+          await page.evaluate((selectedSkillId) => window.__survivorObjectiveRoute.queueGrowth(selectedSkillId), skillId);
+        }
+      }
+
+      worldHud = await readWorldHud();
+      if (worldHud.promptText) {
+        if (initialCapturePromptText === null) {
+          initialCapturePromptText = worldHud.promptText;
+          initialCapturePromptState = worldHud.promptState;
+        }
+        if (!bindStarted && worldHud.promptText.startsWith("Bind 대기") && worldHud.promptState
+          && !worldHud.promptState.disabled && worldHud.promptState.ariaDisabled === "false") {
+          await page.locator("#extract-elite").click();
+          await page.evaluate(() => window.__survivorObjectiveRoute.queueExtraction());
+          await page.evaluate(() => window.__survivorObjectiveRoute.beginBinding());
+          bindStarted = true;
+        }
+        if (worldHud.promptText.startsWith("결속 홀드")) holdingCapturePromptText ??= worldHud.promptText;
+        if (worldHud.promptText.startsWith("추출 가능")) {
+          extractionReadyPromptText = worldHud.promptText;
+          extractionReadyPromptState = worldHud.promptState;
+          if (!extractionClaimed) {
+            await page.locator("#extract-elite").click();
+            await page.evaluate(() => window.__survivorObjectiveRoute.queueExtraction());
+            extractionClaimed = true;
+          }
+        }
+      }
+      if (routeDecision.bossDash) {
+        const queued = await page.evaluate(() => window.__survivorObjectiveRoute.queueDash());
+        if (queued) await page.locator("#manual-dash").click();
+      } else if (routeDecision.canQueueDirectLight) {
+        const queued = await page.evaluate(() => window.__survivorObjectiveRoute.queueLight());
+        if (queued) {
+          await page.locator("#manual-attack").press("Enter");
+          issuedLegalAttacks += 1;
+        }
+      }
+
+      if (worldHud.nameplateTransform && worldHud.damageSamples.length >= 4
+        && extractionReadyPromptText !== null && worldHud.battleState === "victory") break;
+      await page.evaluate((deltaMs) => window.__pumpFrame(deltaMs), FRAME_MS);
+      let mirrorTicks = 0;
+      if (mirrorFrameStarted) {
+        mirrorAccumulator += FRAME_MS;
+        while (mirrorAccumulator >= TICK_FRAME_MS) {
+          mirrorAccumulator -= TICK_FRAME_MS;
+          mirrorTicks += 1;
+        }
+      } else {
+        mirrorFrameStarted = true;
+      }
+      await page.evaluate((ticks) => window.__survivorObjectiveRoute.advance(ticks), mirrorTicks);
+      pumps += 1;
+      await page.waitForTimeout(0);
+    }
+    for (const key of [...heldMovementKeys]) {
+      await page.keyboard.up(key);
+      heldMovementKeys = heldMovementKeys.filter((held) => held !== key);
+      await queueHeldMovement();
+    }
+    const journeyEvidence = await page.evaluate(() => {
+      window.__stopWorldHudDamageObserver?.();
+      window.removeEventListener("abyssal:defense-input-feedback", window.__survivorNativeInputObserver);
+      return {
+        route: window.__survivorObjectiveRoute.evidence(),
+        nativeInputs: window.__survivorNativeInputs,
+      };
+    });
+    const drive = {
+      nameplateTransform: worldHud.nameplateTransform,
+      damageSamples: worldHud.damageSamples,
+      initialCapturePromptText,
+      initialCapturePromptState,
+      holdingCapturePromptText,
+      extractionReadyPromptText,
+      extractionReadyPromptState,
+      bindStarted,
+      pumps,
+      gameTimeMs: pumps * FRAME_MS,
+      finalPromptText: worldHud.promptText,
+      finalObjectivePhase: worldHud.objectivePhase,
+      route: journeyEvidence.route,
+      nativeInputs: journeyEvidence.nativeInputs,
+      issuedLegalAttacks,
+      liveMeleeImpactEventIds: [...new Set(worldHud.damageSamples
+        .filter((sample) => sample.eventType === "MELEE_IMPACT" && sample.eventId)
+        .map((sample) => sample.eventId))],
+    };
+    const liveCinderMeleeImpactFeedback = {
+      eventIds: drive.liveMeleeImpactEventIds,
+      mirrorBossEventIds: drive.route.bossMeleeImpactEventIds,
+    };
+    const nativeCommandStream = drive.nativeInputs
+      .filter((input) => input.type === "MOVE" || input.type === "SKILL_SELECTED" || input.type === "EXTRACT_ELITE" || input.type === "ATTACK_LIGHT" || input.type === "DASH")
+      .map((input) => ({
+        type: input.type,
+        payload: input.type === "MOVE" ? input.move : input.type === "SKILL_SELECTED" ? { skillId: input.skill } : null,
+      }));
+    const mirrorCommandStream = drive.route.queuedInputs
+      .filter((input) => input.type === "MOVE" || input.type === "SKILL_SELECTED" || input.type === "EXTRACT_ELITE" || input.type === "ATTACK_LIGHT" || input.type === "DASH")
+      .map((input) => ({ type: input.type, payload: input.type === "EXTRACT_ELITE" ? null : input.payload ?? null }));
+    assert.deepEqual(nativeCommandStream, mirrorCommandStream, "the public native and mirror command streams must stay identical");
 
     // Bug #1 guard: the companion nameplate must have appeared with a real
     // on-screen pixel transform (never absent/never-appears, which is what
@@ -858,7 +1147,7 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
     // Bug #4 guard: the prompt starts in an explicit pre-bind state and, after
     // the player activates that route, reaches the actionable extraction-ready
     // state. Both states must name the real seeded elite companion prototype.
-    assert.ok(drive.initialCapturePromptText, "the elite capture prompt must appear once an elite candidate and extraction zone exist (Bug #4 guard)");
+    assert.ok(drive.initialCapturePromptText, `the elite capture prompt must appear once an elite candidate and extraction zone exist (Bug #4 guard); final public state: ${JSON.stringify({ stageId: worldHud.stageId, battleState: worldHud.battleState, objectivePhase: worldHud.objectivePhase, status: worldHud.status, nameplateCount: worldHud.nameplateCount, damageSamples: drive.damageSamples.length, liveMeleeImpactCount: drive.liveMeleeImpactEventIds.length, pumps: drive.pumps, issuedLegalAttacks: drive.issuedLegalAttacks, route: drive.route, nativeInputTypes: drive.nativeInputs.map((input) => input.type) })}`);
     assert.match(drive.initialCapturePromptText, /^(?:Bind 대기|결속 홀드 \d+\/\d+초|추출 가능) · Ember Cohort$/, "the initial capture prompt must expose the real companion name and an explicit bind/extraction state");
     assert.ok(drive.initialCapturePromptState, "the initial capture prompt must have a matching extraction action");
     const initiallyReady = drive.initialCapturePromptText.startsWith("추출 가능");
@@ -867,11 +1156,27 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
     if (!initiallyReady) assert.equal(drive.bindStarted, true, "the enabled Bind CTA must be activated exactly once before waiting for extraction readiness");
     assert.ok(drive.holdingCapturePromptText, "the elite capture prompt must expose the active hold state after the Bind route starts");
     assert.match(drive.holdingCapturePromptText, /^결속 홀드 \d+\/\d+초 · Ember Cohort$/, "the active hold prompt must expose deterministic progress and the real companion name");
-    assert.ok(drive.extractionReadyPromptText, "the elite extraction-ready prompt must appear after the Bind hold completes (Bug #4 guard)");
+    assert.ok(drive.extractionReadyPromptText, `the elite extraction-ready prompt must appear after the Bind hold completes (Bug #4 guard); drive: ${JSON.stringify({ initialCapturePromptText: drive.initialCapturePromptText, holdingCapturePromptText: drive.holdingCapturePromptText, finalPromptText: drive.finalPromptText, finalObjectivePhase: drive.finalObjectivePhase, pumps: drive.pumps })}`);
     assert.match(drive.extractionReadyPromptText, /^추출 가능 · Ember Cohort$/, "the elite capture prompt must reach the concrete Korean extraction-ready CTA with the real companion name");
     assert.ok(drive.extractionReadyPromptState, "the extraction-ready prompt must have a matching extraction action");
     assert.equal(drive.extractionReadyPromptState.disabled, false, "the extraction-ready CTA must remain enabled");
     assert.equal(drive.extractionReadyPromptState.ariaDisabled, "false", "the extraction-ready CTA aria-disabled state must be false");
+    assert.equal(extractionClaimed, true, "the native extraction CTA must be activated after Bind completes");
+    assert.equal(worldHud.battleState, "victory", "the live Cinder journey must finish in victory");
+    assert.ok(drive.pumps <= MAX_PUMPS, `the complete Cinder journey must finish within ${MAX_PUMPS} pumps, took ${drive.pumps}`);
+    assert.ok(drive.route.acceptedDirectAttacks > 0, "the objective-aware driver must queue at least one legal direct-light attack");
+    assert.equal(drive.route.bossContacted, true, "the objective-aware driver must bring the commander into direct-light contact with the Cinder boss");
+    assert.deepEqual(drive.route.rejectedDirectAttacks, [], `the route must not queue stale or out-of-range direct light: ${JSON.stringify(drive.route.rejectedDirectAttacks)}`);
+    assert.deepEqual(drive.route.rejectedDashes, [], `the boss-approach dashes must be legal: ${JSON.stringify(drive.route.rejectedDashes)}`);
+    assert.ok(liveCinderMeleeImpactFeedback.eventIds.length > 0 && liveCinderMeleeImpactFeedback.mirrorBossEventIds.length > 0, `the live HUD must render unique MELEE_IMPACT feedback for the Cinder boss contact: ${JSON.stringify(liveCinderMeleeImpactFeedback)}`);
+    assert.ok(drive.nativeInputs.some((input) => input.type === "MOVE"), "the route must use a native movement control");
+    assert.ok(drive.nativeInputs.some((input) => input.type === "ATTACK_LIGHT"), "the route must use the native direct-light control");
+    assert.ok(drive.nativeInputs.some((input) => input.type === "DASH"), "the route must use the native boss-approach dash control");
+    assert.ok(
+      drive.nativeInputs.filter((input) => input.type === "MOVE" || input.type === "ATTACK_LIGHT" || input.type === "DASH")
+        .every((input) => Number.isInteger(input.inputSeq) && input.inputSeq > 0),
+      "native movement, direct-light, and dash feedback must retain their public input ids",
+    );
 
     assert.deepEqual(errors, [], "world HUD overlay journey emitted unexpected page or console errors");
     return {
@@ -885,6 +1190,7 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
       extractionReadyPromptState: drive.extractionReadyPromptState,
       bindStarted: drive.bindStarted,
       pumps: drive.pumps,
+      route: drive.route,
       gameTimeMs: drive.gameTimeMs,
     };
   } finally {
@@ -925,20 +1231,27 @@ async function verifyBossMeshRegression(browser, hosting) {
     await page.goto("/index.html", { waitUntil: "domcontentloaded" });
     const result = await page.evaluate(async () => {
       const sim = await import("/defense-run-simulation.js");
-      const { ARENA, OCTANT_VECTORS } = await import("/defense-catalog.js");
+      const { ARENA, DIRECT_COMBAT, OCTANT_VECTORS } = await import("/defense-catalog.js");
       const { RealtimeBattle } = await import("/battle-realtime-three.js");
       const { createDefenseRun, advanceDefenseRun, getRunSnapshot, isTerminalRun, queueInput } = sim;
 
+      function nearestLivingEnemy(snapshot) {
+        const distance = (entry) => (entry.x - snapshot.commander.x) ** 2 + (entry.y - snapshot.commander.y) ** 2;
+        return snapshot.enemies
+          .filter((enemy) => enemy.hp > 0)
+          .sort((left, right) => distance(left) - distance(right))[0] ?? null;
+      }
+
+      function objectiveTarget(snapshot) {
+        const living = nearestLivingEnemy(snapshot);
+        if (living) return living;
+        if (snapshot.objectives.phase === "occupation") return snapshot.tactics.occupation;
+        if (snapshot.objectives.phase === "extraction") return snapshot.tactics.extraction;
+        return null;
+      }
+
       function objectiveOctant(snapshot) {
-        const phase = snapshot.objectives.phase;
-        let target = null;
-        if (phase === "occupation") target = snapshot.tactics.occupation;
-        else if (phase === "extraction") target = snapshot.tactics.extraction;
-        else {
-          const living = snapshot.enemies.filter((enemy) => enemy.hp > 0);
-          const distance = (entry) => (entry.x - snapshot.commander.x) ** 2 + (entry.y - snapshot.commander.y) ** 2;
-          if (living.length) target = living.slice().sort((left, right) => distance(left) - distance(right))[0];
-        }
+        const target = objectiveTarget(snapshot);
         if (!target) return "IDLE";
         const dx = target.x - snapshot.commander.x;
         const dy = target.y - snapshot.commander.y;
@@ -955,12 +1268,23 @@ async function verifyBossMeshRegression(browser, hosting) {
         return best;
       }
 
+      function canQueueDirectLight(snapshot) {
+        if (snapshot.commander.verbState !== "IDLE") return false;
+        const reach = DIRECT_COMBAT.light[0].reach;
+        return snapshot.enemies.some((enemy) => {
+          if (enemy.hp <= 0) return false;
+          const contactDistance = snapshot.commander.radius + enemy.radius + reach;
+          return (enemy.x - snapshot.commander.x) ** 2 + (enemy.y - snapshot.commander.y) ** 2 <= contactDistance ** 2;
+        });
+      }
+
       function step(run) {
         const snapshot = getRunSnapshot(run);
         if (snapshot.growthOffer) {
           return advanceDefenseRun(queueInput(run, "SKILL_SELECTED", { skillId: snapshot.growthOffer.choices[0] }), 1);
         }
         let next = queueInput(run, "MOVE", { octant: objectiveOctant(snapshot) });
+        if (canQueueDirectLight(snapshot)) next = queueInput(next, "ATTACK_LIGHT");
         if (snapshot.eliteCandidate && !snapshot.extracted) next = queueInput(next, "EXTRACT_ELITE", { enemyId: snapshot.eliteCandidate.enemyId });
         return advanceDefenseRun(next, 1);
       }
@@ -969,9 +1293,18 @@ async function verifyBossMeshRegression(browser, hosting) {
       let run = createDefenseRun({ stageId: "cinder-span", seed: 2962819252, companionLoadout: ["ember-cohort"] });
       let snapshot = getRunSnapshot(run);
       let boss = null;
+      let acceptedDirectAttacks = 0;
+      let meleeImpacts = 0;
+      let rejectedDirectAttacks = [];
       for (let i = 0; i < MAX_BOSS_TICKS && !isTerminalRun(run); i += 1) {
         run = step(run);
         snapshot = getRunSnapshot(run);
+        acceptedDirectAttacks += snapshot.events.filter((event) =>
+          event.type === "INPUT_ACCEPTED" && event.inputType === "ATTACK_LIGHT").length;
+        meleeImpacts += snapshot.events.filter((event) => event.type === "MELEE_IMPACT").length;
+        rejectedDirectAttacks.push(...snapshot.events.filter((event) =>
+          event.type === "INPUT_REJECTED" && event.inputType === "ATTACK_LIGHT"
+          && ["STALE_DIRECT_INPUT", "DIRECT_ACTION_OUT_OF_RANGE", "DIRECT_ACTION_NO_TARGET"].includes(event.reason)));
         boss = snapshot.enemies.find((enemy) => enemy.class === "boss" && enemy.hp > 0);
         if (boss) break;
       }
@@ -1068,6 +1401,9 @@ async function verifyBossMeshRegression(browser, hosting) {
         bossTick: snapshot.tick,
         bossActive: boss.hp > 0,
         terminalAtBoss: isTerminalRun(run),
+        acceptedDirectAttacks,
+        meleeImpacts,
+        rejectedDirectAttacks,
         modelPath: entry.modelPath,
         rootName: entry.root.name,
         meshDescendantCount,
@@ -1082,6 +1418,15 @@ async function verifyBossMeshRegression(browser, hosting) {
     assert.equal(result.error, undefined, `boss mesh regression check failed: ${result.error}`);
     assert.equal(result.bossActive, true, "the fixture must reach a living boss rather than merely exhaust its tick budget");
     assert.equal(result.terminalAtBoss, false, "the fixture must reach the boss before the run becomes terminal");
+    assert.ok(
+      result.acceptedDirectAttacks > 0 || result.meleeImpacts > 0,
+      `the isolated progression driver must resolve at least one legal direct-light contact, saw ${result.acceptedDirectAttacks} accepted inputs and ${result.meleeImpacts} MELEE_IMPACT events`,
+    );
+    assert.deepEqual(
+      result.rejectedDirectAttacks,
+      [],
+      `the isolated progression driver must not queue stale or out-of-range direct-light input: ${JSON.stringify(result.rejectedDirectAttacks)}`,
+    );
     assert.equal(result.modelPath, result.expectedModelPath, "the boss must resolve its model path from the authored BOSS_MODELS table");
     assert.ok(result.meshDescendantCount > 0, `the boss's cloned scene-graph object must contain real mesh geometry, found ${result.meshDescendantCount} mesh descendants`);
     assert.deepEqual(errors, [], "boss mesh regression check emitted unexpected page or console errors");

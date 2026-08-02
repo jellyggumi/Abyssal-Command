@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#050812" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      name="description"
+      content="Abyssal Lantern의 기존 세 가지 모드로 이동하는 정적 입구 페이지입니다."
+    />
+    <title>Abyssal Lantern — 심연으로 향하는 세 개의 등불</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .oneline-hub {
+        min-width: 320px;
+        min-height: 100dvh;
+        overflow-x: hidden;
+        background:
+          radial-gradient(circle at 50% 0%, rgb(54 136 178 / 0.24), transparent 30rem),
+          linear-gradient(145deg, #050812 0%, #07101d 52%, #100a1b 100%);
+        color: #eef5ff;
+      }
+
+      .oneline-hub * {
+        box-sizing: border-box;
+      }
+
+      .oneline-hub__main {
+        display: grid;
+        place-items: center;
+        min-height: 100dvh;
+        padding: clamp(1.5rem, 6vw, 5rem) 1rem;
+      }
+
+      .oneline-hub__panel {
+        width: min(100%, 68rem);
+        padding: clamp(1.5rem, 5vw, 4.5rem);
+        border: 1px solid rgb(142 212 255 / 0.3);
+        border-radius: 1.5rem;
+        background: rgb(6 14 27 / 0.82);
+        box-shadow: 0 1.5rem 5rem rgb(0 0 0 / 0.38), inset 0 1px 0 rgb(255 255 255 / 0.07);
+      }
+
+      .oneline-hub__eyebrow {
+        margin: 0 0 1rem;
+        color: #9cdefe;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .oneline-hub h1 {
+        max-width: 13ch;
+        margin: 0;
+        font-size: clamp(2.25rem, 9vw, 5.5rem);
+        line-height: 0.98;
+        letter-spacing: -0.055em;
+      }
+
+      .oneline-hub__intro {
+        max-width: 42rem;
+        margin: 1.5rem 0 0;
+        color: #c4d8eb;
+        font-size: clamp(1rem, 2.3vw, 1.2rem);
+        line-height: 1.7;
+      }
+
+      .oneline-hub__nav {
+        margin-top: clamp(2rem, 6vw, 4rem);
+      }
+
+      .oneline-hub__nav h2 {
+        margin: 0 0 1rem;
+        color: #d9edff;
+        font-size: 1rem;
+        letter-spacing: 0.08em;
+      }
+
+      .oneline-hub__list {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.85rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .oneline-hub__link {
+        display: flex;
+        min-height: 12rem;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 1.5rem;
+        padding: 1.25rem;
+        border: 1px solid rgb(126 194 237 / 0.32);
+        border-radius: 1rem;
+        background: linear-gradient(150deg, rgb(27 65 99 / 0.54), rgb(17 16 39 / 0.8));
+        color: inherit;
+        text-decoration: none;
+        transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+      }
+
+      .oneline-hub__link:hover {
+        border-color: #9de2ff;
+        background: linear-gradient(150deg, rgb(33 101 139 / 0.72), rgb(35 22 58 / 0.9));
+        transform: translateY(-0.2rem);
+      }
+
+      .oneline-hub__link:focus-visible {
+        outline: 3px solid #b9edff;
+        outline-offset: 4px;
+      }
+
+      .oneline-hub__mode {
+        color: #fff;
+        font-size: 1.35rem;
+        font-weight: 800;
+        line-height: 1.15;
+      }
+
+      .oneline-hub__detail {
+        color: #b9d5e9;
+        font-size: 0.94rem;
+        line-height: 1.55;
+      }
+
+      .oneline-hub__arrow {
+        color: #95ddff;
+        font-size: 1.25rem;
+        font-weight: 800;
+      }
+
+      .oneline-hub__note {
+        margin: 1.5rem 0 0;
+        color: #8eacc4;
+        font-size: 0.88rem;
+        line-height: 1.55;
+      }
+
+      @media (max-width: 48rem) {
+        .oneline-hub__list {
+          grid-template-columns: 1fr;
+        }
+
+        .oneline-hub__link {
+          min-height: 0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .oneline-hub__link {
+          transition: none;
+        }
+
+        .oneline-hub__link:hover {
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body class="oneline-hub">
+    <main class="oneline-hub__main" aria-labelledby="oneline-title">
+      <section class="oneline-hub__panel">
+        <p class="oneline-hub__eyebrow">Abyssal Lantern</p>
+        <h1 id="oneline-title">심연으로 향하는 세 개의 등불</h1>
+        <p class="oneline-hub__intro">
+          이 페이지는 새로운 게임 시스템이 아니라, 현재 공개된 Abyssal Lantern의 세 가지 모드로 이어지는 정적 입구입니다.
+        </p>
+
+        <nav class="oneline-hub__nav" aria-labelledby="mode-navigation-title">
+          <h2 id="mode-navigation-title">모드 선택</h2>
+          <ul class="oneline-hub__list">
+            <li>
+              <a class="oneline-hub__link" href="index.html">
+                <span class="oneline-hub__mode">메인 캠페인</span>
+                <span class="oneline-hub__detail">마지막 등불과 함께 심연의 세 구역을 내려갑니다.</span>
+                <span class="oneline-hub__arrow" aria-hidden="true">→</span>
+              </a>
+            </li>
+            <li>
+              <a class="oneline-hub__link" href="sprite-2-5d.html">
+                <span class="oneline-hub__mode">Cinder Court</span>
+                <span class="oneline-hub__detail">불씨의 궁정을 지키는 독립 전장으로 이동합니다.</span>
+                <span class="oneline-hub__arrow" aria-hidden="true">→</span>
+              </a>
+            </li>
+            <li>
+              <a class="oneline-hub__link" href="sealbound.html">
+                <span class="oneline-hub__mode">Sealbound</span>
+                <span class="oneline-hub__detail">세 개의 심연 전선을 봉인하는 전장으로 이동합니다.</span>
+                <span class="oneline-hub__arrow" aria-hidden="true">→</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <p class="oneline-hub__note">원하는 모드를 선택하면 해당 기존 게임 페이지가 열립니다.</p>
+      </section>
+    </main>
+  </body>
+</html>

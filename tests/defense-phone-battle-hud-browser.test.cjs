@@ -529,12 +529,14 @@ test("pre-run pause keys are inert and shell audio state is shared with the labe
   }
 });
 
-test("stable combat control IDs remain unique and their native keyboard activation reaches live handlers", async () => {
-  const run = await launchCinder(PHONE_VIEWPORT);
+test("stable combat control IDs route light, heavy, and dash input through their selected controls", async () => {
+  const run = await launchCinder(PHONE_VIEWPORT, { syntheticFrames: true });
   try {
     for (const selector of [
       "#movement-actions",
       "#manual-attack",
+      "#manual-heavy",
+      "#manual-dash",
       "#skill-actions",
       "#battle-actions",
       "#stance-cycle",
@@ -542,6 +544,35 @@ test("stable combat control IDs remain unique and their native keyboard activati
     ]) {
       assert.equal(await run.page.locator(selector).count(), 1, `${selector} must remain a unique public control hook`);
     }
+
+    // A fresh synthetic-clock run starts with no already-rendered combat effects. Record
+    // only authoritative direct-melee feedback added after native player input. Event metadata
+    // prevents projectile, commander, or companion feedback from satisfying this contract.
+    await run.page.evaluate(() => {
+      const overlay = document.querySelector("#world-hud-overlay");
+      if (!overlay) throw new Error("world HUD overlay missing");
+      window.__directControlDamageSamples = [];
+      const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          for (const node of mutation.addedNodes) {
+            if (
+              !(node instanceof HTMLElement)
+              || !node.classList.contains("world-damage-number")
+              || node.dataset.defenseEventType !== "MELEE_IMPACT"
+              || !node.dataset.defenseEventId
+            ) continue;
+            window.__directControlDamageSamples.push({
+              computedTransform: getComputedStyle(node).transform,
+              eventId: node.dataset.defenseEventId,
+              inlineTransform: node.style.transform,
+              text: node.querySelector(".world-damage-number-rise")?.textContent ?? "",
+            });
+          }
+        }
+      });
+      observer.observe(overlay, { childList: true });
+      window.__stopDirectControlDamageObserver = () => observer.disconnect();
+    });
 
     // Sibling of the fix in progression-mobile-ui-browser.cjs. Answer any pending level-up growth
     // offer before driving a control. The offer is genuinely modal --
@@ -559,20 +590,76 @@ test("stable combat control IDs remain unique and their native keyboard activati
       await run.page.locator("#defense-growth-offer").waitFor({ state: "hidden" }).catch(() => {});
     };
 
-    const activateAndWaitForInput = async (selector, key) => {
+    const activateAndWaitForInput = async (selector, activate, expectedVerb = null) => {
       await dismissGrowthOffer();
       const control = run.page.locator(selector);
       await control.focus();
       assert.equal(await control.evaluate((node) => document.activeElement === node), true, `${selector} must accept keyboard focus`);
       const previous = Number(await run.surface.getAttribute("data-defense-input-seq"));
-      await run.page.keyboard.press(key);
+      await activate(control);
       await run.page.waitForFunction(
-        ({ prior }) => Number(document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq) > prior,
+        ({ prior }) => Number(document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq) === prior + 1,
         { prior: previous },
       );
+      if (expectedVerb) {
+        assert.equal(await control.getAttribute("data-combat-verb"), expectedVerb, `${selector} must retain its selected direct verb`);
+        assert.equal(await run.surface.getAttribute("data-defense-combat-verb"), expectedVerb, `${selector} must publish its selected direct verb`);
+        assert.equal(await control.getAttribute("data-feedback"), "true", `${selector} must show its own input feedback`);
+      }
     };
 
-    await activateAndWaitForInput("#manual-attack", "Enter");
+    // The opening wave begins out of melee reach. Repeat the native player action only
+    // after a full recovery window while the live wave closes naturally; rejected attempts
+    // cannot create a damage number, while the first accepted contact ends the loop.
+    for (let attempt = 0; attempt < 32; attempt += 1) {
+      await activateAndWaitForInput("#manual-attack", () => run.page.keyboard.press("Enter"), "ATTACK_LIGHT");
+      for (let frame = 0; frame < 12; frame += 1) {
+        await run.page.evaluate(() => window.__pumpDefenseFrame(100));
+        await run.page.waitForTimeout(0);
+        if (await run.page.evaluate(() => window.__directControlDamageSamples.length > 0)) break;
+      }
+      if (await run.page.evaluate(() => window.__directControlDamageSamples.length > 0)) break;
+    }
+    const directDamageSamples = await run.page.evaluate(() => window.__directControlDamageSamples);
+    assert.equal(
+      directDamageSamples.length,
+      1,
+      `one native light action must render exactly one MELEE_IMPACT number, saw ${JSON.stringify(directDamageSamples)}`,
+    );
+    const [firstDirectDamage] = directDamageSamples;
+    assert.match(firstDirectDamage.eventId, /\S+/, "the resolved direct hit must expose an authoritative event id");
+    assert.match(firstDirectDamage.text, /^-\d+$/, "the resolved direct hit must expose player-visible damage text");
+    assert.notEqual(firstDirectDamage.computedTransform, "none", "the direct-hit number must be target-anchored on screen");
+    assert.match(firstDirectDamage.inlineTransform, /^translate\(-?\d+(?:\.\d+)?px, -?\d+(?:\.\d+)?px\)$/,
+      "the direct-hit number must retain its target-anchored world position");
+    const impactSelector = await run.page.evaluate((eventId) => (
+      `.world-damage-number[data-defense-event-type="MELEE_IMPACT"][data-defense-event-id="${CSS.escape(eventId)}"]`
+    ), firstDirectDamage.eventId);
+    const firstImpact = run.page.locator(impactSelector);
+    assert.equal(await firstImpact.count(), 1, "the resolved MELEE_IMPACT event id must map to exactly one DOM number");
+    assert.equal(await firstImpact.isVisible(), true, "the resolved MELEE_IMPACT number must be visible");
+    for (let frame = 0; frame < 3; frame += 1) {
+      await run.page.evaluate(() => window.__pumpDefenseFrame(100));
+      await run.page.waitForTimeout(0);
+    }
+    assert.equal(
+      await firstImpact.count(),
+      1,
+      "re-rendering resolved MELEE_IMPACT events must not append a duplicate node with the same event id",
+    );
+    const resolvedDamageCount = directDamageSamples.length;
+
+    await activateAndWaitForInput("#manual-heavy", (control) => control.click(), "ATTACK_HEAVY");
+    for (let frame = 0; frame < 12; frame += 1) {
+      await run.page.evaluate(() => window.__pumpDefenseFrame(100));
+      await run.page.waitForTimeout(0);
+      if (await run.page.evaluate((count) => window.__directControlDamageSamples.length > count, resolvedDamageCount)) break;
+    }
+    assert.ok(
+      await run.page.evaluate((count) => window.__directControlDamageSamples.length > count, resolvedDamageCount),
+      "a valid direct heavy action must resolve into additional visible world damage feedback",
+    );
+    await activateAndWaitForInput("#manual-dash", (control) => control.click(), "DASH");
     // KEYPAD RETIRED: `#movement-actions [data-move="E"]` no longer exists, and movement is not a
     // combat CONTROL ID any more — this test is about the stable control ids and their native
     // keyboard activation, so movement simply leaves its scope. The keyboard movement contract is
@@ -585,7 +672,7 @@ test("stable combat control IDs remain unique and their native keyboard activati
     // `data-defense-state === "active"`, which is how this test timed out at :622 on CI.
     assert.equal(await run.page.locator("#movement-actions [data-move]").count(), 0,
       "movement must no longer expose keypad control ids");
-    await activateAndWaitForInput("#stance-cycle", "Enter");
+    await activateAndWaitForInput("#stance-cycle", () => run.page.keyboard.press("Enter"));
 
     const pause = run.page.locator("#toggle-pause");
     await pause.focus();
@@ -825,13 +912,52 @@ test("phone critical and lore feedback are visible once and clear inside the bou
     assert.equal(loreAnnouncements.filter((text) => text === loreText).length, 1, "one lore event must produce one live-region announcement");
     assert.equal(await feedback.getAttribute("data-feedback"), null, "cleared lore feedback must not leave stale visual state");
 
+    // Auto-attacks are intentionally absent. Drive the public light-attack control through
+    // its keyboard activation path, only while the visible game is ready to take a player
+    // command. Three synthetic frames clear every authored light-combo recovery window (12
+    // ticks max), keeping the same bounded 180-frame observation budget that this test had
+    // before player agency became required for a critical hit.
+    const dismissBlockingUi = async () => {
+      for (let dismissal = 0; dismissal < 4; dismissal += 1) {
+        const dismiss = run.page.locator("#defense-cutscene-overlay [data-cutscene-dismiss]");
+        if (await dismiss.isVisible().catch(() => false)) {
+          await dismiss.click();
+          continue;
+        }
+        const pick = run.page.locator("#defense-growth-offer [data-pick], #defense-reward-offer [data-pick]").first();
+        if (await pick.isVisible().catch(() => false)) {
+          await pick.click();
+          continue;
+        }
+        break;
+      }
+    };
+    const activateReadyLightAttack = async () => {
+      await dismissBlockingUi();
+      assert.equal(await run.surface.getAttribute("data-defense-state"), "active", "the direct-combat driver must wait for a ready battle surface");
+      const lightAttack = run.page.locator("#manual-attack");
+      await lightAttack.focus();
+      assert.equal(await lightAttack.evaluate((node) => document.activeElement === node), true, "the public light control must own focus before keyboard activation");
+      const priorInput = Number(await run.surface.getAttribute("data-defense-input-seq"));
+      await run.page.keyboard.press("Enter");
+      await run.page.waitForFunction(
+        ({ prior }) => Number(document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq) === prior + 1,
+        { prior: priorInput },
+      );
+    };
+
     let criticalVisible = false;
+    let nextLightAttackFrame = 0;
     for (let frame = 0; frame < 180 && !criticalVisible; frame += 1) {
+      await dismissBlockingUi();
+      if (
+        frame >= nextLightAttackFrame
+        && await run.surface.getAttribute("data-defense-state") === "active"
+      ) {
+        await activateReadyLightAttack();
+        nextLightAttackFrame = frame + 3;
+      }
       await run.page.evaluate(() => window.__pumpDefenseFrame(100));
-      const dismiss = run.page.locator("#defense-cutscene-overlay [data-cutscene-dismiss]");
-      if (await dismiss.isVisible()) await dismiss.click();
-      const choice = run.page.locator("#defense-growth-offer [data-pick]").first();
-      if (await choice.isVisible()) await choice.click();
       criticalVisible = /\bcritical\b/.test(await feedback.getAttribute("data-feedback") ?? "");
     }
     assert.equal(criticalVisible, true, "the deterministic phone battle must surface a critical-hit feedback event");

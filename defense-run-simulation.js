@@ -6,7 +6,7 @@ import * as Catalog from "./defense-catalog.js";
 import {
   ARENA, AUDIO_CUES, BOSSES, COLLISION, COMBAT_TARGETING, COMMANDER, COMPANION_AUTONOMY, COMPANIONS,
   CUTSCENES, ENEMIES, CARRY_OVER_MAX_ITEMS, CARRY_OVER_MAX_RANK, CARRY_OVER_RANK_DECAY,
-  BUFF_ITEMS, BUFF_RARITIES, BUFF_STAT_OPS, DROP_CHANCE_BP, DROP_OFFSET_X, DROP_TTL_TICKS,
+  DIRECT_COMBAT, BUFF_ITEMS, BUFF_RARITIES, BUFF_STAT_OPS, DROP_CHANCE_BP, DROP_OFFSET_X, DROP_TTL_TICKS,
   MAX_ACTIVE_BUFFS, MAX_FIELD_DROPS, RARITY_WEIGHTS_BP, slabAt,
 
   MAX_SKILL_RANK, SKILL_RANK_COOLDOWN_FLOOR, SKILL_RANK_COOLDOWN_STEP, SKILL_RANK_DAMAGE_STEP,
@@ -2241,16 +2241,6 @@ function consumeFirstStrikeFactor(run) {
   run.wardenState.firstStrikeConsumed = true;
   return runtime.firstStrikeMultiplier;
 }
-/** echo-backlash/echo-cascade: chance-based extra hit off raw basicDamage (balance-sheet.md: "추가타 basicDamage*0.5"), independently crit-resolved. */
-function maybeFireExtraHit(run, target) {
-  const extraHit = run.wardenState?.runtime?.extraHit;
-  if (!extraHit) return;
-  run.combatRng = rngNext(run.combatRng);
-  if (run.combatRng % 10000 >= extraHit.extraHitChance * 10000) return;
-  const hit = resolveCritical(run, "basic", Math.round(effectiveBasicDamage(run) * extraHit.extraHitDamageMultiplier));
-  playerAttack(run, run.commander, hit.damage, "commander", hit, COMMANDER.basicRange);
-
-}
 /** wardens-ward (once/run shield-as-heal at <=30% integrity) + echo-warden-awakening (once/run full cooldown reset at <=15% integrity). Called after any commander integrity loss. */
 function applyWardenDamageResponse(run) {
   const runtime = run.wardenState?.runtime;
@@ -2264,7 +2254,6 @@ function applyWardenDamageResponse(run) {
   }
   if (runtime.awakeningReset && !run.wardenState.awakeningResetConsumed && ratio <= runtime.awakeningReset.thresholdIntegrityFraction) {
     run.wardenState.awakeningResetConsumed = true;
-    run.commander.basicCooldown = 0;
     Object.keys(run.commander.cooldowns).forEach((id) => { run.commander.cooldowns[id] = 0; });
     run.companions.forEach((companion) => { companion.cooldown = 0; });
     emit(run, "ECHO_WARDEN_AWAKENING_TRIGGERED", { entityId: run.commander.id });
@@ -2572,6 +2561,7 @@ const bodyHealth = (body) => (body.id === "commander" ? body.integrity : body.hp
  */
 function applyAreaDamageToBody(run, body, damage, context) {
   if (damage <= 0) return 0;
+  if (body.id === "commander" && dashEvadesDamage(run, context.sourceId, context.sourceKey)) return 0;
   if (body.id === "commander") {
     // Area splash on the commander goes through the same mitigation path as a direct strike,
     // so a timed defensive buff protects against a splash exactly as it protects against the
@@ -2967,8 +2957,8 @@ function aimDirection(run, source, range) {
 }
 
 /** Every living enemy whose body touches the adjacent frontal sweep, nearest first. */
-function meleeSweepTargets(run, source, aim) {
-  const { reach, arcCosBp, maxTargets } = COMBAT_TARGETING.melee;
+function meleeSweepTargets(run, source, aim, targeting = COMBAT_TARGETING.melee) {
+  const { reach, arcCosBp, maxTargets } = targeting;
   const arcCos = arcCosBp / 10000;
   const sourceRadius = Math.max(0, Math.trunc(source.radius || 0));
   return run.enemies
@@ -2988,19 +2978,21 @@ function meleeSweepTargets(run, source, aim) {
 }
 
 /** Resolves one adjacent sweep; returns the number of bodies struck. */
-function meleeSweep(run, source, targets, damage, owner, combat) {
+function meleeSweep(run, source, targets, damage, owner, combat, targeting = COMBAT_TARGETING.melee) {
   const hit = combat || { source: null, baseDamage: damage, damage, critical: false };
   const sweepEvent = emit(run, "MELEE_SWEEP", {
     entityId: source.id,
     sourceSpawnEventId: source.spawnEventId || null,
     owner,
-    reach: COMBAT_TARGETING.melee.reach,
-    arcCosBp: COMBAT_TARGETING.melee.arcCosBp,
+    reach: targeting.reach,
+    arcCosBp: targeting.arcCosBp,
     targetIds: targets.map((target) => target.id),
     damage: hit.damage,
     baseDamage: hit.baseDamage,
     combatSource: hit.source,
     critical: hit.critical,
+    actionId: hit.actionId ?? null,
+    verb: hit.verb ?? null,
     cue: eventCue("weaponFire"),
   });
   sweepEvent.spawnEventId = sweepEvent.eventId;
@@ -3030,6 +3022,8 @@ function meleeSweep(run, source, targets, damage, owner, combat) {
       guardedBy: applied.guardedBy,
       hit: true,
       cue: eventCue("impactHit"),
+      actionId: hit.actionId ?? null,
+      verb: hit.verb ?? null,
     });
   });
   // 광역: the swing is a disc centred on the arc, not a list of locked targets. Bodies already
@@ -3122,32 +3116,208 @@ function playerAttack(run, source, damage, owner, combat, range) {
   return true;
 }
 
-/** Resolves the commander's shared basic-attack verb for both automatic and manual input. */
-function resolveCommanderBasicAttack(run, aimReference, mode = "automatic") {
-  const mult = commanderDamageMultiplier(run, aimReference, { skill: false });
-  const hit = resolveCritical(run, "basic", Math.round(effectiveBasicDamage(run) * mult));
-  const resolved = playerAttack(run, run.commander, hit.damage, "commander", hit, COMMANDER.basicRange);
+function resetCombo(run, reason) {
+  if (!run.commander.comboStep) return;
+  emit(run, "COMBO_DROPPED", {
+    entityId: run.commander.id,
+    actionId: run.commander.actionId,
+    comboStep: run.commander.comboStep,
+    reason,
+  });
+  run.commander.comboStep = 0;
+  run.commander.comboWindowUntil = 0;
+}
 
-  if (!resolved) return false;
-
-  if (mode === "manual") {
-    emit(run, "BASIC_ATTACK", {
-      entityId: run.commander.id,
-      targetId: aimReference.id,
-      critical: hit.critical,
-      damage: hit.damage,
-      cue: eventCue("weaponFire"),
-    });
+function clearResolvedVerb(run) {
+  const commander = run.commander;
+  if (commander.dashIFrameUntil > 0 && run.tick > commander.dashIFrameUntil) {
+    emit(run, "DASH_IFRAME_END", { entityId: commander.id, actionId: commander.actionId });
+    commander.dashIFrameUntil = 0;
   }
-
-  maybeFireExtraHit(run, aimReference);
+  if (commander.verbState !== "IDLE" && run.tick > commander.verbRecoveryUntil) {
+    commander.verbState = "IDLE";
+    commander.verbTick = 0;
+  }
+  if (commander.comboStep && run.tick > commander.comboWindowUntil) resetCombo(run, "COMBO_WINDOW_EXPIRED");
+}
+function dashEvadesDamage(run, sourceId, sourceType) {
+  if (run.commander.dashIFrameUntil < run.tick) return false;
+  emit(run, "DASH_EVADED", {
+    entityId: run.commander.id,
+    actionId: run.commander.actionId,
+    sourceId,
+    sourceType,
+  });
   return true;
 }
 
-function commanderBasicAttack(run, mode = "automatic") {
-  const aimReference = nearestEnemy(run, run.commander, COMMANDER.basicRange);
-  if (!aimReference) return false;
-  return resolveCommanderBasicAttack(run, aimReference, mode);
+function rechargeDash(run) {
+  const commander = run.commander;
+  while (commander.dashCharges < DIRECT_COMBAT.dash.charges
+      && commander.dashRechargeTick > 0
+      && run.tick >= commander.dashRechargeTick) {
+    commander.dashCharges += 1;
+    commander.dashRechargeTick += DIRECT_COMBAT.dash.rechargeTicks;
+  }
+  if (commander.dashCharges >= DIRECT_COMBAT.dash.charges) commander.dashRechargeTick = 0;
+}
+
+function nextActionId(run) {
+  run.actionSequence += 1;
+  return `${run.planCommitment.identity}:action:${run.actionSequence}`;
+}
+
+function beginDirectVerb(run, verb, recoveryTicks) {
+  const actionId = nextActionId(run);
+  const commander = run.commander;
+  commander.actionId = actionId;
+  commander.verbState = verb;
+  commander.verbTick = run.tick;
+  commander.verbRecoveryUntil = run.tick + recoveryTicks;
+  commander.actionContactedTargetIds = [];
+  return actionId;
+}
+
+function directAttackRejection(run) {
+  return run.enemies.some((enemy) => enemy.hp > 0 && withinStrikeHeight(run.commander, enemy))
+    ? "DIRECT_ACTION_OUT_OF_RANGE"
+    : "DIRECT_ACTION_NO_TARGET";
+}
+
+function resolveDirectMelee(run, definition, comboStep = 0) {
+  const commander = run.commander;
+  if (commander.verbState !== "IDLE") return { accepted: false, reason: "VERB_RECOVERING" };
+  const aim = aimDirection(run, commander, COMMANDER.basicRange);
+  if (!aim) return { accepted: false, reason: directAttackRejection(run) };
+  const targets = meleeSweepTargets(run, commander, aim, {
+    ...COMBAT_TARGETING.melee,
+    reach: definition.reach,
+    maxTargets: definition.maxTargets,
+  }).sort((left, right) => left.id.localeCompare(right.id));
+  if (!targets.length) return { accepted: false, reason: directAttackRejection(run) };
+
+  const actionId = beginDirectVerb(run, definition.id, definition.recoveryTicks);
+  const firstStrikeFactor = consumeFirstStrikeFactor(run);
+  const mult = commanderDamageMultiplier(run, targets[0], { skill: false, firstStrikeFactor });
+  const hit = resolveCritical(run, "basic", Math.round(effectiveBasicDamage(run) * definition.damageBp * mult / 10000));
+  commander.actionContactedTargetIds = targets.map((target) => target.id);
+  setFacing(commander, aim.x * FACING_SCALE, aim.y * FACING_SCALE);
+  emit(run, "VERB_STARTED", {
+    entityId: commander.id,
+    actionId,
+    verb: definition.id,
+    comboStep,
+    recoveryUntilTick: commander.verbRecoveryUntil,
+  });
+  targets.forEach((target) => emit(run, "MELEE_CONTACT", {
+    entityId: commander.id,
+    actionId,
+    verb: definition.id,
+    targetId: target.id,
+    targetSpawnEventId: target.spawnEventId || null,
+  }));
+  meleeSweep(run, commander, targets, hit.damage, "commander", {
+    ...hit,
+    actionId,
+    verb: definition.id,
+  }, {
+    ...COMBAT_TARGETING.melee,
+    reach: definition.reach,
+    maxTargets: definition.maxTargets,
+  });
+  return { accepted: true, actionId };
+}
+
+function resolveLightAttack(run) {
+  const commander = run.commander;
+  const comboStep = commander.comboStep > 0 && run.tick <= commander.comboWindowUntil
+    ? commander.comboStep % DIRECT_COMBAT.light.length + 1
+    : 1;
+  const result = resolveDirectMelee(run, DIRECT_COMBAT.light[comboStep - 1], comboStep);
+  if (!result.accepted) return result;
+  commander.comboStep = comboStep;
+  commander.comboWindowUntil = run.tick + DIRECT_COMBAT.comboWindowTicks;
+  emit(run, "COMBO_ADVANCED", {
+    entityId: commander.id,
+    actionId: result.actionId,
+    comboStep,
+    comboWindowUntil: commander.comboWindowUntil,
+  });
+  return result;
+}
+
+function resolveHeavyAttack(run) {
+  const previousActionId = run.commander.actionId;
+  const previousComboStep = run.commander.comboStep;
+  const result = resolveDirectMelee(run, DIRECT_COMBAT.heavy);
+  if (result.accepted && previousComboStep) {
+    emit(run, "COMBO_DROPPED", {
+      entityId: run.commander.id,
+      actionId: previousActionId,
+      comboStep: previousComboStep,
+      reason: "HEAVY_STARTED",
+    });
+    run.commander.comboStep = 0;
+    run.commander.comboWindowUntil = 0;
+  }
+  return result;
+}
+
+function dashDirection(commander) {
+  const aim = commander.aim;
+  if (aim && validVectorMillis(aim) && (aim.x !== 0 || aim.y !== 0)) return aim;
+  const move = commander.moveAnalog || OCTANT_VECTORS[commander.move];
+  if (move && (move.x !== 0 || move.y !== 0)) return move;
+  const facing = facingOf(commander);
+  return facing ? { x: Math.round(facing.x * AIM_VECTOR_SCALE), y: Math.round(facing.y * AIM_VECTOR_SCALE) } : null;
+}
+
+function resolveDash(run) {
+  const commander = run.commander;
+  const direction = dashDirection(commander);
+  if (!direction) return { accepted: false, reason: "DASH_INVALID_DIRECTION" };
+  if (commander.dashCharges <= 0) return { accepted: false, reason: "DASH_NO_CHARGES" };
+  if (commander.verbState !== "IDLE") {
+    emit(run, "VERB_CANCELLED", {
+      entityId: commander.id,
+      actionId: commander.actionId,
+      verb: commander.verbState,
+      reason: "DASH_CANCEL",
+    });
+    commander.verbState = "IDLE";
+    commander.verbTick = 0;
+    commander.actionContactedTargetIds = [];
+  }
+  resetCombo(run, "DASH_STARTED");
+  const actionId = beginDirectVerb(run, "DASH", DIRECT_COMBAT.dash.recoveryTicks);
+  const from = { x: commander.x, y: commander.y };
+  moveOnTerrain(run, commander, {
+    x: commander.x + Math.trunc(direction.x * DIRECT_COMBAT.dash.distance / AIM_VECTOR_SCALE),
+    y: commander.y + Math.trunc(direction.y * DIRECT_COMBAT.dash.distance / AIM_VECTOR_SCALE),
+  });
+  if (commander.x === from.x && commander.y === from.y) {
+    commander.verbState = "IDLE";
+    commander.verbTick = 0;
+    return { accepted: false, reason: "DASH_BLOCKED" };
+  }
+  commander.dashCharges -= 1;
+  if (!commander.dashRechargeTick) commander.dashRechargeTick = run.tick + DIRECT_COMBAT.dash.rechargeTicks;
+  commander.dashIFrameUntil = run.tick + DIRECT_COMBAT.dash.iFrameTicks;
+  emit(run, "VERB_STARTED", {
+    entityId: commander.id,
+    actionId,
+    verb: "DASH",
+    recoveryUntilTick: commander.verbRecoveryUntil,
+  });
+  emit(run, "DASH_IFRAME_START", {
+    entityId: commander.id,
+    actionId,
+    untilTick: commander.dashIFrameUntil,
+    from,
+    to: { x: commander.x, y: commander.y },
+    charges: commander.dashCharges,
+  });
+  return { accepted: true, actionId };
 }
 
 /** Closest point parameter (0..1) of segment `from`->`delta` to `point`. */
@@ -3697,9 +3867,20 @@ function updateM4Recovery(run) {
 }
 
 function processInput(run, input) {
+  const directInput = input.type === "ATTACK" || input.type === "ATTACK_LIGHT"
+    || input.type === "ATTACK_HEAVY" || input.type === "DASH";
+  if (directInput && input.at !== run.tick) {
+    emit(run, "INPUT_REJECTED", {
+      inputId: input.inputId ?? null,
+      inputType: input.type,
+      atTick: run.tick,
+      reason: "STALE_DIRECT_INPUT",
+    });
+    return false;
+  }
   let accepted = false;
   let rejectionReason = "INPUT_NOT_ACCEPTED";
-  if (["MOVE", "ATTACK", "SKILL_CAST", "SKILL_SELECTED", "GROWTH_OFFER_SELECTED", "EXTRACT_ELITE"].includes(input.type)) run.commander.engaged = true;
+  if (["MOVE", "ATTACK", "ATTACK_LIGHT", "ATTACK_HEAVY", "DASH", "SKILL_CAST", "SKILL_SELECTED", "GROWTH_OFFER_SELECTED", "EXTRACT_ELITE"].includes(input.type)) run.commander.engaged = true;
   if (input.type === "MOVE") {
     const direction = typeof input.payload === "string" ? input.payload : input.payload?.octant;
     const analog = typeof input.payload === "string" ? undefined : input.payload?.analog;
@@ -3719,15 +3900,14 @@ function processInput(run, input) {
       else delete run.commander.aim;
       accepted = true;
     }
-  } else if (input.type === "ATTACK") {
-    // Inputs are processed before the per-tick cooldown decrement. Allowing one remaining
-    // tick keeps the manual verb reachable without racing the automatic-fire loop; the +1
-    // reservation below consumes that decrement and prevents a same-tick double shot.
-    if (run.commander.basicCooldown > 1) rejectionReason = "BASIC_ATTACK_ON_COOLDOWN";
-    else if (commanderBasicAttack(run, "manual")) {
-      run.commander.basicCooldown = (run.commander.basicTicks || COMMANDER.basicCooldown) + 1;
-      accepted = true;
-    } else rejectionReason = "BASIC_ATTACK_NO_TARGET";
+  } else if (directInput) {
+    const result = input.type === "DASH"
+      ? resolveDash(run)
+      : input.type === "ATTACK_HEAVY"
+        ? resolveHeavyAttack(run)
+        : resolveLightAttack(run);
+    accepted = result.accepted;
+    rejectionReason = result.reason;
   } else if (input.type === "STANCE_CYCLE") {
     if (run.tick >= (run.stanceCooldownUntilTick ?? 0)) {
       const currentStance = FORMATION_STANCES.includes(run.formationStance) ? run.formationStance : "VANGUARD";
@@ -4317,6 +4497,8 @@ function moveEnemies(run) {
         target.status = "DOWNED";
         emit(run, "COMPANION_DOWNED", { entityId: target.id, companionId: target.companionId, policyId: enemy.policyId });
       }
+    } else if (dashEvadesDamage(run, enemy.id, "enemy")) {
+      // The enemy's active window still resolves; the dash i-frame is the authoritative miss.
     } else {
       run.commander.integrity = clamp(run.commander.integrity - damage, 0, run.commander.maxIntegrity);
       emit(run, "COMMANDER_DAMAGED", {
@@ -4624,6 +4806,8 @@ function processTerrainEffects(run) {
 function tick(run) {
   run.tick += 1;
   run.events = [];
+  clearResolvedVerb(run);
+  rechargeDash(run);
   while (run.inputs.length && run.inputs[0].at <= run.tick) processInput(run, run.inputs.shift());
   if (run.growthOffer) return;
   processEncounterRecovery(run);
@@ -4765,6 +4949,9 @@ function tick(run) {
     let targetSpawnEventId = null;
     if (projectile.targetId === "gate") {
       run.gate.integrity = clamp(run.gate.integrity - damage, 0, effectiveGateMax(run));
+    } else if (projectile.targetId === "commander" && dashEvadesDamage(run, projectile.sourceId, "projectile")) {
+      hit = false;
+      damage = 0;
     } else if (projectile.targetId === "commander") {
       run.commander.integrity = clamp(run.commander.integrity - damage, 0, run.commander.maxIntegrity);
       applyWardenDamageResponse(run);
@@ -4834,13 +5021,6 @@ function tick(run) {
     }
   });
 
-  run.commander.basicCooldown -= 1;
-  if (run.commander.basicCooldown <= 0) {
-    /* None-target: the aim reference only feeds conditional damage multipliers — the hit itself is
-     * resolved by the melee arc or by the travelling orb's swept sphere. */
-    commanderBasicAttack(run, "automatic");
-    run.commander.basicCooldown = run.commander.basicTicks || COMMANDER.basicCooldown;
-  }
 
 
   updateCompanions(run);
@@ -5050,7 +5230,6 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
 
   const maxIntegrity = measurementProfile ? measurementProfile.maxIntegrity : GATE.maxIntegrity;
   const stageGateIntegrity = stage.doctrine?.gateIntegrity ?? GATE.maxIntegrity;
-  const basicTicks = measurementProfile ? measurementProfile.basicCooldownTicks : COMMANDER.basicCooldown;
   const critProfile = measurementProfile ? clone(measurementProfile.critProfile) : clone(COMMANDER.critProfile);
   const initialSkills = measurementProfile
     ? [...(measurementProfile.activeSkillIds || [measurementProfile.activeSkillId])]
@@ -5087,6 +5266,7 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     buffs: [],
     eventSequence: 0,
     castSequence: 0,
+    actionSequence: 0,
     stage,
     tactics,
     planCommitment: {
@@ -5158,8 +5338,16 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
       move: "IDLE",
       moveSpeed: COMMANDER.speed,
       basicDamage: measurementProfile ? measurementProfile.basicDamage : COMMANDER.basicDamage,
-      basicTicks,
-      basicCooldown: 0,
+      verbState: "IDLE",
+      verbTick: 0,
+      actionId: null,
+      actionContactedTargetIds: [],
+      verbRecoveryUntil: 0,
+      comboStep: 0,
+      comboWindowUntil: 0,
+      dashCharges: DIRECT_COMBAT.dash.charges,
+      dashRechargeTick: 0,
+      dashIFrameUntil: 0,
       objectiveRoute: false,
       engaged: false,
       pickupRange: 12000,
@@ -5305,7 +5493,7 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
 
 /** Queues one input for the next simulation tick and returns a new run. */
 export function queueInput(run, type, payload = null) {
-  if (!run || !["MOVE", "ATTACK", "SKILL_CAST", "SKILL_SELECTED", "GROWTH_OFFER_SELECTED", "REWARD_SELECTED", "RETRY_OBJECTIVE", "EXTRACT_ELITE", "M4_CARD_DECISION", "M3_TARGET_PROBE", "STANCE_CYCLE"].includes(type)) return run;
+  if (!run || !["MOVE", "ATTACK", "ATTACK_LIGHT", "ATTACK_HEAVY", "DASH", "SKILL_CAST", "SKILL_SELECTED", "GROWTH_OFFER_SELECTED", "REWARD_SELECTED", "RETRY_OBJECTIVE", "EXTRACT_ELITE", "M4_CARD_DECISION", "M3_TARGET_PROBE", "STANCE_CYCLE"].includes(type)) return run;
   const next = clone(run);
   next.inputSequence = (next.inputSequence || 0) + 1;
   next.inputs.push({ at: next.tick + 1, inputId: `${next.planCommitment.identity}:input:${next.inputSequence}`, type, payload: clone(payload) });
@@ -5335,6 +5523,19 @@ export function advanceDefenseRun(run, steps = 1) {
   }
   if (next.commander && typeof next.commander.objectiveRoute !== "boolean") next.commander.objectiveRoute = false;
   if (next.commander && typeof next.commander.engaged !== "boolean") next.commander.engaged = false;
+  if (!Number.isInteger(next.actionSequence)) next.actionSequence = 0;
+  if (next.commander) {
+    if (typeof next.commander.verbState !== "string") next.commander.verbState = "IDLE";
+    if (!Number.isInteger(next.commander.verbTick)) next.commander.verbTick = 0;
+    if (!Object.hasOwn(next.commander, "actionId")) next.commander.actionId = null;
+    if (!Array.isArray(next.commander.actionContactedTargetIds)) next.commander.actionContactedTargetIds = [];
+    if (!Number.isInteger(next.commander.verbRecoveryUntil)) next.commander.verbRecoveryUntil = 0;
+    if (!Number.isInteger(next.commander.comboStep)) next.commander.comboStep = 0;
+    if (!Number.isInteger(next.commander.comboWindowUntil)) next.commander.comboWindowUntil = 0;
+    if (!Number.isInteger(next.commander.dashCharges)) next.commander.dashCharges = DIRECT_COMBAT.dash.charges;
+    if (!Number.isInteger(next.commander.dashRechargeTick)) next.commander.dashRechargeTick = 0;
+    if (!Number.isInteger(next.commander.dashIFrameUntil)) next.commander.dashIFrameUntil = 0;
+  }
   if (!Number.isInteger(next.combatRng)) next.combatRng = rngNext(next.seed ^ 0x9e3779b9);
   // Shape checks, exactly the pattern this function already uses for `terrainRecovery`,
   // `objectiveRoute`, `engaged`, and `combatRng`. A pre-cycle-10 save has neither field, both

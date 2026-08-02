@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  CARRY_OVER_MAX_ITEMS, CARRY_OVER_MAX_RANK, ENEMIES, ITEMS, MIDBOSS_PROFILE, OCTANT_VECTORS,
-  PLAYER_BASELINE_DPS, SKILLS, STAGES, STAGE_BY_ID, STAGE_WAVE_DOCTRINE, TICK_RATE, WAVE_KIND_PROFILE,
+  CARRY_OVER_MAX_ITEMS, CARRY_OVER_MAX_RANK, COMMANDER, DIRECT_COMBAT, ENEMIES, ITEMS, MIDBOSS_PROFILE, OCTANT_VECTORS,
+  SKILLS, STAGES, STAGE_BY_ID, STAGE_WAVE_DOCTRINE, TICK_RATE, WAVE_KIND_PROFILE,
 } from "../defense-catalog.js";
 import {
   advanceDefenseRun, createDefenseRun, getRunSnapshot, isTerminalRun, queueInput, runCarryOver,
@@ -18,14 +18,121 @@ function advanceResolving(run, ticks, pick = (snapshot) => snapshot.growthOffer.
     const snapshot = getRunSnapshot(current);
     if (collected) collected.push(...snapshot.events);
     if (snapshot.growthOffer) current = queueInput(current, "GROWTH_OFFER_SELECTED", { skillId: pick(snapshot) });
+    current = queueDirectAttackWhenAvailable(current);
     current = advanceDefenseRun(current, 1);
   }
   if (collected) collected.push(...getRunSnapshot(current).events);
   return current;
 }
 
+function queueDirectAttackWhenAvailable(run) {
+  const snapshot = getRunSnapshot(run);
+  if (snapshot.growthOffer || snapshot.commander.verbState !== "IDLE") return run;
+  const reach = DIRECT_COMBAT.light[0].reach;
+  const targetInMelee = snapshot.enemies.some((enemy) => {
+    if (enemy.hp <= 0) return false;
+    const contactDistance = snapshot.commander.radius + enemy.radius + reach;
+    return (enemy.x - snapshot.commander.x) ** 2 + (enemy.y - snapshot.commander.y) ** 2
+      <= contactDistance ** 2;
+  });
+  return targetInMelee ? queueInput(run, "ATTACK_LIGHT") : run;
+}
+
+function queueNextDirectLightInput(run) {
+  const snapshot = getRunSnapshot(run);
+  const commander = snapshot.commander;
+  if (snapshot.growthOffer || (commander.verbState !== "IDLE"
+      && snapshot.tick !== commander.verbRecoveryUntil)) return run;
+  const reach = DIRECT_COMBAT.light[0].reach;
+  const targetInMelee = snapshot.enemies.some((enemy) => {
+    if (enemy.hp <= 0) return false;
+    const contactDistance = commander.radius + enemy.radius + reach;
+    return (enemy.x - commander.x) ** 2 + (enemy.y - commander.y) ** 2 <= contactDistance ** 2;
+  });
+  return targetInMelee ? queueInput(run, "ATTACK_LIGHT") : run;
+}
+
 const PLAYTIME_MIN_SECONDS = 180;
 const PLAYTIME_MAX_SECONDS = 360;
+
+function directLightComboDamage() {
+  return DIRECT_COMBAT.light.reduce(
+    (total, { damageBp }) => total + Math.round(COMMANDER.basicDamage * damageBp / 10000),
+    0,
+  );
+}
+
+function directLightBaselineDps() {
+  return directLightComboDamage() * TICK_RATE / DIRECT_COMBAT.lightReadyToReadyTicks;
+}
+
+function octantFor(dx, dy) {
+  let best = "IDLE";
+  let bestDot = -Infinity;
+  const length = Math.hypot(dx, dy) || 1;
+  for (const [name, vector] of Object.entries(OCTANT_VECTORS)) {
+    if (name === "IDLE") continue;
+    const vectorLength = Math.hypot(vector.x, vector.y) || 1;
+    const dot = (dx / length) * (vector.x / vectorLength) + (dy / length) * (vector.y / vectorLength);
+    if (dot > bestDot) { bestDot = dot; best = name; }
+  }
+  return best;
+}
+
+function queueMoveTowardLiveEnemy(run, lastOctant) {
+  const snapshot = getRunSnapshot(run);
+  const target = snapshot.enemies
+    .filter((enemy) => enemy.hp > 0)
+    .sort((left, right) => (
+      (left.x - snapshot.commander.x) ** 2 + (left.y - snapshot.commander.y) ** 2
+      - ((right.x - snapshot.commander.x) ** 2 + (right.y - snapshot.commander.y) ** 2)
+    ))[0];
+  if (!target) return { run, lastOctant };
+  const distance = Math.hypot(target.x - snapshot.commander.x, target.y - snapshot.commander.y);
+  const octant = target.radius && distance < target.radius * 0.5
+    ? "IDLE"
+    : octantFor(target.x - snapshot.commander.x, target.y - snapshot.commander.y);
+  return {
+    run: octant === lastOctant ? run : queueInput(run, "MOVE", { octant }),
+    lastOctant: octant,
+  };
+}
+
+test("direct light establishes the floor clear budget from its completed cadence", () => {
+  assert.equal(directLightComboDamage(), 2520,
+    "the bare commander must deal 2520 damage across LIGHT_1 → LIGHT_3");
+  assert.equal(DIRECT_COMBAT.lightReadyToReadyTicks, 28,
+    "a completed direct-light combo must be ready again after 28 ticks");
+  assert.equal(directLightBaselineDps(), 5400,
+    "the stage floor must be 2520 damage per 28-tick direct-light cadence");
+});
+
+test("direct light's observed ready-to-ready cadence matches its published combat data", () => {
+  let run = createDefenseRun({ stageId: "cinder-span", seed: 11 });
+  let lastOctant = null;
+  const starts = [];
+  // Each input is queued on the final recovery tick, then consumed on the following ready tick.
+  // An observe-then-queue loop adds one idle tick after every recovery and measures 31 instead;
+  // this trace pins the earliest legal direct-input cadence that prices the stage clear budget.
+  for (let tick = 0; tick < 2000 && starts.length < 4; tick += 1) {
+    ({ run, lastOctant } = queueMoveTowardLiveEnemy(run, lastOctant));
+    const snapshot = getRunSnapshot(run);
+    run = snapshot.growthOffer
+      ? queueInput(run, "GROWTH_OFFER_SELECTED", { skillId: snapshot.growthOffer.choices[0] })
+      : queueNextDirectLightInput(run);
+    run = advanceDefenseRun(run, 1);
+    starts.push(...getRunSnapshot(run).events.filter((event) => event.type === "VERB_STARTED"
+      && event.entityId === "commander" && DIRECT_COMBAT.light.some(({ id }) => id === event.verb)));
+  }
+  assert.deepEqual(starts.slice(0, 4).map((event) => event.verb),
+    ["LIGHT_1", "LIGHT_2", "LIGHT_3", "LIGHT_1"],
+    "legal direct inputs must complete the light chain before restarting it");
+  assert.deepEqual(starts.slice(1, 4).map((event, index) => event.tick - starts[index].tick),
+    [7, 8, 13],
+    "each direct action must become input-ready one tick after its authored recovery");
+  assert.equal(starts[3].tick - starts[0].tick, DIRECT_COMBAT.lightReadyToReadyTicks,
+    "observed LIGHT_1 ready-to-ready timing must match the authored direct cadence");
+});
 
 test("every stage publishes a long-form doctrine wave plan", () => {
   for (const { id } of STAGES) {
@@ -85,7 +192,7 @@ test("wave body counts stay inside the authored clear budget instead of scaling 
   for (const { id } of STAGES) {
     const stage = STAGE_BY_ID[id];
     const cadenceSeconds = (stage.wavePlan[1].tick - stage.wavePlan[0].tick) / TICK_RATE;
-    const clearableHp = cadenceSeconds * PLAYER_BASELINE_DPS;
+    const clearableHp = cadenceSeconds * directLightBaselineDps();
     for (const wave of stage.wavePlan) {
       const waveHp = wave.alternatives[0].composition
         .reduce((total, { enemy, count }) => total + (ENEMIES[enemy].hp * stage.scale / 100) * count, 0);
@@ -104,7 +211,7 @@ test("a mid-boss is a non-elite budget-sized wall that holds the gate-defense ob
   const cadenceSeconds = (stage.wavePlan[1].tick - stage.wavePlan[0].tick) / TICK_RATE;
   assert.equal(
     midWave.midboss.hp,
-    Math.round((cadenceSeconds * PLAYER_BASELINE_DPS * MIDBOSS_PROFILE.hpBudgetBp) / 10000),
+    Math.round((cadenceSeconds * directLightBaselineDps() * MIDBOSS_PROFILE.hpBudgetBp) / 10000),
     "mid-boss HP must be the authored share of one cadence clear budget",
   );
 
@@ -136,8 +243,10 @@ test("a mid-boss is a non-elite budget-sized wall that holds the gate-defense ob
 
 test("clearing a wave pays back both bars once, and never past the maximum", () => {
   let run = createDefenseRun({ stageId: "cinder-span", seed: 11 });
+  let lastOctant = null;
   const cleared = [];
   for (let tick = 0; tick < 4000 && !isTerminalRun(run); tick += 1) {
+    ({ run, lastOctant } = queueMoveTowardLiveEnemy(run, lastOctant));
     run = advanceResolving(run, 1);
     const snapshot = getRunSnapshot(run);
     for (const event of snapshot.events.filter((entry) => entry.type === "WAVE_CLEARED")) {
@@ -160,14 +269,13 @@ test("re-picking a learned skill ranks it up instead of duplicating it", () => {
     const snapshot = getRunSnapshot(run);
     if (snapshot.growthOffer) {
       const owned = snapshot.growthOffer.choices.find((skillId) => snapshot.commander.skills.includes(skillId));
-      run = queueInput(run, "GROWTH_OFFER_SELECTED", { skillId: owned ?? snapshot.growthOffer.choices[0] });
       picks += 1;
       if (owned) {
         const beforeDamage = snapshot.commander.basicDamage;
         const beforePickupRange = snapshot.commander.pickupRange;
         const beforeMaxIntegrity = snapshot.commander.maxIntegrity;
         const beforeRank = snapshot.commander.skillRanks[owned] ?? 1;
-        run = advanceDefenseRun(run, 1);
+        run = advanceResolving(run, 1, () => owned);
         const after = getRunSnapshot(run);
         rankUpSeen = true;
         assert.equal(after.commander.skillRanks[owned], beforeRank + 1, "re-picking an owned skill raises its rank by one");
@@ -191,7 +299,7 @@ test("re-picking a learned skill ranks it up instead of duplicating it", () => {
         break;
       }
     }
-    run = advanceDefenseRun(run, 1);
+    run = advanceResolving(run, 1);
   }
   assert.ok(picks > 0, "growth offers must be reachable during the authored hold, not only after it");
   assert.ok(rankUpSeen, "an owned skill must remain offerable as a rank-up");
@@ -244,8 +352,7 @@ test("growth offers are reachable during the gate-defense hold", () => {
   for (let tick = 0; tick < 9000 && !isTerminalRun(run) && !offerDuringHold; tick += 1) {
     const snapshot = getRunSnapshot(run);
     if (snapshot.growthOffer && !snapshot.objectives.gateDefense.completed) offerDuringHold = true;
-    if (snapshot.growthOffer) run = queueInput(run, "GROWTH_OFFER_SELECTED", { skillId: snapshot.growthOffer.choices[0] });
-    run = advanceDefenseRun(run, 1);
+    run = advanceResolving(run, 1);
   }
   assert.ok(offerDuringHold, "the 160-250s hold must be playable with upgrades, not locked at level 1");
 });
@@ -299,18 +406,6 @@ test("campaign persists carry-over on victory, clears it on defeat, and survives
 });
 
 test("cinder-span plays for 3-6 minutes under an objective-seeking bot", () => {
-  const octantFor = (dx, dy) => {
-    let best = "IDLE";
-    let bestDot = -Infinity;
-    const length = Math.hypot(dx, dy) || 1;
-    for (const [name, vector] of Object.entries(OCTANT_VECTORS)) {
-      if (name === "IDLE") continue;
-      const vectorLength = Math.hypot(vector.x, vector.y) || 1;
-      const dot = (dx / length) * (vector.x / vectorLength) + (dy / length) * (vector.y / vectorLength);
-      if (dot > bestDot) { bestDot = dot; best = name; }
-    }
-    return best;
-  };
 
   let run = createDefenseRun({ stageId: "cinder-span", seed: 101 });
   let ticks = 0;
@@ -345,6 +440,7 @@ test("cinder-span plays for 3-6 minutes under an objective-seeking bot", () => {
         lastOctant = octant;
       }
     }
+    run = queueDirectAttackWhenAvailable(run);
     run = advanceDefenseRun(run, 1);
     ticks += 1;
   }

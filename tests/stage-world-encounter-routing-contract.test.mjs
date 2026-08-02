@@ -5,6 +5,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
+  DIRECT_COMBAT,
   OCTANT_VECTORS,
   STAGE_BY_ID,
   STAGE_ENCOUNTER_ROUTES,
@@ -150,11 +151,25 @@ function objectiveOctant(snapshot) {
   return best;
 }
 
+function queueDirectAttackWhenAvailable(run) {
+  const snapshot = getRunSnapshot(run);
+  if (snapshot.growthOffer || snapshot.commander.verbState !== "IDLE") return run;
+  const reach = DIRECT_COMBAT.light[0].reach;
+  const targetInMelee = snapshot.enemies.some((enemy) => {
+    if (enemy.hp <= 0) return false;
+    const contactDistance = snapshot.commander.radius + enemy.radius + reach;
+    return squaredDistance(enemy, snapshot.commander) <= contactDistance ** 2;
+  });
+  return targetInMelee ? queueInput(run, "ATTACK_LIGHT") : run;
+}
+
 function queueProgressInputs(run) {
   const snapshot = getRunSnapshot(run);
   if (snapshot.growthOffer) {
     return queueInput(run, "SKILL_SELECTED", { skillId: snapshot.growthOffer.choices[0] });
   }
+  const attacking = queueDirectAttackWhenAvailable(run);
+  if (attacking !== run) return attacking;
   let next = queueInput(run, "MOVE", { octant: objectiveOctant(snapshot) });
   for (const skillId of snapshot.commander.skills) {
     next = queueInput(next, "SKILL_CAST", { skillId });
@@ -337,7 +352,7 @@ test("committed attackers never exceed the authored cap on any stage", () => {
       if (before.growthOffer) {
         run = queueInput(run, "SKILL_SELECTED", { skillId: before.growthOffer.choices[0] });
       }
-      run = advanceDefenseRun(run, 12);
+      run = advanceDefenseRun(queueDirectAttackWhenAvailable(run), 12);
       const snapshot = getRunSnapshot(run);
       const { committedAttackerCount, committedAttackerIds } = snapshot.encounter;
       maxObserved = Math.max(maxObserved, committedAttackerCount);

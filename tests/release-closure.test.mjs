@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
@@ -123,7 +123,7 @@ const DIRECT_RUNTIME_ASSETS = Object.freeze([
 const RUNTIME_PATHS = [
   "index.html", "sprite-2-5d.html", "sprite-2-5d.css", "sprite-2-5d.js", "sealbound.html", "sealbound.css", "sealbound.js", "app.js", "rpg-catalog.js", "stage-world-catalog.js", "stage-story-catalog.js", "defense-viewport.js", "defense-catalog.js", "defense-run-simulation.js",
   "campaign-state.js", "defense-storage.js", "defense-audio.js", "defense-cutscene.js", "defense-telemetry.js",
-  "battle-canvas-text.js", "battle-realtime-three.js", "battle-visualizer.js", "lobby-cinematic.js", "styles.css", "react-game-ui.css", "sw.js", "manifest.json", "icon.svg", "privacy.html", "abbysal-oneline.html",
+  "battle-canvas-text.js", "battle-realtime-three.js", "battle-visualizer.js", "lobby-cinematic.js", "styles.css", "react-game-ui.css", "sw.js", "manifest.json", "icon.svg", "privacy.html", "abyssal-oneline.html", "abbysal-oneline.html",
   "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
   "assets/icons/icon-192.png", "assets/icons/icon-512.png",
   ...UI_ICON_ASSETS,
@@ -159,6 +159,20 @@ function assertCommandsInOrder(workflow, jobName, commands) {
   }
 }
 
+test("deployed defense smoke keeps the active native direct-light coverage gate", async () => {
+  const smoke = await project("tests/deployed-defense-smoke.cjs");
+  assert.match(
+    smoke,
+    /#defense-cutscene-overlay \[data-cutscene-dismiss\].*?isVisible[\s\S]*?#defense-battle-surface\[data-defense-state="active"\]/,
+    "the deployed smoke must conditionally dismiss visible startup cutscenes before waiting for an active battle",
+  );
+  assert.match(
+    smoke,
+    /#manual-attack\[data-combat-verb="ATTACK_LIGHT"\][\s\S]*?expectedInputSeq = inputBefore \+ 1[\s\S]*?attackSeq: expectedInputSeq[\s\S]*?combatVerb: "ATTACK_LIGHT"/,
+    "the deployed smoke must click the native light control and prove its exact public routing sequence",
+  );
+});
+
 test("Pages workflow preserves the defense-survivor release DAG and closure", async () => {
   const [workflow, readme] = await Promise.all([
     project(".github/workflows/static.yml"),
@@ -180,6 +194,72 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
   assert.match(job(workflow, "deployed_smoke"), /if: needs\.deploy_pages\.result == 'success'/);
   assert.match(job(workflow, "release_receipt"), /if: always\(\)/);
   assert.match(job(workflow, "release_receipt"), /needs: \[resolve_revision, engine_contract, release_closure, browser_contract, package_pages, artifact_smoke, deploy_pages, deployed_smoke\]/);
+
+  const deployedSmoke = job(workflow, "deployed_smoke");
+  const retryClassifier = deployedSmoke.match(
+    /elif grep -Eiq '(?<pattern>[^']+)' results\/deployed-smoke-attempt-1\.log; then/,
+  );
+  assert.ok(retryClassifier, "deployed_smoke must classify only the first failed attempt before retrying");
+  const retryPattern = new RegExp(retryClassifier.groups.pattern, "i");
+  for (const transient of [
+    "received 503",
+    "fetch failed",
+    "ECONNRESET",
+    "ECONNREFUSED",
+    "ECONNABORTED",
+    "ENOTFOUND",
+    "EAI_AGAIN",
+    "ETIMEDOUT",
+    "net::ERR_CONNECTION_RESET",
+    "socket hang up",
+  ]) {
+    assert.match(transient, retryPattern, `deployed_smoke must retry transient ${transient}`);
+  }
+  for (const nonTransient of [
+    "SHA assertion failed",
+    "rules-version assertion failed",
+    "content assertion failed",
+  ]) {
+    assert.doesNotMatch(
+      nonTransient,
+      retryPattern,
+      `deployed_smoke must not retry non-transient ${nonTransient}`,
+    );
+  }
+  assert.match(
+    deployedSmoke,
+    /local log="results\/deployed-smoke-attempt-\$\{attempt\}\.log"\n\s*set \+e\n\s*"\$\{smoke_command\[@\]\}" 2>&1 \| tee "\$log"\n\s*smoke_status=\$\{PIPESTATUS\[0\]\}\n\s*set -e\n\s*cp "\$log" results\/deployed-smoke-final\.log\n\s*return "\$smoke_status"/,
+    "deployed_smoke must retain each attempt and the final attempt output",
+  );
+  const retryOrder = [
+    deployedSmoke.indexOf("if run_smoke 1; then"),
+    deployedSmoke.indexOf(retryClassifier[0]),
+    deployedSmoke.indexOf("sleep 10"),
+    deployedSmoke.indexOf("if run_smoke 2; then"),
+  ];
+  assert.ok(
+    retryOrder.every((index, position) => index >= 0 && (position === 0 || index > retryOrder[position - 1])),
+    "deployed_smoke must wait exactly 10 seconds after transient attempt 1 before the sole retry",
+  );
+  assert.deepEqual(
+    deployedSmoke.match(/run_smoke [0-9]+/g),
+    ["run_smoke 1", "run_smoke 2"],
+    "deployed_smoke must make no more than two attempts",
+  );
+  assert.doesNotMatch(deployedSmoke, /\b(?:for|while|until)\b/, "deployed_smoke must not use an unbounded retry loop");
+  assert.doesNotMatch(deployedSmoke, /continue-on-error/, "deployed_smoke must keep retry failure strict");
+  assert.match(deployedSmoke, /test "\$status" = passed/, "deployed_smoke must fail unless its final status passes");
+  const releaseReceipt = job(workflow, "release_receipt");
+  assert.match(
+    releaseReceipt,
+    /DEPLOYED: \$\{\{ needs\.deployed_smoke\.result \}\}/,
+    "release_receipt must consume the deployed_smoke result",
+  );
+  assert.match(
+    releaseReceipt,
+    /for result in "\$ENGINE" "\$CLOSURE" "\$BROWSER" "\$PACKAGE" "\$ARTIFACT" "\$DEPLOY" "\$DEPLOYED"; do/,
+    "release_receipt must fail closure when deployed_smoke does not succeed",
+  );
 
   const pagesRuntimePaths = runtimePaths(workflow);
   assert.deepEqual(pagesRuntimePaths, RUNTIME_PATHS);
@@ -274,6 +354,15 @@ test("version scripts enforce the exact defense rules version", async () => {
   assert.match(reader, new RegExp(`RULES_VERSION = "${RULES_VERSION}"`));
   assert.match(reader, /defense-catalog\.js must export RULES_VERSION/);
 
+  const workflow = await project(".github/workflows/static.yml");
+  const rootRuntimeMatch = job(workflow, "artifact_smoke").match(
+    /request\.url === "\/" \? "([^"]+)" : request\.url/,
+  );
+  assert.ok(rootRuntimeMatch, "artifact smoke must serve a declared root runtime document");
+  const rootRuntimeHtml = rootRuntimeMatch[1];
+  assert.ok(RUNTIME_PATHS.includes(rootRuntimeHtml), "the Pages root document must be packaged");
+  await execFileAsync("git", ["ls-files", "--error-unmatch", "--", rootRuntimeHtml]);
+
   const directory = await mkdtemp(join(tmpdir(), "pages-version-"));
   const versionFile = join(directory, "version.json");
   const sha = "a".repeat(40);
@@ -284,15 +373,25 @@ test("version scripts enforce the exact defense rules version", async () => {
   for (const file of required) {
     const target = join(directory, file);
     await mkdir(dirname(target), { recursive: true });
+    if (file === rootRuntimeHtml) continue;
     await writeFile(
       target,
       file === "app.js"
         ? 'import "./bootstrap.js";\n'
-        : file === "abbysal-oneline.html"
+        : file === "abyssal-oneline.html"
           ? '<!doctype html><html lang="ko"><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="styles.css"></head><body><nav aria-labelledby="mode-navigation-title"><h2 id="mode-navigation-title">모드 탐색</h2><a href="index.html">홈</a><a href="sprite-2-5d.html">스프라이트</a><a href="sealbound.html">실바운드</a></nav><main><h1>어비스 원라인</h1></main></body></html>'
+        : file === "abbysal-oneline.html"
+          ? '<!doctype html><html lang="ko"><head><meta http-equiv="refresh" content="0; url=abyssal-oneline.html"><link rel="canonical" href="abyssal-oneline.html"></head><body><a href="abyssal-oneline.html">어비스 원라인으로 이동</a></body></html>'
           : "",
     );
   }
+  await copyFile(new URL(rootRuntimeHtml, ROOT), join(directory, rootRuntimeHtml));
+  const rootRuntimeDocument = await readFile(join(directory, rootRuntimeHtml), "utf8");
+  assert.match(
+    rootRuntimeDocument,
+    /<html\b[^>]*\blang\s*=\s*(?:"ko(?:-[a-z]{2,4})?"|'ko(?:-[a-z]{2,4})?'|ko(?:-[a-z]{2,4})?(?=[\s/>]))/i,
+    "the staged Pages root document must declare Korean content",
+  );
 
   const command = new URL("tests/pages-artifact-smoke.cjs", ROOT).pathname;
   await assert.rejects(execFileAsync(process.execPath, [command, "--dir", directory]));

@@ -151,8 +151,12 @@ const KEY_DIRECTIONS = Object.freeze({
   w: "N", arrowup: "N", d: "E", arrowright: "E",
   s: "S", arrowdown: "S", a: "W", arrowleft: "W",
 });
-const ATTACK_KEYS = new Set([" ", "space", "spacebar", "j", "f", "enter"]);
-const ATTACK_CODES = new Set(["Space", "KeyJ", "KeyF", "Numpad0"]);
+const ATTACK_LIGHT_KEYS = new Set([" ", "space", "spacebar", "j", "enter"]);
+const ATTACK_LIGHT_CODES = new Set(["Space", "KeyJ", "Numpad0"]);
+const ATTACK_HEAVY_KEYS = new Set(["f"]);
+const ATTACK_HEAVY_CODES = new Set(["KeyF"]);
+const DASH_KEYS = new Set(["shift", "k"]);
+const DASH_CODES = new Set(["ShiftLeft", "ShiftRight", "KeyK"]);
 const SNAPSHOT_FEEDBACK_TYPES = new Set(["CRITICAL_HIT", "LORE_SURPRISE_RESOLVED"]);
 const VISUAL_ACTOR_SCALE = 2.5;
 const CAMERA_FOLLOW_X_LIMIT = 0.18;
@@ -1432,8 +1436,8 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
           <div id="modality-panel-keyboard" class="modality-pane" data-pane="keyboard" role="tabpanel" aria-labelledby="modality-tab-keyboard" ${activeModality === "keyboard" ? "" : "hidden"}>
             <ul class="guide-list">
               <li><b>지휘관 이동:</b> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 또는 <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> (화살표 키)</li>
-              <li><b>기본 공격:</b> <kbd>Space</kbd> 또는 <kbd>J</kbd> 키</li>
-              <li><b>스탠스 / 스킬 / 정예 추출:</b> <kbd>Tab</kbd> 키로 해당 버튼 포커스 후 <kbd>Space</kbd> 또는 <kbd>Enter</kbd></li>
+              <li><b>직접 전투:</b> <kbd>Space</kbd>/<kbd>J</kbd> 연속 베기, <kbd>F</kbd> 강공격, <kbd>Shift</kbd>/<kbd>K</kbd> 대시</li>
+              <li><b>스킬 / 정예 추출:</b> <kbd>Tab</kbd> 키로 해당 버튼 포커스 후 <kbd>Space</kbd> 또는 <kbd>Enter</kbd></li>
               <li><b>전투 일시 정지:</b> <kbd>P</kbd> 또는 <kbd>Escape</kbd> 키</li>
               <li><b>카메라 제어:</b> 키보드 포커스 조작 지원</li>
             </ul>
@@ -1442,7 +1446,7 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
           <div id="modality-panel-pointer" class="modality-pane" data-pane="pointer" role="tabpanel" aria-labelledby="modality-tab-pointer" ${activeModality === "pointer" ? "" : "hidden"}>
             <ul class="guide-list">
               <li><b>지휘관 이동:</b> 좌측 하단 D-pad 이동 버튼 클릭</li>
-              <li><b>기본 공격:</b> 우측 하단 공격 버튼 클릭</li>
+              <li><b>직접 전투:</b> 우측 하단 연속 베기·강공격·대시 버튼 클릭</li>
               <li><b>스킬 사용:</b> 활성 스킬 아이콘 클릭</li>
               <li><b>스탠스 전환:</b> 좌측 하단 스탠스 아이콘 클릭</li>
               <li><b>정예 추출:</b> 정예 적 처치 후 우측 하단 추출 버튼 클릭</li>
@@ -1455,7 +1459,7 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
           <div id="modality-panel-touch" class="modality-pane" data-pane="touch" role="tabpanel" aria-labelledby="modality-tab-touch" ${activeModality === "touch" ? "" : "hidden"}>
             <ul class="guide-list">
               <li><b>지휘관 이동:</b> 전장 화면 좌측 하단 D-pad 방향키 터치 및 홀드</li>
-              <li><b>기본 공격:</b> 우측 하단 공격 버튼 터치</li>
+              <li><b>직접 전투:</b> 우측 하단 연속 베기·강공격·대시 버튼 터치</li>
               <li><b>스킬 사용:</b> 활성 스킬 아이콘 터치</li>
               <li><b>스탠스 전환:</b> 좌측 하단 스탠스 아이콘 터치</li>
               <li><b>정예 추출:</b> 정예 적 처치 후 우측 하단 추출 버튼 터치</li>
@@ -1469,7 +1473,7 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
         <div class="lobby-guide-grid">
           <section data-guide-section="companion" aria-labelledby="guide-companion-title"><span aria-hidden="true">01</span><h3 id="guide-companion-title">동료 편성·자율 전투</h3><ol><li><b>군단</b>에서 해금한 출전 슬롯만큼 편성하세요.</li><li>전열·후열 선호는 다음 출전의 배치 순위에 반영됩니다.</li><li>동료는 자동 교전하고, 멀어지면 지휘관 곁으로 복귀합니다.</li></ol></section>
           <section data-guide-section="extraction" aria-labelledby="guide-extraction-title"><span aria-hidden="true">02</span><h3 id="guide-extraction-title">정예 추출 · ARISE</h3><ol><li>정예를 처치한 뒤 <b>Bind 시작</b>을 누르세요.</li><li>추출 지점 안에서 홀드가 끝날 때까지 버티세요.</li><li><b>정예 추출</b>이 준비되면 눌러 영구 동료로 결속하세요.</li></ol></section>
-          <section data-guide-section="skills" aria-labelledby="guide-skills-title"><span aria-hidden="true">03</span><h3 id="guide-skills-title">공격·스킬·쿨다운</h3><ol><li><b>공격</b> 버튼은 언제든 기본 공격을 보냅니다.</li><li>준비된 액티브 스킬을 누르면 즉시 사용합니다.</li><li>레벨업 선택은 이번 런, 성장 탭의 스킬 노드는 영구 적용입니다.</li></ol></section>
+          <section data-guide-section="skills" aria-labelledby="guide-skills-title"><span aria-hidden="true">03</span><h3 id="guide-skills-title">공격·스킬·쿨다운</h3><ol><li><b>연속 베기</b>는 세 단계로 이어지고, <b>강공격</b>과 <b>대시</b>는 별도 직접 입력입니다.</li><li>준비된 액티브 스킬을 누르면 즉시 사용합니다.</li><li>레벨업 선택은 이번 런, 성장 탭의 스킬 노드는 영구 적용입니다.</li></ol></section>
         </div>
       </div>
     </dialog>`;
@@ -1885,7 +1889,9 @@ ${lobbyCinematicMarkup()}
             <span id="movement-hint" class="sr-only">스틱을 끌어 이동합니다. 키보드는 WASD 또는 방향키로 이동하며, 대각선은 두 키를 함께 누릅니다.</span>
           </div>
           <div class="combat-input-cluster" id="combat-input-cluster" role="group" aria-label="전투 입력">
-            <button type="button" id="manual-attack" class="manual-attack-action" aria-label="수동 공격 (Space 또는 J)"><span class="manual-attack-glyph" aria-hidden="true">✦</span><span class="manual-attack-label">공격</span><kbd>SPACE</kbd></button>
+            <button type="button" id="manual-attack" class="manual-attack-action" data-combat-verb="ATTACK_LIGHT" aria-label="연속 베기 (Space 또는 J)" style="right:.5rem;bottom:.05rem"><span class="manual-attack-glyph" aria-hidden="true">✦</span><span class="manual-attack-label">연속 베기</span><kbd>SPACE</kbd></button>
+            <button type="button" id="manual-heavy" class="manual-attack-action" data-combat-verb="ATTACK_HEAVY" aria-label="강공격 (F)" style="right:4.9rem;bottom:.05rem"><span class="manual-attack-glyph" aria-hidden="true">◆</span><span class="manual-attack-label">강공격</span><kbd>F</kbd></button>
+            <button type="button" id="manual-dash" class="manual-attack-action" data-combat-verb="DASH" aria-label="대시 (Shift 또는 K)" style="right:2.7rem;bottom:4.3rem"><span class="manual-attack-glyph" aria-hidden="true">➜</span><span class="manual-attack-label">대시</span><kbd>SHIFT</kbd></button>
             <div class="skill-actions skill-radial" id="skill-actions" aria-label="활성 스킬"></div>
           </div>
           <div class="hud-actions" id="battle-actions" aria-label="전투 행동"></div>
@@ -2452,12 +2458,12 @@ export class BattleSession {
   }
 
   onAttackSurfacePointerDown(event) {
-    if (!event.target.closest?.("#manual-attack")) return;
+    if (!event.target.closest?.("[data-combat-verb]")) return;
     this.onAttackControlDown(event);
   }
 
   onAttackSurfaceClick(event) {
-    if (!event.target.closest?.("#manual-attack")) return;
+    if (!event.target.closest?.("[data-combat-verb]")) return;
     this.onAttackControlClick(event);
   }
 
@@ -2477,19 +2483,22 @@ export class BattleSession {
 
   onAttackControlDown(event) {
     if (event.button !== undefined && event.button !== 0) return;
+    const control = event.target.closest?.("[data-combat-verb]");
+    if (!control) return;
     event.preventDefault();
-    this.send("ATTACK");
-    this.signalAttackFeedback();
+    this.send(control.dataset.combatVerb);
+    this.signalAttackFeedback(control);
   }
 
   onAttackControlClick(event) {
     if (event.detail !== 0) return;
-    this.send("ATTACK");
-    this.signalAttackFeedback();
+    const control = event.target.closest?.("[data-combat-verb]");
+    if (!control) return;
+    this.send(control.dataset.combatVerb);
+    this.signalAttackFeedback(control);
   }
 
-  signalAttackFeedback() {
-    const control = root.querySelector("#manual-attack");
+  signalAttackFeedback(control = root.querySelector("#manual-attack")) {
     if (!control) return;
     control.dataset.feedback = "true";
     clearTimeout(this.attackFeedbackTimer);
@@ -2693,18 +2702,22 @@ export class BattleSession {
     this.updateInputModality("keyboard");
     // A focused control owns its ACTIVATION keys (Enter and Space) -- that is how keyboard
     // activation works, and the `preventDefault()` below would otherwise cancel it.
-    // ATTACK_KEYS contains "enter" and " ", so without this exemption Enter/Space stopped
-    // activating EVERY button in the app: measured, focusing a showcase card and pressing
-    // Enter left the selection unchanged, which is exactly what
-    // tests/lobby-guide-disclosure-browser.test.mjs asserts as "keyboard operable".
+    // Direct-combat keys are ignored while native controls own their activation behavior.
     const isActivationKey = key === "enter" || key === " " || event.code === "Space";
     if (isActivationKey && target?.closest?.("button, a[href], summary, [role='button']")) return;
-    if (ATTACK_KEYS.has(key) || ATTACK_CODES.has(event.code)) {
+    const directVerb = (ATTACK_LIGHT_KEYS.has(key) || ATTACK_LIGHT_CODES.has(event.code))
+      ? "ATTACK_LIGHT"
+      : (ATTACK_HEAVY_KEYS.has(key) || ATTACK_HEAVY_CODES.has(event.code))
+        ? "ATTACK_HEAVY"
+        : (DASH_KEYS.has(key) || DASH_CODES.has(event.code))
+          ? "DASH"
+          : null;
+    if (directVerb) {
       event.preventDefault();
       if (event.type === "keydown" && !event.repeat) {
         if (this.inLobby()) this.suppressLobbyShowcase();
-        this.send("ATTACK");
-        this.signalAttackFeedback();
+        this.send(directVerb);
+        this.signalAttackFeedback(root.querySelector(`[data-combat-verb="${directVerb}"]`));
       }
       return;
     }
@@ -2736,7 +2749,10 @@ export class BattleSession {
       if (analog) this.surface.dataset.defenseMoveAnalog = `${analog.x},${analog.y}`;
       else delete this.surface.dataset.defenseMoveAnalog;
     }
-    if (type === "ATTACK") this.surface.dataset.defenseAttack = String(inputSeq);
+    if (["ATTACK", "ATTACK_LIGHT", "ATTACK_HEAVY", "DASH"].includes(type)) {
+      this.surface.dataset.defenseAttack = String(inputSeq);
+      this.surface.dataset.defenseCombatVerb = type === "ATTACK" ? "ATTACK_LIGHT" : type;
+    }
     if (type === "SKILL_CAST" || type === "SKILL_SELECTED" || type === "REWARD_SELECTED") {
       this.surface.dataset.defenseSkill = payload?.skillId ?? payload?.rewardId ?? payload ?? "";
     }
@@ -3752,17 +3768,15 @@ export class BattleSession {
     }
 
     // Floating damage numbers (screen #16) — event-driven, pooled at
-    // MAX_VISUAL_EFFECTS=24 (battle-visualizer.js precedent). Two
+    // MAX_VISUAL_EFFECTS=24 (battle-visualizer.js precedent). Three
     // non-overlapping event sources (verified against
     // defense-run-simulation.js emit() call sites): PROJECTILE_IMPACT for
     // ranged hits on enemies/commander (excludes gate by design — it has a
     // persistent HUD bar already; excludes companion ids because a
     // companion ranged hit ALSO emits COMPANION_DAMAGED for the same hit,
-    // which would double-count), and COMMANDER_DAMAGED/COMPANION_DAMAGED
-    // unconditionally for melee contact damage (which never emits
-    // PROJECTILE_IMPACT). Enemy-takes-melee-contact-damage has no event at
-    // all in this codebase (enemies only take damage via projectiles), so
-    // that path needs no separate handling.
+    // which would double-count), MELEE_IMPACT for resolved direct hits on
+    // enemies, and COMMANDER_DAMAGED/COMPANION_DAMAGED unconditionally for
+    // melee contact damage (which never emits PROJECTILE_IMPACT).
     //
     // Structure: an outer .world-damage-number holds the JS-computed screen
     // position (set once via inline transform, never animated — a CSS
@@ -3779,7 +3793,10 @@ export class BattleSession {
     for (const event of snapshot.events ?? []) {
       let targetId = null;
       let damage = null;
-      if (event.type === "PROJECTILE_IMPACT" && event.hit && event.targetId !== "gate" && !companionIds.has(event.targetId)) {
+      if ((event.type === "PROJECTILE_IMPACT" || event.type === "MELEE_IMPACT")
+        && event.hit
+        && event.targetId !== "gate"
+        && !companionIds.has(event.targetId)) {
         targetId = event.targetId;
         damage = event.damage;
       } else if (event.type === "COMMANDER_DAMAGED") {
@@ -3792,14 +3809,11 @@ export class BattleSession {
         continue;
       }
       if (targetId === null || !damage) continue;
-      // Keyed by the EVENT's own tick (always present, see emit() in
-      // defense-run-simulation.js), not the outer snapshot.tick -- snapshot
-      // now carries a whole frame's worth of events across a slow-frame
-      // catch-up burst (see loop()'s frameEvents), so two genuinely distinct
-      // hits on the same target in different real ticks must not collide on
-      // the same key.
-      const key = event.type + ":" + targetId + ":" + event.tick;
-      if (this.worldHudDamageEventKeys.has(key)) continue;
+      // Every simulation emission carries a unique eventId. Deduplicating on
+      // it makes a repeat render of the same authoritative snapshot a no-op
+      // without collapsing distinct impacts against the same target and tick.
+      const key = event.eventId;
+      if (!key || this.worldHudDamageEventKeys.has(key)) continue;
       this.worldHudDamageEventKeys.add(key);
       const ndc = this.renderer?.projectEntityToScreen?.(targetId);
       if (!ndc?.visible) continue;
@@ -3809,6 +3823,8 @@ export class BattleSession {
       if (pooled.length >= 24) pooled[0].remove();
       const number = document.createElement("div");
       number.className = "world-damage-number";
+      number.dataset.defenseEventId = key;
+      number.dataset.defenseEventType = event.type;
       number.style.transform = "translate(" + point.x + "px, " + (point.y - WORLD_DAMAGE_NUMBER_LIFT_PX) + "px)";
       const rise = document.createElement("span");
       rise.className = "world-damage-number-rise" + (isCriticalTick ? " is-crit" : "");

@@ -9,7 +9,7 @@ import {
   isTerminalRun,
   queueInput,
 } from "../defense-run-simulation.js";
-import { STAGE_BY_ID, XP_GROWTH } from "../defense-catalog.js";
+import { DIRECT_COMBAT, OCTANT_VECTORS, STAGE_BY_ID, XP_GROWTH } from "../defense-catalog.js";
 
 const FULL_LOADOUT = ["ember-cohort", "rift-lens", "veil-vanguard"];
 const FULL_REWARDS = ["abyssal-banner", "bulwark-brand", "stillwater-hourglass"];
@@ -18,13 +18,57 @@ function squaredDistance(left, right) {
   return (left.x - right.x) ** 2 + (left.y - right.y) ** 2;
 }
 
+function octantFor(dx, dy) {
+  let best = "IDLE";
+  let bestDot = -Infinity;
+  const length = Math.hypot(dx, dy) || 1;
+  for (const [name, vector] of Object.entries(OCTANT_VECTORS)) {
+    if (name === "IDLE") continue;
+    const vectorLength = Math.hypot(vector.x, vector.y) || 1;
+    const dot = (dx / length) * (vector.x / vectorLength) + (dy / length) * (vector.y / vectorLength);
+    if (dot > bestDot) { bestDot = dot; best = name; }
+  }
+  return best;
+}
+
+function queueMoveTowardRouteTarget(run, routeObjectives) {
+  const snapshot = getRunSnapshot(run);
+  let target = null;
+  if (routeObjectives && snapshot.objectives.phase === "occupation") target = snapshot.tactics.occupation;
+  else if (routeObjectives && snapshot.objectives.phase === "extraction") target = snapshot.tactics.extraction;
+  else {
+    target = snapshot.enemies
+      .filter((enemy) => enemy.hp > 0)
+      .sort((left, right) => squaredDistance(left, snapshot.commander) - squaredDistance(right, snapshot.commander))[0];
+  }
+  if (!target) return queueInput(run, "MOVE", { octant: "IDLE" });
+  const distance = Math.hypot(target.x - snapshot.commander.x, target.y - snapshot.commander.y);
+  const octant = target.radius && distance < target.radius * 0.5
+    ? "IDLE"
+    : octantFor(target.x - snapshot.commander.x, target.y - snapshot.commander.y);
+  return queueInput(run, "MOVE", { octant });
+}
+
 function chooseGrowth(run) {
   const offer = getRunSnapshot(run).growthOffer;
   return offer ? queueInput(run, "SKILL_SELECTED", { skillId: offer.choices[0] }) : run;
 }
 
+function queueDirectAttackWhenAvailable(run) {
+  const snapshot = getRunSnapshot(run);
+  if (snapshot.growthOffer || snapshot.commander.verbState !== "IDLE") return run;
+  const reach = DIRECT_COMBAT.light[0].reach;
+  const targetInMelee = snapshot.enemies.some((enemy) => {
+    if (enemy.hp <= 0) return false;
+    const contactDistance = snapshot.commander.radius + enemy.radius + reach;
+    return squaredDistance(enemy, snapshot.commander) <= contactDistance ** 2;
+  });
+  return targetInMelee ? queueInput(run, "ATTACK_LIGHT") : run;
+}
+
 function advanceTicks(run, tickCount, {
   castSkills = false,
+  directAttack = false,
   events = [],
   routeObjectives = false,
 } = {}) {
@@ -33,16 +77,18 @@ function advanceTicks(run, tickCount, {
   while (getRunSnapshot(next).tick < targetTick && !isTerminalRun(next)) {
     next = chooseGrowth(next);
     const snapshot = getRunSnapshot(next);
-    if (routeObjectives) {
-      next = queueInput(next, "MOVE", { octant: "IDLE" });
-      if (snapshot.eliteCandidate && !snapshot.extracted) {
-        next = queueInput(next, "EXTRACT_ELITE", { enemyId: snapshot.eliteCandidate.enemyId });
-      }
+    if (routeObjectives && !directAttack) next = queueInput(next, "MOVE", { octant: "IDLE" });
+    if (routeObjectives && snapshot.eliteCandidate && !snapshot.extracted) {
+      next = queueInput(next, "EXTRACT_ELITE", { enemyId: snapshot.eliteCandidate.enemyId });
     }
     if (castSkills) {
       for (const skillId of snapshot.commander.skills) {
         next = queueInput(next, "SKILL_CAST", { skillId });
       }
+    }
+    if (directAttack) {
+      next = queueMoveTowardRouteTarget(next, routeObjectives);
+      next = queueDirectAttackWhenAvailable(next);
     }
     const advanced = advanceDefenseRun(next, 1);
     const advancedSnapshot = getRunSnapshot(advanced);
@@ -436,7 +482,7 @@ test("enemy policies produce gate pressure, pursuit, flank, denial, escort, and 
         (enemy) => enemy.policyId === "elite-escort" && enemy.escortLeaderId,
       ),
       STAGE_BY_ID["cinder-span"].gateTicks + 6000,
-      { castSkills: true, events, routeObjectives: true },
+      { castSkills: true, directAttack: true, events, routeObjectives: true },
     );
     const escort = appeared.snapshot.enemies.find(
       (enemy) => enemy.policyId === "elite-escort" && enemy.escortLeaderId,
@@ -459,7 +505,7 @@ test("enemy policies produce gate pressure, pursuit, flank, denial, escort, and 
       appeared.run,
       (snapshot) => snapshot.eliteCandidate?.enemyId === leader.id,
       3000,
-      { castSkills: true, events },
+      { castSkills: true, directAttack: true, events, routeObjectives: true },
     );
     assert.equal(recovered.snapshot.eliteCandidate?.enemyId, leader.id);
     assert.equal(recovered.snapshot.enemies.some((enemy) => enemy.id === escort.id), false,
@@ -488,23 +534,16 @@ test("enemy policies produce gate pressure, pursuit, flank, denial, escort, and 
 });
 
 test("a run that never fights loses to enemy pressure", () => {
-  // A pending growth offer PAUSES the simulation, so "no input at all" now means "stalled at the
-  // first offer" rather than "played passively". The pressure contract is measured with the offers
-  // resolved and nothing else done: no movement, no casts, no extraction.
+  // Without an explicit attack, the commander earns no combat XP. This is the actual no-input
+  // contract now that autonomous attacks have been removed.
   let run = createDefenseRun({ stageId: "echo-throne", seed: 37 });
   const budget = STAGE_BY_ID["echo-throne"].gateTicks + 9000;
-  let offersSeen = 0;
   for (let tick = 0; tick < budget && !isTerminalRun(run); tick += 1) {
-    const snapshot = getRunSnapshot(run);
-    if (snapshot.growthOffer) {
-      offersSeen += 1;
-      run = queueInput(run, "SKILL_SELECTED", { skillId: snapshot.growthOffer.choices[0] });
-    }
     run = advanceDefenseRun(run, 1);
   }
   const snapshot = getRunSnapshot(run);
 
-  assert.ok(offersSeen > 0, "a stalled run must still have been offered growth during the hold");
+  assert.equal(snapshot.commander.xp, 0, "a no-fight run earns no combat XP");
   assert.equal(snapshot.terminal, "DEFEAT");
   // A run that never fights loses either bar, or loses the extraction window it never worked.
   assert.ok(snapshot.gate.integrity === 0
@@ -523,7 +562,7 @@ test("a spawned boss applies attack pressure before it dies and opens extraction
     }),
     (snapshot) => snapshot.enemies.some((enemy) => enemy.class === "boss"),
     STAGE_BY_ID["echo-throne"].gateTicks + 9000,
-    { castSkills: true, events, routeObjectives: true },
+    { castSkills: true, directAttack: true, events, routeObjectives: true },
   );
   const boss = bossAppeared.snapshot.enemies.find((enemy) => enemy.class === "boss");
   assert.ok(boss, "the public route must capture occupation and spawn the boss");
@@ -543,9 +582,6 @@ test("a spawned boss applies attack pressure before it dies and opens extraction
   pressureRun.commander.x = pressureRun.gate.x + 2000;
   pressureRun.commander.y = 0;
   const combatCompanions = structuredClone(pressureRun.companions);
-  const combatBasicCooldown = pressureRun.commander.basicCooldown;
-  pressureRun.companions = [];
-  pressureRun.commander.basicCooldown = 4001;
   const positionedBoss = pressureRun.enemies.find((enemy) => enemy.id === boss.id);
   positionedBoss.x = pressureRun.gate.x - positionedBoss.radius - pressureRun.gate.radius + 300;
   positionedBoss.y = pressureRun.gate.y;
@@ -582,7 +618,6 @@ test("a spawned boss applies attack pressure before it dies and opens extraction
 
   const resumedCombat = structuredClone(pressured.run);
   resumedCombat.companions = combatCompanions;
-  resumedCombat.commander.basicCooldown = combatBasicCooldown;
   const pressuredBoss = pressured.snapshot.enemies.find((enemy) => enemy.id === boss.id);
   assert.ok(pressuredBoss, "the boss must still be alive after applying pressure");
   resumedCombat.commander.x = pressuredBoss.x;
@@ -610,7 +645,7 @@ test("run rewards, learned skills, pickups, and companions remain distinct growt
     companionLoadout: ["rift-lens"],
     rewardIds: ["bulwark-brand"],
   });
-  const offered = advanceUntil(run, (snapshot) => Boolean(snapshot.growthOffer), 1500);
+  const offered = advanceUntil(run, (snapshot) => Boolean(snapshot.growthOffer), 1500, { directAttack: true });
   assert.ok(offered.snapshot.growthOffer, "combat XP must offer a run skill");
   const skillId = offered.snapshot.growthOffer.choices[0];
   run = advanceDefenseRun(queueInput(offered.run, "SKILL_SELECTED", { skillId }), 1);

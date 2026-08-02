@@ -24,7 +24,7 @@ env:
   PAGES_ARTIFACT_DIR: .pages-artifact
   PAGES_RUNTIME_PATHS: >-
     index.html sprite-2-5d.html sprite-2-5d.css sprite-2-5d.js sealbound.html sealbound.css sealbound.js app.js rpg-catalog.js stage-world-catalog.js stage-story-catalog.js defense-viewport.js defense-catalog.js defense-run-simulation.js campaign-state.js defense-storage.js defense-audio.js
-    defense-cutscene.js defense-telemetry.js battle-canvas-text.js battle-realtime-three.js battle-visualizer.js lobby-cinematic.js styles.css react-game-ui.css sw.js manifest.json icon.svg privacy.html abbysal-oneline.html
+    defense-cutscene.js defense-telemetry.js battle-canvas-text.js battle-realtime-three.js battle-visualizer.js lobby-cinematic.js styles.css react-game-ui.css sw.js manifest.json icon.svg privacy.html abyssal-oneline.html abbysal-oneline.html
     vendor/three.module.js vendor/three.core.js vendor/loaders/GLTFLoader.js vendor/utils/BufferGeometryUtils.js vendor/utils/SkeletonUtils.js
     assets/icons/icon-192.png assets/icons/icon-512.png
     assets/images/battle/ui/hud/control-close.webp assets/images/battle/ui/hud/control-pause.webp assets/images/battle/ui/hud/control-sortie.webp
@@ -371,8 +371,26 @@ jobs:
           npx --no-install playwright install --with-deps chromium
           mkdir -p results
           if [ -f tests/deployed-defense-smoke.cjs ]; then
-            node tests/deployed-defense-smoke.cjs --url "$PAGE_URL" --sha "$RESOLVED_SHA" --rules-version "$RULES_VERSION"
-            status=passed
+            smoke_command=(node tests/deployed-defense-smoke.cjs --url "$PAGE_URL" --sha "$RESOLVED_SHA" --rules-version "$RULES_VERSION")
+            run_smoke() {
+              local attempt="$1"
+              local log="results/deployed-smoke-attempt-${attempt}.log"
+              set +e
+              "${smoke_command[@]}" 2>&1 | tee "$log"
+              smoke_status=${PIPESTATUS[0]}
+              set -e
+              cp "$log" results/deployed-smoke-final.log
+              return "$smoke_status"
+            }
+            status=failed
+            if run_smoke 1; then
+              status=passed
+            elif grep -Eiq 'received 5[0-9]{2}|fetch failed|ECONN(RESET|REFUSED|ABORTED)|ENOTFOUND|EAI_AGAIN|ETIMEDOUT|net::ERR_|socket hang up' results/deployed-smoke-attempt-1.log; then
+              sleep 10
+              if run_smoke 2; then
+                status=passed
+              fi
+            fi
           else
             status=unsupported-no-deployed-defense-smoke
           fi

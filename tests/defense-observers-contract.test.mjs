@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { BattleVisualizer } from "../battle-visualizer.js";
-import { AUDIO_CUES, COMMANDER, MEASUREMENT_PROFILES, SKILLS } from "../defense-catalog.js";
+import { AUDIO_CUES, COMMANDER, DIRECT_COMBAT, MEASUREMENT_PROFILES, SKILLS } from "../defense-catalog.js";
 import { DefenseAudio } from "../defense-audio.js";
 import {
   advanceDefenseRun,
@@ -110,11 +110,24 @@ function replaceGlobal(t, name, value) {
   });
 }
 
+function queueDirectAttackWhenAvailable(run) {
+  const snapshot = getRunSnapshot(run);
+  if (snapshot.growthOffer || snapshot.commander.verbState !== "IDLE") return run;
+
+  const reach = DIRECT_COMBAT.light[0].reach;
+  const targetInMelee = snapshot.enemies.some((enemy) => {
+    if (enemy.hp <= 0) return false;
+    const contactDistance = snapshot.commander.radius + enemy.radius + reach;
+    return (enemy.x - snapshot.commander.x) ** 2 + (enemy.y - snapshot.commander.y) ** 2 <= contactDistance ** 2;
+  });
+  return targetInMelee ? queueInput(run, "ATTACK_LIGHT") : run;
+}
+
 function snapshotWithCriticalHit() {
   for (let seed = 1; seed <= 16; seed += 1) {
     let run = createDefenseRun({ stageId: "cinder-span", seed });
     for (let tick = 0; tick < 600; tick += 1) {
-      run = advanceDefenseRun(run, 1);
+      run = advanceDefenseRun(queueDirectAttackWhenAvailable(run), 1);
       const snapshot = getRunSnapshot(run);
       if (snapshot.events.some(({ type }) => type === "CRITICAL_HIT")) return snapshot;
     }

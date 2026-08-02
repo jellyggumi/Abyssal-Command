@@ -3,22 +3,40 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { BattleVisualizer } from "../battle-visualizer.js";
-import { CUTSCENES, ITEMS, SKILLS, STAGES } from "../defense-catalog.js";
+import { CUTSCENES, DIRECT_COMBAT, ITEMS, SKILLS, STAGES } from "../defense-catalog.js";
 import { DefenseAudio } from "../defense-audio.js";
 import {
   advanceDefenseRun,
   createDefenseRun,
   getRunDigest,
   getRunSnapshot,
+  queueInput,
 } from "../defense-run-simulation.js";
+
+function queueLightAttackAtLegalReadiness(run) {
+  const snapshot = getRunSnapshot(run);
+  if (snapshot.growthOffer || snapshot.commander.verbState !== "IDLE") return run;
+
+  const reach = DIRECT_COMBAT.light[0].reach;
+  const targetInMelee = snapshot.enemies.some((enemy) => {
+    if (enemy.hp <= 0) return false;
+    const dx = enemy.x - snapshot.commander.x;
+    const dy = enemy.y - snapshot.commander.y;
+    const contactDistance = snapshot.commander.radius + enemy.radius + reach;
+    return dx * dx + dy * dy <= contactDistance ** 2;
+  });
+  return targetInMelee ? queueInput(run, "ATTACK_LIGHT") : run;
+}
 
 function criticalHitSnapshot() {
   for (let seed = 1; seed <= 16; seed += 1) {
     let run = createDefenseRun({ stageId: "cinder-span", seed });
     for (let tick = 0; tick < 600; tick += 1) {
-      run = advanceDefenseRun(run, 1);
+      run = advanceDefenseRun(queueLightAttackAtLegalReadiness(run), 1);
       const snapshot = getRunSnapshot(run);
-      if (snapshot.events.some(({ type }) => type === "CRITICAL_HIT")) return { run, snapshot };
+      if (snapshot.events.some(({ type, entityId }) => type === "CRITICAL_HIT" && entityId === "commander")) {
+        return { run, snapshot };
+      }
     }
   }
   return null;
@@ -50,7 +68,7 @@ test("critical visual and audio observation is idempotent and cannot alter the d
   const result = criticalHitSnapshot();
   assert.ok(result, "a fixed Cinder Span search range must yield a public critical event");
   const { run, snapshot } = result;
-  const critical = snapshot.events.find(({ type }) => type === "CRITICAL_HIT");
+  const critical = snapshot.events.find(({ type, entityId }) => type === "CRITICAL_HIT" && entityId === "commander");
   const digest = getRunDigest(run);
   const originalSnapshot = structuredClone(snapshot);
   const audio = new DefenseAudio({ reducedMotion: true });

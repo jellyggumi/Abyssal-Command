@@ -27,6 +27,7 @@ import {
   COMMANDER,
   CUTSCENES,
   DROP_TTL_TICKS,
+  DIRECT_COMBAT,
   ENEMIES,
   ITEMS,
   MAX_FIELD_DROPS,
@@ -124,6 +125,18 @@ function objectiveOctant(snapshot) {
   return best;
 }
 
+function queueDirectAttackWhenAvailable(run) {
+  const snapshot = getRunSnapshot(run);
+  if (snapshot.growthOffer || snapshot.commander.verbState !== "IDLE") return run;
+  const reach = DIRECT_COMBAT.light[0].reach;
+  const targetInMelee = snapshot.enemies.some((enemy) => {
+    if (enemy.hp <= 0) return false;
+    const contactDistance = snapshot.commander.radius + enemy.radius + reach;
+    return squaredDistance(enemy, snapshot.commander) <= contactDistance ** 2;
+  });
+  return targetInMelee ? queueInput(run, "ATTACK_LIGHT") : run;
+}
+
 function queueObjectiveCommands(run, { extractElite = true, castSkills = true, moveOctant = null } = {}) {
   const snapshot = getRunSnapshot(run);
   if (snapshot.growthOffer) {
@@ -139,7 +152,7 @@ function queueObjectiveCommands(run, { extractElite = true, castSkills = true, m
   if (extractElite && snapshot.eliteCandidate && !snapshot.extracted) {
     next = queueInput(next, "EXTRACT_ELITE", { enemyId: snapshot.eliteCandidate.enemyId });
   }
-  return next;
+  return queueDirectAttackWhenAvailable(next);
 }
 
 function advanceThroughObjectives(run, maxSteps = OBJECTIVE_STEP_BUDGET, options = {}) {
@@ -691,7 +704,7 @@ test("an active zero-radius skill damages a single target", () => {
     const targetInRange = snapshot.enemies.some(
       (enemy) => squaredDistance(enemy, snapshot.commander) <= COMMANDER.basicRange ** 2,
     );
-    const damageSourcesIdle = snapshot.commander.basicCooldown > 1
+    const damageSourcesIdle = snapshot.commander.verbState === "IDLE"
       && snapshot.companions.every((companion) => companion.cooldown > 1)
       && snapshot.projectiles.every((projectile) => projectile.ttl > 1);
     const skillReady = (snapshot.commander.cooldowns?.[skillId] ?? 0) === 0;
@@ -715,7 +728,7 @@ test("an active zero-radius skill damages a single target", () => {
     if (snapshot.growthOffer) {
       run = queueInput(run, "SKILL_SELECTED", { skillId: snapshot.growthOffer.choices[0] });
     } else {
-      run = queueInput(run, "MOVE", { octant: "IDLE" });
+      run = queueDirectAttackWhenAvailable(queueInput(run, "MOVE", { octant: objectiveOctant(snapshot) }));
       if (snapshot.eliteCandidate && !snapshot.extracted) {
         run = queueInput(run, "EXTRACT_ELITE", { enemyId: snapshot.eliteCandidate.enemyId });
       }
@@ -787,7 +800,7 @@ test("catalog-selected measurement fixtures isolate their signed commander setup
     assert.equal(snapshot.measurementProfileId, profile.id);
     assert.equal(snapshot.commander.maxIntegrity, profile.maxIntegrity);
     assert.equal(snapshot.commander.integrity, profile.maxIntegrity);
-    assert.equal(snapshot.commander.basicTicks, profile.basicCooldownTicks);
+    assert.equal("basicTicks" in snapshot.commander, false, "measurement fixtures must not retain the retired automatic-attack cadence");
     assert.equal(snapshot.commander.basicDamage, profile.basicDamage);
     assert.deepEqual(snapshot.commander.critProfile, profile.critProfile);
     assert.deepEqual(snapshot.commander.skills, [profile.activeSkillId]);
@@ -810,9 +823,13 @@ test("measurement fixtures remain isolated through a deterministic combat interv
   let combatObserved = false;
 
   for (let tick = 0; tick < 360; tick += 1) {
-    run = advanceDefenseRun(run, 1);
+    const before = getRunSnapshot(run);
+    run = advanceDefenseRun(
+      queueDirectAttackWhenAvailable(queueInput(run, "MOVE", { octant: objectiveOctant(before) })),
+      1,
+    );
     combatObserved ||= getRunSnapshot(run).events.some(
-      (event) => event.type === "WEAPON_FIRED" && event.entityId === "commander",
+      (event) => event.type === "VERB_STARTED" && event.entityId === "commander",
     );
   }
   const snapshot = getRunSnapshot(run);
@@ -886,7 +903,7 @@ test("core event identities stay ordered and preserve spawn, cast, causal, and k
   let defeat = null;
 
   for (let tick = 0; tick < 360 && !defeat; tick += 1) {
-    laterRun = advanceDefenseRun(laterRun, 1);
+    laterRun = advanceDefenseRun(queueDirectAttackWhenAvailable(laterRun), 1);
     const tickEvents = getRunSnapshot(laterRun).events;
     laterEvents.push(...tickEvents);
     defeat = tickEvents.find((event) => event.type === "ENEMY_DEFEATED" && event.enemyId === resolution?.targetId) || null;
@@ -1259,16 +1276,24 @@ function withFieldDrops(run, count) {
 }
 
 /** Advances `steps` ticks through growth offers, tallying every event type seen on the way. */
-function driveWithLedger(run, steps) {
+function driveWithLedger(run, steps, { stationary = false } = {}) {
   const counts = new Map();
   let next = run;
   for (let step = 0; step < steps && !isTerminalRun(next); step += 1) {
     const snapshot = getRunSnapshot(next);
     if (snapshot.growthOffer) next = queueInput(next, "SKILL_SELECTED", { skillId: snapshot.growthOffer.choices[0] });
+    else {
+      const inputRun = stationary ? next : queueInput(next, "MOVE", { octant: objectiveOctant(snapshot) });
+      next = queueDirectAttackWhenAvailable(inputRun);
+    }
     next = advanceDefenseRun(next, 1);
     for (const event of getRunSnapshot(next).events) counts.set(event.type, (counts.get(event.type) || 0) + 1);
   }
   return { run: next, counts, count: (type) => counts.get(type) || 0 };
+}
+
+function driveAdversarialTape(run, steps) {
+  return driveWithLedger(run, steps, { stationary: true });
 }
 
 /** Every numeric leaf in a serialized snapshot, as `path -> value`. Array indices are kept. */
@@ -1393,32 +1418,36 @@ const sha256 = (value) => crypto.createHash("sha256").update(value).digest("hex"
 /*
  * REBASELINED 2026-07-31, cinder-span only: the ash gatehouse added two obstacles at the ingress
  * band of `cinder-span`, which changes what a cinder-span tick DOES (collision and the paths
- * enemies take through the doorway) and therefore moves these two windows. Scope was measured,
- * not assumed: `abyss-chancel/71/1000` and `echo-throne/12/500` re-measured to their existing SHAs
- * byte-for-byte, and all three rng-at-3000 fixtures below kept their pinned values, so nothing
- * outside stage 1 moved. Preconditions re-measured for both repinned windows: zero DROP_SPAWNED,
- * zero BUFF_APPLIED, window ran to completion, advanced dropRng, absent buffs/buffStats at
- * SNAPSHOT_VERSION 7.
+ * enemies take through the doorway) and therefore moved the cinder-span fixtures. Scope was measured,
+ * not assumed: `abyss-chancel/71/1000` re-measured to its existing SHA byte-for-byte, and all
+ * three rng-at-3000 fixtures below kept their pinned values, so nothing outside stage 1 moved.
+ * Preconditions re-measured for the repinned window: zero DROP_SPAWNED, zero BUFF_APPLIED, window
+ * ran to completion, advanced dropRng, absent buffs/buffStats at SNAPSHOT_VERSION 7.
+ */
+/*
+ * REBASELINED 2026-08-02, final direct-combat pacing: these adversarial tapes retain their
+ * established seeds and their stationary input program. `driveAdversarialTape` queues a light
+ * attack only when one is available; it does not introduce movement, because movement changes the
+ * encounter and kill cadence the tapes are meant to hold constant.
+ *
+ * Every fixture below completes at its stated tick with zero DROP_SPAWNED/BUFF_APPLIED events,
+ * advances dropRng, and has absent `buffs`/`buffStats` at SNAPSHOT_VERSION 7; each SHA is
+ * `sha256(getRunDigest(run))` from that remeasured direct-combat run.
  */
 const PRE_FEATURE_DIGEST_SHA256 = Object.freeze([
-  { label: "cinder-span/71/500 +ember-cohort", options: { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] }, steps: 500, sha: "396a06a49febbbb9d0995d1ee121ebad8f59a84aa6984f2ce2aeb769878c6550" },
-  { label: "cinder-span/71/500 bare", options: { stageId: "cinder-span", seed: 71, companionLoadout: [] }, steps: 500, sha: "980f019efc762928222acc3dbf91d837684e7e2dc262977f7a5f079098222521" },
-  { label: "abyss-chancel/71/1000 bare", options: { stageId: "abyss-chancel", seed: 71, companionLoadout: [] }, steps: 1000, sha: "ade3e989e89d3a3037ada50b5bebaa6a2f073cc395545d58efcb89313717805b" },
-  // Re-baselined 2026-07-31 (echo-throne wave-doctrine retune: four-class rotation, the
-  // normal/mid/normal/big/normal rhythm and a ranged mid-boss). The stage's schedule changed, so its
-  // snapshot bytes changed; the CLAIM is unchanged and was re-verified for this window — zero
-  // DROP_SPAWNED, zero BUFF_APPLIED, completed window, advanced dropRng, absent buff keys. The other
-  // three rows are byte-identical, which is what proves the retune stayed inside one stage.
-  { label: "echo-throne/12/500 bare", options: { stageId: "echo-throne", seed: 12, companionLoadout: [] }, steps: 500, sha: "01972547729aa402735cb70eef54c126a816ec062bc2e165a511e04de825107a" },
+  { label: "cinder-span/71/500 +ember-cohort", options: { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] }, steps: 500, sha: "6869c99a3add675bdbbab50574d3ad7badaddcd43d413ce8504a6ed9b66722ac" },
+  { label: "cinder-span/71/500 bare", options: { stageId: "cinder-span", seed: 71, companionLoadout: [] }, steps: 500, sha: "619ab30478623a13550d3ac66a8f22f762f53909d67af2f41af2038dea925ee6" },
+  { label: "abyss-chancel/71/1000 bare", options: { stageId: "abyss-chancel", seed: 71, companionLoadout: [] }, steps: 1000, sha: "5f908f3123abd43954f9498ee318698dd0e882d144aa0d16895a5e4a005b6c37" },
+  { label: "echo-throne/12/500 bare", options: { stageId: "echo-throne", seed: 12, companionLoadout: [] }, steps: 500, sha: "eaf3eecf78742e24055c99588a44e249d526beb5fa40a7e2179d4b71d2628a90" },
 ]);
 
 // ---------------------------------------------------------------------------------------------
 // CHECK 1 — zero-buff digest byte-identity
 // ---------------------------------------------------------------------------------------------
 
-test("gate check 1: a run that collects no buff drop keeps a digest byte-identical to the pre-feature build", () => {
+test("gate check 1: direct-input runs with no buff drop keep their pinned digest", () => {
   for (const fixture of PRE_FEATURE_DIGEST_SHA256) {
-    const ledger = driveWithLedger(createDefenseRun(fixture.options), fixture.steps);
+    const ledger = driveAdversarialTape(createDefenseRun(fixture.options), fixture.steps);
     const digest = getRunDigest(ledger.run);
     const snapshot = JSON.parse(digest);
 
@@ -1439,7 +1468,7 @@ test("gate check 1: a run that collects no buff drop keeps a digest byte-identic
     );
 
     // The additive claim itself.
-    assert.equal(sha256(digest), fixture.sha, `${fixture.label}: digest diverged from the pre-feature baseline`);
+    assert.equal(sha256(digest), fixture.sha, `${fixture.label}: digest diverged from the direct-input baseline`);
 
     // Absent, not empty: an empty `buffs: []` would still change the serialized bytes.
     assert.equal("buffs" in snapshot, false, `${fixture.label}: buffs must be absent, not empty`);
@@ -1450,8 +1479,8 @@ test("gate check 1: a run that collects no buff drop keeps a digest byte-identic
 
 test("gate check 1: two runs at one seed ticked identically with no buff produce string-equal digests, and a buffed run does not", () => {
   const options = { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] };
-  const left = driveWithLedger(createDefenseRun(options), 500);
-  const right = driveWithLedger(createDefenseRun(options), 500);
+  const left = driveAdversarialTape(createDefenseRun(options), 500);
+  const right = driveAdversarialTape(createDefenseRun(options), 500);
   assert.equal(left.count("BUFF_APPLIED"), 0);
   assert.equal(getRunDigest(left.run), getRunDigest(right.run));
 
@@ -1481,15 +1510,18 @@ test("gate check 1: two runs at one seed ticked identically with no buff produce
  * that build is §9 check 2's "build with the drop block deleted". Each row spawns drops in the
  * current build, so the stream is compared across a boundary where drop rolls demonstrably ran.
  */
-// Seed 3 repinned 2026-07-30 with the cycle-9 slice: growth offers draw from `run.rng`, and the
-// combat changes moved how many enemies die inside 3000 ticks, so the number of offers moved with
-// them. The other two seeds were re-measured and did NOT move. The invariant this gate protects --
-// the drop roll never touches the wave stream -- is unchanged and still asserted alongside its
-// positive pair (drops really spawned, dropRng really advanced, waveVariant byte-identical).
+/*
+ * REBASELINED 2026-08-02, final direct-combat pacing: the removed commander auto-attack changes
+ * the number and timing of kills, which changes the number of growth offers that legitimately
+ * consume `run.rng` during 3000 ticks. The literal inputs remain unchanged; their current,
+ * remeasured `run.rng` values are below. Each run spawned live drops and advanced only `dropRng`
+ * through that path, while its waveVariant remained byte-identical to creation. This preserves
+ * the gate's claim: drop rolls never touch the wave/growth stream.
+ */
 const PRE_FEATURE_RNG_AT_3000 = Object.freeze([
-  { options: { stageId: "cinder-span", seed: 9, companionLoadout: [] }, rng: 745195808 },
-  { options: { stageId: "cinder-span", seed: 3, companionLoadout: [] }, rng: 3246667586 },
-  { options: { stageId: "abyss-chancel", seed: 5, companionLoadout: ["ember-cohort"] }, rng: 3688787054 },
+  { options: { stageId: "cinder-span", seed: 9, companionLoadout: [] }, rng: 2225378768 },
+  { options: { stageId: "cinder-span", seed: 3, companionLoadout: [] }, rng: 3957678918 },
+  { options: { stageId: "abyss-chancel", seed: 5, companionLoadout: ["ember-cohort"] }, rng: 3901786627 },
 ]);
 
 test("gate check 2: 3000 ticks of live drop rolls leave run.rng and the wave schedule exactly where the pre-feature build left them", () => {
@@ -1998,4 +2030,171 @@ test("gate check 17: the identical kill sequence outside a measurement profile d
 
   assert.notEqual(ordinaryAfter.dropRng, ordinary.dropRng, "an ordinary run must advance the drop stream");
   assert.equal(getRunSnapshot(ordinaryAfter).events.filter((event) => event.type === "DROP_SPAWNED").length, 2);
+});
+
+function directCombatFixture(seed = 17) {
+  const spawned = advanceDefenseRun(createDefenseRun({ stageId: "cinder-span", seed }), 1);
+  const fixture = thawRun(spawned);
+  const template = fixture.enemies[0];
+  assert.ok(template, "the opening encounter must provide an enemy template");
+  const { x, y } = fixture.commander;
+  fixture.enemies = [
+    { ...template, id: "enemy-c", x: x + 1000, y, hp: 999999, attackCooldown: 999999, rangedCooldown: 999999 },
+    { ...template, id: "enemy-a", x: x + 800, y, hp: 999999, attackCooldown: 999999, rangedCooldown: 999999 },
+    { ...template, id: "enemy-b", x: x + 1200, y, hp: 999999, attackCooldown: 999999, rangedCooldown: 999999 },
+    { ...template, id: "enemy-out", x: x + 4000, y, hp: 999999, attackCooldown: 999999, rangedCooldown: 999999 },
+  ];
+  return fixture;
+}
+
+function advanceDirectRecovery(run, events = []) {
+  let next = run;
+  for (let tick = 0; tick <= DIRECT_COMBAT.heavy.recoveryTicks; tick += 1) {
+    if (getRunSnapshot(next).commander.verbState === "IDLE") return next;
+    next = advanceDefenseRun(next, 1);
+    events.push(...getRunSnapshot(next).events);
+  }
+  if (getRunSnapshot(next).commander.verbState === "IDLE") return next;
+  assert.fail("a direct verb must leave recovery within its authored maximum");
+}
+
+function actionEvents(snapshot, type, actionId) {
+  return snapshot.events.filter((event) => event.type === type && event.actionId === actionId);
+}
+
+test("direct light inputs progress LIGHT_1 through LIGHT_3 and contact each eligible target once in stable ID order", () => {
+  let run = directCombatFixture(401);
+  const expectedTargets = ["enemy-a", "enemy-b", "enemy-c"];
+
+  for (const [index, verb] of ["LIGHT_1", "LIGHT_2", "LIGHT_3"].entries()) {
+    run = advanceDefenseRun(queueInput(run, "ATTACK_LIGHT"), 1);
+    const snapshot = getRunSnapshot(run);
+    const started = snapshot.events.find((event) => event.type === "VERB_STARTED");
+
+    assert.equal(started?.verb, verb);
+    assert.equal(started?.comboStep, index + 1);
+    assert.ok(started?.actionId.startsWith(`${snapshot.plan.identity}:action:`), "action identity must remain plan-scoped");
+    if (index === 0) {
+      assert.deepEqual(actionEvents(snapshot, "MELEE_CONTACT", started.actionId).map(({ targetId }) => targetId), expectedTargets);
+      assert.deepEqual(actionEvents(snapshot, "MELEE_IMPACT", started.actionId).map(({ targetId }) => targetId), expectedTargets);
+      assert.equal(actionEvents(snapshot, "MELEE_CONTACT", started.actionId).length, new Set(expectedTargets).size);
+      assert.equal(actionEvents(snapshot, "MELEE_IMPACT", started.actionId).length, new Set(expectedTargets).size);
+      assert.equal(snapshot.enemies.find(({ id }) => id === "enemy-out")?.hp, 999999, "out-of-range targets must not be struck");
+    }
+    assert.equal(
+      snapshot.events.some((event) => event.type === "COMBO_ADVANCED" && event.actionId === started.actionId && event.comboStep === index + 1),
+      true,
+    );
+    run = advanceDirectRecovery(run);
+  }
+});
+
+test("legacy light, heavy, and directional dash inputs resolve their authored verbs", () => {
+  let legacy = advanceDefenseRun(queueInput(directCombatFixture(403), "ATTACK"), 1);
+  let snapshot = getRunSnapshot(legacy);
+  assert.equal(snapshot.events.find((event) => event.type === "VERB_STARTED")?.verb, "LIGHT_1", "legacy ATTACK must map to light one");
+  assert.equal(snapshot.events.find((event) => event.type === "INPUT_ACCEPTED")?.inputType, "ATTACK");
+
+  let heavy = advanceDefenseRun(queueInput(directCombatFixture(407), "ATTACK_HEAVY"), 1);
+  snapshot = getRunSnapshot(heavy);
+  const heavyStart = snapshot.events.find((event) => event.type === "VERB_STARTED");
+  assert.equal(heavyStart?.verb, "HEAVY");
+  assert.deepEqual(actionEvents(snapshot, "MELEE_CONTACT", heavyStart.actionId).map(({ targetId }) => targetId), ["enemy-a", "enemy-b", "enemy-c"]);
+  assert.deepEqual(actionEvents(snapshot, "MELEE_IMPACT", heavyStart.actionId).map(({ targetId }) => targetId), ["enemy-a", "enemy-b", "enemy-c"]);
+
+  let dash = advanceDefenseRun(queueInput(directCombatFixture(409), "MOVE", "E"), 1);
+  const beforeDash = getRunSnapshot(dash).commander;
+  dash = advanceDefenseRun(queueInput(dash, "DASH"), 1);
+  snapshot = getRunSnapshot(dash);
+  const dashStart = snapshot.events.find((event) => event.type === "VERB_STARTED");
+  const iframe = snapshot.events.find((event) => event.type === "DASH_IFRAME_START");
+  assert.equal(dashStart?.verb, "DASH");
+  assert.equal(iframe?.actionId, dashStart?.actionId);
+  assert.equal(snapshot.commander.dashCharges, DIRECT_COMBAT.dash.charges - 1);
+  assert.notDeepEqual(
+    { x: snapshot.commander.x, y: snapshot.commander.y },
+    { x: beforeDash.x, y: beforeDash.y },
+    "a directional dash must move the commander",
+  );
+});
+
+test("invalid, stale, and premature direct inputs reject visibly without starting or damaging an action", () => {
+  let malformed = advanceDefenseRun(queueInput(createDefenseRun({ stageId: "cinder-span", seed: 419 }), "DASH"), 1);
+  let snapshot = getRunSnapshot(malformed);
+  assert.equal(snapshot.events.find((event) => event.type === "INPUT_REJECTED")?.reason, "DASH_INVALID_DIRECTION");
+  assert.equal(snapshot.commander.actionId, null);
+  assert.equal(snapshot.commander.verbState, "IDLE");
+
+  const staleFixture = directCombatFixture(421);
+  staleFixture.inputs.push({
+    at: staleFixture.tick,
+    inputId: `${getRunSnapshot(staleFixture).plan.identity}:test:stale`,
+    type: "ATTACK_LIGHT",
+    payload: null,
+  });
+  const stale = advanceDefenseRun(staleFixture, 1);
+  snapshot = getRunSnapshot(stale);
+  assert.equal(snapshot.events.find((event) => event.type === "INPUT_REJECTED")?.reason, "STALE_DIRECT_INPUT");
+  assert.equal(snapshot.commander.actionId, null);
+  assert.equal(snapshot.events.some((event) => ["VERB_STARTED", "MELEE_CONTACT", "MELEE_IMPACT"].includes(event.type)), false);
+
+  let recovering = advanceDefenseRun(queueInput(directCombatFixture(431), "ATTACK_LIGHT"), 1);
+  const afterLight = getRunSnapshot(recovering);
+  const hitPoints = Object.fromEntries(afterLight.enemies.map(({ id, hp }) => [id, hp]));
+  recovering = advanceDefenseRun(queueInput(recovering, "ATTACK_HEAVY"), 1);
+  snapshot = getRunSnapshot(recovering);
+  assert.equal(snapshot.events.find((event) => event.type === "INPUT_REJECTED")?.reason, "VERB_RECOVERING");
+  assert.equal(snapshot.commander.actionId, afterLight.commander.actionId);
+  assert.deepEqual(Object.fromEntries(snapshot.enemies.map(({ id, hp }) => [id, hp])), hitPoints, "a premature verb must not apply another hit");
+});
+
+test("the commander produces no autonomous combat event or damage after the former basic cooldown", () => {
+  let run = directCombatFixture(433);
+  const hitPoints = Object.fromEntries(getRunSnapshot(run).enemies
+    .filter(({ id }) => id.startsWith("enemy-") && id !== "enemy-2")
+    .map(({ id, hp }) => [id, hp]));
+  const commanderCombat = [];
+
+  for (let tick = 0; tick <= COMMANDER.basicCooldown; tick += 1) {
+    run = advanceDefenseRun(run, 1);
+    const snapshot = getRunSnapshot(run);
+    commanderCombat.push(...snapshot.events.filter((event) =>
+      event.entityId === "commander" && ["VERB_STARTED", "MELEE_CONTACT", "MELEE_SWEEP", "MELEE_IMPACT", "WEAPON_FIRED"].includes(event.type)));
+  }
+
+  assert.deepEqual(commanderCombat, []);
+  assert.deepEqual(
+    Object.fromEntries(getRunSnapshot(run).enemies
+      .filter(({ id }) => Object.hasOwn(hitPoints, id))
+      .map(({ id, hp }) => [id, hp])),
+    hitPoints,
+  );
+});
+
+function replayDirectInputScript() {
+  let run = directCombatFixture(439);
+  const events = [];
+  const advance = (type, payload = null) => {
+    run = advanceDefenseRun(queueInput(run, type, payload), 1);
+    events.push(...getRunSnapshot(run).events);
+  };
+  const recover = () => { run = advanceDirectRecovery(run, events); };
+
+  advance("ATTACK_LIGHT");
+  recover();
+  advance("ATTACK_LIGHT");
+  recover();
+  advance("ATTACK_HEAVY");
+  recover();
+  advance("MOVE", "E");
+  advance("DASH");
+  return { digest: getRunDigest(run), events };
+}
+
+test("same seed and direct input script replay to the identical digest and event sequence", () => {
+  const left = replayDirectInputScript();
+  const right = replayDirectInputScript();
+
+  assert.equal(left.digest, right.digest);
+  assert.deepEqual(left.events, right.events);
 });
