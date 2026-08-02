@@ -1,0 +1,8 @@
+{
+  "runtimeEligible": false,
+  "source": "Original Lantern Reaver concept prompt; no third-party input image supplied.",
+  "generator": "god-tibo-imagen gti CLI through private Codex backend; responseId resp_0c78563359b8b0f4016a6f005562d88191a3ee73ebdac9af3c.",
+  "output": "_workspace/current/engineering/asset-pipeline/concept-input/lantern-reaver/lantern-reaver-concept.webp",
+  "rightsReceipt": "Pending human rights/provenance review; concept input is not approved for runtime promotion.",
+  "runtimeReceipt": "Concept-lane only. Not referenced by runtime, Pages, manifest, or service-worker allowlists."
+}

@@ -295,3 +295,24 @@ evidence_state: "[OBSERVED] — 실측·결정성 통과. p95 프레임 시간�
   `aoe-burst-wide-hit-contract`, `audio-sample-hybrid`, `combat-presentation-contract`,
   `world-presentation-contract`, `ingame-motion-pack`).
 - D-20260730-01의 모션 프로파일·방향 리액션·스테이지 카메라 봉투는 상류 리라이트 이후에도 유지된다.
+
+---
+
+## D-20260802-AON-01 — 상세 구현 워커 격리 규칙
+
+```yaml
+decision_id: D-20260802-AON-01
+date: 2026-08-02
+status: APPLIES_FROM_NEXT_IMPLEMENTATION
+scope: abbysal-oneline 2D/2.5D, PCG, 난이도, GitHub Pages 관련 상세 구현
+evidence_state: "[OBSERVED] gjc v0.12.5 --help 확인; 아직 이 규칙으로 실행된 구현 워커 없음"
+```
+
+### 결정
+
+**GO — 이후 상세 구현은 `gjc --tmux --worktree`로 독립 worktree와 tmux 세션을 가진 구현 워커에게 위임한다.**
+
+- 워커마다 명시적 파일 소유권, 검증 명령, handoff artifact를 지정한다. 하나의 shared worktree에서 여러 구현 워커를 실행하지 않는다.
+- `--tmux`는 interactive launcher이므로 parent가 반환값을 기다리는 subagent API가 아니다. 실행 세션의 확인·재접속은 `gjc session`으로 한다.
+- 비대화형 분석/짧은 결과만 필요한 경우에만 `gjc -p`를 사용한다. 탐색·리뷰·증거 수집은 이 규칙과 충돌하지 않는 별도 read-only worker로 둘 수 있다.
+- [TARGET] 이 결정은 다음 사용자 인터뷰에서 Stage 1–3 범위와 acceptance criteria가 동결된 뒤의 구현에 적용한다. 이 기록 자체는 코드·밸런스·Pages 배포를 완료했다는 뜻이 아니다.
