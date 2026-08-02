@@ -81,6 +81,7 @@ const telemetry = new DefenseTelemetry();
 const thumbnailService = new MeshThumbnailService();
 
 const STEP_MS = 1000 / TICK_RATE;
+const CINDER_STARTER_SKILL_ID = stageStoryFor("cinder-span")?.extractionReward?.skillId ?? null;
 const CAMERA_ORBIT_YAW_SENSITIVITY = 0.00372; // rad per logical px; full landscape width ~= 180deg
 const CAMERA_ORBIT_PITCH_SENSITIVITY = 0.00246; // rad per logical px; drag up = look down (steeper pitch)
 const CAMERA_PINCH_ZOOM_SENSITIVITY = 0.006; // zoomFactor delta per px of pinch-distance change
@@ -2077,6 +2078,9 @@ export class BattleSession {
           campaign.storyProgress?.extractedSkillLevels?.[skillId] ?? 1,
         ]),
       ),
+      initialSkillIds: stageId === "cinder-span" && campaign.resolvedIds.length === 0
+        ? [CINDER_STARTER_SKILL_ID]
+        : [],
       formation: campaign.companionFormation,
       // Stage-to-stage carry-over: the skill ranks and items the previous cleared stage
       // handed back. Lives here rather than at the constructor's call site so a pre-commit
@@ -3269,8 +3273,8 @@ export class BattleSession {
     this.renderRouteRail(snapshot);
     this.renderGimmickChip(snapshot);
     this.renderBuffStrip(snapshot);
+    this.renderControls(snapshot);
     if (this.started) {
-      this.renderControls(snapshot);
       this.renderPauseOverlay(snapshot);
       if (snapshot.terminal && !this.terminalHandled) void this.resolveTerminal(snapshot);
       this.renderEventFeedback(snapshot);
@@ -3858,6 +3862,14 @@ export class BattleSession {
         passives.dataset.passives = passiveMarkup;
         passives.innerHTML = passiveMarkup;
       }
+    }
+    if (!this.started) {
+      const actions = root.querySelector("#battle-actions");
+      if (actions?.dataset.actions) {
+        actions.dataset.actions = "";
+        actions.replaceChildren();
+      }
+      return;
     }
 
     // Scoped to the growth-offer card's own id (not the broader .edge-card

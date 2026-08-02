@@ -10,6 +10,7 @@ import {
   advanceDefenseRun,
   createDefenseRun,
   getRunSnapshot,
+  getRunDigest,
   queueInput,
 } from "../defense-run-simulation.js";
 
@@ -17,6 +18,43 @@ const STAGE_ID = "cinder-span";
 const STAGE = STAGE_BY_ID[STAGE_ID];
 const MAX_CRITICAL_SEEDS = 16;
 const MAX_CRITICAL_TICKS = 600;
+test("fresh Cinder exposes one ready authored starter skill and replays its cast", () => {
+  const fresh = createDefenseRun({
+    stageId: STAGE_ID,
+    seed: 41,
+    initialSkillIds: ["rift-bolt", "unknown-skill"],
+  });
+  const ready = getRunSnapshot(fresh);
+
+  assert.deepEqual(ready.commander.skills, ["rift-bolt"], "fresh Cinder must expose exactly one authored active skill");
+  assert.equal(ready.commander.cooldowns["rift-bolt"], 0, "the starter skill must be ready before the first tick");
+
+  const play = () => {
+    let run = createDefenseRun({ stageId: STAGE_ID, seed: 41, initialSkillIds: ["rift-bolt"] });
+    run = queueInput(run, "SKILL_CAST", { skillId: "rift-bolt" });
+    run = advanceDefenseRun(run, 1);
+    const snapshot = getRunSnapshot(run);
+    return {
+      digest: getRunDigest(run),
+      events: snapshot.events,
+    };
+  };
+
+  const first = play();
+  const replay = play();
+  assert.deepEqual(first, replay, "the same seed and skill input must replay the same digest and event sequence");
+  assert.ok(
+    first.events.some((event) => event.type === "SKILL_CAST" && event.skillId === "rift-bolt"),
+    "the authored starter skill must accept SKILL_CAST",
+  );
+
+  const rejected = advanceDefenseRun(
+    queueInput(createDefenseRun({ stageId: STAGE_ID, seed: 41, initialSkillIds: ["rift-bolt"] }), "SKILL_CAST", { skillId: "unknown-skill" }),
+    1,
+  );
+  const rejection = getRunSnapshot(rejected).events.find((event) => event.type === "INPUT_REJECTED");
+  assert.equal(rejection?.reason, "SKILL_NOT_READY_OR_UNAVAILABLE", "unknown skill ids must remain rejected");
+});
 
 function advanceCollectingEvents(run, steps) {
   let next = run;
