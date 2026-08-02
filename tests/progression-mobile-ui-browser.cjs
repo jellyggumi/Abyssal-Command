@@ -264,6 +264,36 @@ after(async () => {
   await new Promise((resolve) => hosting?.host.close(resolve));
 });
 
+test("BattleSession grants the ready Cinder starter only to a fresh Cinder preview", async () => {
+  const fresh = await openPage({ campaign: createCampaign({ campaignId: "fresh-cinder-starter", resetEpoch: 1 }) });
+  try {
+    await launch(fresh);
+    await dismissOpeningCutscene(fresh);
+    const freshStarter = fresh.page.locator('#skill-actions [data-cast="rift-bolt"]');
+    await freshStarter.waitFor({ state: "visible" });
+    assert.equal(await fresh.surface.getAttribute("data-stage-id"), "cinder-span", "a fresh campaign must mount the Cinder session");
+    assert.equal(await fresh.page.locator("#skill-actions [data-cast]").count(), 1, "the fresh Cinder session must render exactly one active skill");
+    assert.equal(await freshStarter.isDisabled(), false, "the fresh Cinder starter must be cast-ready");
+    assert.match(await freshStarter.textContent() ?? "", /준비됨/, "the fresh Cinder control must expose its ready state");
+    assert.deepEqual(fresh.errors, [], "the fresh Cinder session must render the starter control without browser errors");
+  } finally {
+    await fresh.context.close();
+  }
+
+  const resolved = await openPage({ campaign: storyRewardCampaign() });
+  try {
+    assert.equal(await resolved.surface.getAttribute("data-stage-id"), "abyss-chancel", "the resolved campaign must mount its unlocked non-Cinder stage");
+    assert.equal(await resolved.page.locator('#skill-actions [data-cast="rift-bolt"]').count(), 0, "a non-Cinder session must not receive Cinder's starter");
+
+    await resolved.page.locator("#stage-progression").selectOption("cinder-span");
+    await resolved.page.locator('#defense-battle-surface[data-stage-id="cinder-span"]').waitFor({ state: "attached" });
+    assert.equal(await resolved.page.locator('#skill-actions [data-cast="rift-bolt"]').count(), 0, "a resolved Cinder session must not receive the fresh-campaign starter");
+    assert.deepEqual(resolved.errors, [], "stage remounting must not emit browser errors");
+  } finally {
+    await resolved.context.close();
+  }
+});
+
 test("story rewards drive extracted-skill and appearance controls through persisted campaign state", async () => {
   const run = await openPage({ campaign: storyRewardCampaign(), rendererProbe: true });
   try {

@@ -5005,7 +5005,7 @@ function applyCarryOver(state, carryOver) {
  * `formation` is the saved per-companion FRONT/BACK intent map. It deterministically chooses
  * companion position rank at run creation; the active stance still derives the live slot count
  * from STANCE_CONFIG every tick. See resolveFormation(). */
-export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rewardIds = [], measurementProfileId = null, wardenProgress = null, wardenEquipment = {}, companionEquipment = {}, formation = {}, extractedSkillRanks = null, carryOver = null, abyssDepth = 0, companionCapacity = null } = {}) {
+export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rewardIds = [], measurementProfileId = null, wardenProgress = null, wardenEquipment = {}, companionEquipment = {}, formation = {}, extractedSkillRanks = null, initialSkillIds = [], carryOver = null, abyssDepth = 0, companionCapacity = null } = {}) {
   const stage = stageFor(stageId);
   const stagePlan = stagePlanFor(stage);
   const unsignedSeed = (seed >>> 0) || 1;
@@ -5054,7 +5054,9 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
   const critProfile = measurementProfile ? clone(measurementProfile.critProfile) : clone(COMMANDER.critProfile);
   const initialSkills = measurementProfile
     ? [...(measurementProfile.activeSkillIds || [measurementProfile.activeSkillId])]
-    : [];
+    : [...new Set(Array.isArray(initialSkillIds) ? initialSkillIds : [])]
+      .filter((skillId) => SKILLS[skillId]?.kind === "active")
+      .sort();
   const initialSkillRanks = Object.fromEntries(initialSkills.map((skillId) => [skillId, 1]));
   const initialCooldowns = Object.fromEntries(initialSkills.map((skillId) => [skillId, 0]));
 
