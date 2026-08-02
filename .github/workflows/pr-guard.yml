@@ -195,6 +195,7 @@ jobs:
           node tests/sealbound-browser.cjs > results/browser/sealbound-browser.txt || status=failed
           node tests/defense-performance-browser.cjs > results/browser/defense-performance-browser.txt || status=failed
           printf '{"gate":"browser_contract","status":"%s"}\n' "$status" > results/browser_contract.json
+          test "$status" = passed
 
       - name: Decide
         id: decide

@@ -466,7 +466,7 @@ async function measureRafPartition(browser, hosting, partitions, label) {
     }
     assert.equal((await clockSnapshot(page)).pending, 1, `${label} must retain exactly one pending frame`);
     assert.deepEqual(failures, [], `${label} must not emit page, console, or request errors`);
-    return snapshot(page);
+    return await snapshot(page);
   } finally {
     await context.close();
   }

@@ -412,4 +412,12 @@ test("the PR guard runs the Sealbound browser contract once in route order", asy
     [spriteCommand, sealboundCommand, performanceCommand],
     "Sealbound must run immediately after sprite-2.5D and before defense performance",
   );
+  const browserGateLines = browserGate.groups.body.split("\n").map((line) => line.trim());
+  const receiptCommand = `printf '{"gate":"browser_contract","status":"%s"}\\n' "$status" > results/browser_contract.json`;
+  const receiptIndex = browserGateLines.indexOf(receiptCommand);
+  assert.deepEqual(
+    browserGateLines.slice(receiptIndex, receiptIndex + 2),
+    [receiptCommand, `test "$status" = passed`],
+    "browser gate must fail the step immediately after recording a failed aggregate receipt",
+  );
 });
