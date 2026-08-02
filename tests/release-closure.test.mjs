@@ -123,7 +123,7 @@ const DIRECT_RUNTIME_ASSETS = Object.freeze([
 const RUNTIME_PATHS = [
   "index.html", "sprite-2-5d.html", "sprite-2-5d.css", "sprite-2-5d.js", "sealbound.html", "sealbound.css", "sealbound.js", "app.js", "rpg-catalog.js", "stage-world-catalog.js", "stage-story-catalog.js", "defense-viewport.js", "defense-catalog.js", "defense-run-simulation.js",
   "campaign-state.js", "defense-storage.js", "defense-audio.js", "defense-cutscene.js", "defense-telemetry.js",
-  "battle-canvas-text.js", "battle-realtime-three.js", "battle-visualizer.js", "lobby-cinematic.js", "styles.css", "react-game-ui.css", "sw.js", "manifest.json", "icon.svg", "privacy.html",
+  "battle-canvas-text.js", "battle-realtime-three.js", "battle-visualizer.js", "lobby-cinematic.js", "styles.css", "react-game-ui.css", "sw.js", "manifest.json", "icon.svg", "privacy.html", "abbysal-oneline.html",
   "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
   "assets/icons/icon-192.png", "assets/icons/icon-512.png",
   ...UI_ICON_ASSETS,
@@ -284,7 +284,14 @@ test("version scripts enforce the exact defense rules version", async () => {
   for (const file of required) {
     const target = join(directory, file);
     await mkdir(dirname(target), { recursive: true });
-    await writeFile(target, file === "app.js" ? 'import "./bootstrap.js";\n' : "");
+    await writeFile(
+      target,
+      file === "app.js"
+        ? 'import "./bootstrap.js";\n'
+        : file === "abbysal-oneline.html"
+          ? '<!doctype html><html lang="ko"><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="styles.css"></head><body><nav aria-labelledby="mode-navigation-title"><h2 id="mode-navigation-title">모드 탐색</h2><a href="index.html">홈</a><a href="sprite-2-5d.html">스프라이트</a><a href="sealbound.html">실바운드</a></nav><main><h1>어비스 원라인</h1></main></body></html>'
+          : "",
+    );
   }
 
   const command = new URL("tests/pages-artifact-smoke.cjs", ROOT).pathname;
