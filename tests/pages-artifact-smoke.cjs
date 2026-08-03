@@ -149,16 +149,20 @@ function main() {
     !openingTags.some(([tag]) => /\son[\w:-]*/i.test(tag.replace(/"[^"]*"|'[^']*'/g, ""))),
     "abyssal-oneline.html must not include inline event handlers",
   );
+  // The campaign CTA points at campaign.html, not index.html. index.html became
+  // the sprite arena when the Three.js campaign moved to its own entry, and
+  // abyssal-oneline.html was repointed with it — this assertion was left behind
+  // and failed the Pages artifact gate on the already-correct markup.
   const campaignCtas = openingTags.filter(([tag, name]) => name.toLowerCase() === "a"
-    && /\bhref\s*=\s*(?:"index\.html"|'index\.html'|index\.html(?=[\s/>]))/i.test(tag));
+    && /\bhref\s*=\s*(?:"campaign\.html"|'campaign\.html'|campaign\.html(?=[\s/>]))/i.test(tag));
   assert.equal(
     campaignCtas.length,
     1,
-    "abyssal-oneline.html must have exactly one campaign CTA to index.html",
+    "abyssal-oneline.html must have exactly one campaign CTA to campaign.html",
   );
   assert.match(
     markup,
-    /<a\b[^>]*\bhref\s*=\s*(?:"index\.html"|'index\.html'|index\.html(?=[\s/>]))[^>]*>[\s\S]*?현재 전선 작전 로비 열기[\s\S]*?<\/a>/i,
+    /<a\b[^>]*\bhref\s*=\s*(?:"campaign\.html"|'campaign\.html'|campaign\.html(?=[\s/>]))[^>]*>[\s\S]*?현재 전선 작전 로비 열기[\s\S]*?<\/a>/i,
     "abyssal-oneline.html must label the campaign CTA as opening the current-front lobby",
   );
   const lockedReels = [...markup.matchAll(
