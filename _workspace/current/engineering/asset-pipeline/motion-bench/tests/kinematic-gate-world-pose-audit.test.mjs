@@ -1913,6 +1913,39 @@ function assertKeyOrder(actual, canonical, label) {
 }
 
 /**
+ * Field names the approved evidence writes as float literals even when the
+ * value is integral -- `"passThreshold": 1.0`, not `1`.
+ *
+ * This distinction is invisible to every assertion in this file that works on
+ * parsed JSON, because JavaScript has one number type: `JSON.parse('1')` and
+ * `JSON.parse('1.0')` are the same value, so `assert.equal(x, 1.0)` passes for
+ * both.  Python does distinguish them, and `json.dumps` writes `1` for an int
+ * and `1.0` for a float.  A renderer that declared its threshold as int `1`
+ * would emit a semantically identical manifest with different bytes, missing
+ * any pinned digest while every value-level check still passed -- so the
+ * literal form has to be asserted against the raw text.
+ */
+function integralFloatLiteralKeys(rawManifest) {
+  return new Set(
+    [...rawManifest.matchAll(/"(\w+)":\s*-?\d+\.0(?=[,\n\]])/g)].map((match) => match[1]),
+  );
+}
+
+/** Fail if any `keys` field is written as a bare integer rather than a float. */
+function assertFloatLiterals(rawManifest, keys, label) {
+  const demoted = [...rawManifest.matchAll(/"(\w+)":\s*(-?\d+)(?=[,\n\]])/g)]
+    .filter((match) => keys.has(match[1]))
+    .map((match) => `${match[1]}: ${match[2]}`);
+  assert.deepEqual(
+    [...new Set(demoted)],
+    [],
+    `${label}: these fields are float literals in the approved evidence but were emitted as bare integers; `
+      + "the digest is byte-sensitive, so an int-typed constant silently breaks the pin while every "
+      + "parsed-value assertion still passes",
+  );
+}
+
+/**
  * Exercise the renderer's argument validation without paying a Blender launch.
  * `bpy` is stubbed only so the module imports; every case below is refused
  * before any Blender call, so the stub is never actually driven.
@@ -2066,15 +2099,25 @@ describe("--camera-direction is validated and scoped to pose-pairs mode", () => 
 });
 
 // A single real-Blender run shared by the semantic assertions below.  Each
-// Blender launch costs seconds, so one bounded run (one selected pair, two
-// panels) is reused rather than re-rendered per test.
+// Blender launch costs seconds, so one bounded run is reused rather than
+// re-rendered per test.
+//
+// Two rows are selected, deliberately: one worst on the WORLD metric and one
+// worst on the LOCAL metric.  The local row is not redundant -- it takes a
+// different branch (`local-quaternion-delta`, resolving postLocalResidualDeg
+// while postWorldResidualDeg stays non-zero) and it is the only row here whose
+// residual is exactly zero, which is the shape the residuals input writes as a
+// bare `0`.  A renderer that echoes that value through `json.dumps` re-emits
+// `0` where the approved evidence has `0.0`.
 let semanticRunCache;
 function semanticPairRun() {
   if (semanticRunCache === undefined) {
     const residuals = writeScratchResiduals("semantic-residuals.json", [
-      // A real bone with a real 15.06-degree world residual: large enough that
+      // Worst on the world metric: a 15.06-degree residual, large enough that
       // PRE and POST cannot be confused for one another.
       residualRow("guard", "DEF-foot.L", 15.05661874166174, 15.056618741661838),
+      // Worst on the local metric, and zero on the world metric.
+      residualRow("guard", "DEF-toe.L", 0, 15.05661267365437),
       // The self-target reference: its model SHA equals the target rig's, so it
       // must be excluded before selection rather than rendered against itself.
       residualRow("human-command-boss", "DEF-foot.L", 0, 0),
@@ -2085,16 +2128,18 @@ function semanticPairRun() {
       "--pose-pairs", residuals,
       "--target-rig", POSE_PAIR_TARGET_RIG,
       "--actors-root", ACTORS_ROOT,
-      "--worst-n", "1",
+      "--worst-n", "2",
       "--out", outputRoot,
       "--camera-direction", cameraDirection.join(","),
     ]);
     const manifestPath = repositoryPath(join(outputRoot, "render-manifest.json"));
+    const rawManifest = existsSync(manifestPath) ? readFileSync(manifestPath, "utf8") : undefined;
     semanticRunCache = {
       result,
       outputRoot,
       cameraDirection,
-      manifest: existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, "utf8")) : undefined,
+      rawManifest,
+      manifest: rawManifest === undefined ? undefined : JSON.parse(rawManifest),
     };
   }
   return semanticRunCache;
@@ -2102,7 +2147,7 @@ function semanticPairRun() {
 
 describe("a pose pair renders one actor twice, PRE and POST, cropped to the selected bone", () => {
   test("the run succeeds and records the semantic pair schema", { skip: BLENDER_SKIP }, () => {
-    const { result, manifest, cameraDirection } = semanticPairRun();
+    const { result, manifest, rawManifest, cameraDirection } = semanticPairRun();
     assert.equal(result.status, 0, `pose-pair render failed: ${result.stderr || result.stdout}`);
     assert.ok(manifest, "a successful run must write render-manifest.json");
 
@@ -2114,23 +2159,38 @@ describe("a pose pair renders one actor twice, PRE and POST, cropped to the sele
     // camera placement, never rewritten in the evidence.
     assert.deepEqual(manifest.camera.direction, cameraDirection);
 
-    // The self-target actor is excluded, so exactly one pair is selected.
-    assert.equal(manifest.pairs.length, 1, "only the non-self-target candidate is selected");
-    const [pair] = manifest.pairs;
-    assert.equal(pair.actorId, "guard");
-    assert.equal(pair.bone, "DEF-foot.L");
-    assert.equal(pair.status, "passed");
-    assert.deepEqual(
-      pair.selectionReasons.slice().sort(),
-      ["localRestResidualDeg", "restResidualDeg"],
-      "a bone worst on both metrics records both selection reasons",
+    // Byte-level, not value-level: an int-typed constant would satisfy every
+    // assertion above and still emit `"passThreshold": 1` instead of `1.0`.
+    assertFloatLiterals(
+      rawManifest,
+      integralFloatLiteralKeys(readFileSync(repositoryPath(`${SEMANTIC_V3}/render-manifest.json`), "utf8")),
+      "rendered manifest",
     );
+
+    // The self-target actor is excluded, so the two guard rows are selected.
+    assert.equal(manifest.pairs.length, 2, "both guard rows are selected; the self-target is excluded");
+    assert.deepEqual(
+      manifest.pairs.map((row) => [row.bone, row.status]),
+      [["DEF-foot.L", "passed"], ["DEF-toe.L", "passed"]],
+      "ranked by the larger of the two metrics",
+    );
+    // Both rows sit inside both worst-2 lists here, so both carry both
+    // reasons.  Reason SHAPES (world-only, local-only, both) and worst-N
+    // truncation are covered by the selection probe below, which has enough
+    // rows for truncation to bite; this run exists to render, not to rank.
+    for (const row of manifest.pairs) {
+      assert.deepEqual(
+        row.selectionReasons.slice().sort(),
+        ["localRestResidualDeg", "restResidualDeg"],
+        `${row.bone} is inside both worst-2 lists`,
+      );
+    }
   });
 
   test("PRE and POST are the same actor under two different pose states", { skip: BLENDER_SKIP }, () => {
     const { manifest } = semanticPairRun();
     assert.ok(manifest, "a successful run must write render-manifest.json");
-    const [pair] = manifest.pairs;
+    const pair = manifest.pairs.find((row) => row.bone === "DEF-foot.L");
     const provenance = pair.transformProvenance;
 
     assert.equal(pair.panels.length, 2, "a semantic pair is exactly two panels");
@@ -2221,7 +2281,7 @@ describe("a pose pair renders one actor twice, PRE and POST, cropped to the sele
   test("the camera crops to the selected bone rather than framing the whole body", { skip: BLENDER_SKIP }, () => {
     const { manifest } = semanticPairRun();
     assert.ok(manifest, "a successful run must write render-manifest.json");
-    const [pair] = manifest.pairs;
+    const pair = manifest.pairs.find((row) => row.bone === "DEF-foot.L");
     const framing = pair.boneLocalFraming;
 
     assert.equal(framing.bone, pair.bone);
@@ -2246,6 +2306,43 @@ describe("a pose pair renders one actor twice, PRE and POST, cropped to the sele
     assert.ok(
       framing.cameraOrthoScale < 1,
       `a bone-local crop must be tighter than a whole-body frame, got ortho scale ${framing.cameraOrthoScale}`,
+    );
+  });
+
+  test("a local-metric row resolves the local delta and leaves the world delta alone", { skip: BLENDER_SKIP }, () => {
+    const { manifest } = semanticPairRun();
+    assert.ok(manifest, "a successful run must write render-manifest.json");
+    const pair = manifest.pairs.find((row) => row.bone === "DEF-toe.L");
+    assert.ok(pair, "the local-metric row must be selected");
+
+    // `local` is chosen only because a world delta would be degenerate here:
+    // the world residual is already zero, so aligning on it would be a no-op
+    // that renders two identical panels.
+    assert.equal(pair.restResidualDeg, 0);
+    assert.ok(pair.localRestResidualDeg > IMPORTER_TOLERANCE_DEG);
+    assert.equal(pair.visualizationMetric, "local");
+    assert.equal(pair.encoding, "local-quaternion-delta");
+    assert.equal(pair.transformProvenance.encoding, "local-quaternion-delta");
+
+    // A zero world residual is NOT a zero-residual no-op: the local metric is
+    // still out of tolerance, so a pose is applied.
+    assert.equal(pair.zeroResidualNoOp, false);
+    assert.equal(pair.transformProvenance.originalMatrixUsedForBothPanels, false);
+    assert.equal(pair.status, "passed");
+
+    // The selected metric resolves; the unselected one is free to stay
+    // non-zero, so asserting both would be wrong.
+    assert.equal(pair.postLocalResidualDeg, 0, "POST must resolve the local metric");
+
+    // Still a genuine two-state render.
+    const rendered = quaternionAngleDeg(
+      pair.panels[0].renderedSelectedWorldQuaternion,
+      pair.panels[1].renderedSelectedWorldQuaternion,
+    );
+    assert.ok(rendered > 1, `PRE and POST must differ, got ${rendered} degrees`);
+    assert.ok(
+      Math.abs(rendered - pair.appliedDeltaDeg) < 1e-3,
+      `rendered rotation ${rendered} must equal recorded delta ${pair.appliedDeltaDeg}`,
     );
   });
 });
@@ -2277,9 +2374,11 @@ function selectionRun() {
       "--out", outputRoot,
     ]);
     const manifestPath = repositoryPath(join(outputRoot, "render-manifest.json"));
+    const rawManifest = existsSync(manifestPath) ? readFileSync(manifestPath, "utf8") : undefined;
     selectionRunCache = {
       result,
-      manifest: existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, "utf8")) : undefined,
+      rawManifest,
+      manifest: rawManifest === undefined ? undefined : JSON.parse(rawManifest),
     };
   }
   return selectionRunCache;
@@ -2382,10 +2481,21 @@ describe("pose-pair selection unions both residual metrics and excludes the self
   });
 
   test("worst-N and the zero-residual no-op rows are recorded", { skip: BLENDER_SKIP }, () => {
-    const { manifest } = selectionRun();
+    const { manifest, rawManifest } = selectionRun();
     assert.ok(manifest, "a failed run must still write render-manifest.json before exiting non-zero");
 
     assert.equal(manifest.worstN, 2, "the manifest records the worst-N it was run with");
+
+    // This probe's rows carry residuals of exactly zero, and the residuals
+    // input writes those as a bare `0` -- which is how the real corpus writes
+    // all 344 of its zeros.  A renderer that echoes the parsed value straight
+    // back through `json.dumps` re-emits `0` where the approved evidence has
+    // `0.0`.  Checking it here costs nothing: these rows never render.
+    assertFloatLiterals(
+      rawManifest,
+      integralFloatLiteralKeys(readFileSync(repositoryPath(`${SEMANTIC_V3}/render-manifest.json`), "utf8")),
+      "selection-probe manifest",
+    );
 
     // `scout` carries a single row that is below tolerance on both metrics, so
     // it is selected anyway and must take the no-op path: no pose assignment,
@@ -2499,6 +2609,27 @@ describe("the approved pose-pair evidence satisfies the semantic contract", () =
       canonical.pair.indexOf("encoding") + 1,
       "zeroResidualNoOp follows encoding in the approved evidence",
     );
+  });
+
+  test("integral-valued fields are written as float literals, which the pinned digest depends on", () => {
+    const raw = readFileSync(repositoryPath(`${SEMANTIC_V3}/render-manifest.json`), "utf8");
+    const floatKeys = integralFloatLiteralKeys(raw);
+
+    // The threshold is the one most easily declared as an int by mistake: it
+    // is compared numerically everywhere and reads naturally as `1`.
+    assert.ok(floatKeys.has("passThreshold"), "passThreshold is a float literal in the approved evidence");
+    assert.match(raw, /"passThreshold": 1\.0(?=[,\n])/);
+    for (const key of ["keyEnergy", "fillEnergy", "restResidualDeg", "postWorldResidualDeg"]) {
+      assert.ok(floatKeys.has(key), `${key} is a float literal in the approved evidence`);
+    }
+    assertFloatLiterals(raw, floatKeys, "approved evidence");
+
+    // Genuine integers must stay integers: this is a float-vs-int contract,
+    // not a blanket "write everything with a decimal point" rule.
+    assert.match(raw, /"resolution": \[\n\s+640,\n\s+640\n\s+\]/);
+    for (const key of ["schemaVersion", "rank", "frame", "worstN", "pointCount", "totalPairs"]) {
+      assert.equal(floatKeys.has(key), false, `${key} is a genuine integer and must not gain a decimal point`);
+    }
   });
 
   test("the recorded selection is exactly the union of both worst-N residual metrics", () => {
