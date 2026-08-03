@@ -404,6 +404,92 @@ test("committed attackers never exceed the authored cap on any stage", () => {
   }
 });
 
+test("Cinder Span retry withdrawal cannot earn a wave-clear recovery", () => {
+  const stageId = "cinder-span";
+  const objective = STAGE_ENCOUNTER_ROUTES[stageId].objectives[0];
+  let run = createDefenseRun({ stageId, seed: 41, companionLoadout: FULL_LOADOUT });
+  let snapshot = getRunSnapshot(run);
+  const scheduledEvents = [];
+
+  for (let step = 0; step < 1200; step += 1) {
+    run = advanceDefenseRun(run, 1);
+    snapshot = getRunSnapshot(run);
+    scheduledEvents.push(...snapshot.events);
+    const hasLiveObjectiveEnemy = snapshot.enemies.some((enemy) =>
+      enemy.hp > 0 && enemy.encounterObjectiveId === objective.id);
+    const hasScheduledObjectiveWave = scheduledEvents.some((event) =>
+      event.type === "WAVE_VARIANT_STARTED" && event.objectiveId === objective.id);
+    const integrityWasDamaged = snapshot.commander.integrity < snapshot.commander.maxIntegrity
+      || snapshot.gate.integrity < snapshot.gate.maxIntegrity;
+    if (hasScheduledObjectiveWave && snapshot.encounter.pendingSpawnCount > 0
+        && hasLiveObjectiveEnemy && integrityWasDamaged) break;
+  }
+
+  assert.ok(
+    scheduledEvents.some((event) => event.type === "WAVE_VARIANT_STARTED" && event.objectiveId === objective.id),
+    "fixture must enter an actual scheduled wave for the retrying objective",
+  );
+  assert.equal(snapshot.encounter.status, "ACTIVE");
+  assert.ok(snapshot.encounter.pendingSpawnCount > 0, "the scheduled wave must retain pending spawns");
+  assert.ok(
+    snapshot.enemies.some((enemy) => enemy.hp > 0 && enemy.encounterObjectiveId === objective.id),
+    "the scheduled wave must retain a live objective enemy",
+  );
+  assert.ok(
+    snapshot.commander.integrity < snapshot.commander.maxIntegrity
+      || snapshot.gate.integrity < snapshot.gate.maxIntegrity,
+    "the fixture must leave recovery headroom for an accidental wave-clear award",
+  );
+
+  const rewardKeysBeforeRetry = [...snapshot.encounter.rewardKeys];
+  const retryIntegrity = {
+    commander: Math.max(
+      snapshot.commander.integrity,
+      Math.trunc((snapshot.commander.maxIntegrity * objective.retry.commanderFloorBp) / 10000),
+    ),
+    gate: Math.max(
+      snapshot.gate.integrity,
+      Math.trunc((snapshot.gate.maxIntegrity * objective.retry.gateFloorBp) / 10000),
+    ),
+  };
+  const recoveryEvents = [];
+  run = advanceDefenseRun(
+    queueInput(run, "RETRY_OBJECTIVE", { objectiveId: snapshot.encounter.objectiveId }),
+    1,
+  );
+  snapshot = getRunSnapshot(run);
+  assert.equal(snapshot.encounter.status, "RECOVERY");
+
+  while (snapshot.encounter.status === "RECOVERY") {
+    recoveryEvents.push(...snapshot.events);
+    assert.deepEqual(snapshot.encounter.rewardKeys, rewardKeysBeforeRetry);
+    assert.equal(snapshot.commander.integrity, retryIntegrity.commander);
+    assert.equal(snapshot.gate.integrity, retryIntegrity.gate);
+    run = advanceDefenseRun(run, 1);
+    snapshot = getRunSnapshot(run);
+  }
+
+  recoveryEvents.push(...snapshot.events);
+  assert.equal(snapshot.encounter.status, "ACTIVE");
+  assert.deepEqual(snapshot.encounter.rewardKeys, rewardKeysBeforeRetry);
+  assert.equal(recoveryEvents.filter(({ type }) => type === "WAVE_CLEARED").length, 0);
+
+  const postRetryEvents = [];
+  for (let step = 0; step < 5000 && !isTerminalRun(run); step += 1) {
+    run = advanceDefenseRun(queueProgressInputs(run), 1);
+    snapshot = getRunSnapshot(run);
+    postRetryEvents.push(...snapshot.events);
+    if (postRetryEvents.some((event) =>
+      event.type === "WAVE_CLEARED" && event.objectiveId === objective.id)) break;
+  }
+
+  const postRetryWaveClears = postRetryEvents.filter((event) =>
+    event.type === "WAVE_CLEARED" && event.objectiveId === objective.id);
+  assert.equal(postRetryWaveClears.length, 1, "the retried objective must award its first real wave clear once");
+  const postRetryRewardKeys = snapshot.encounter.rewardKeys.filter((key) => !rewardKeysBeforeRetry.includes(key));
+  assert.deepEqual(postRetryRewardKeys, [`wave:${postRetryWaveClears[0].waveIndex}`]);
+});
+
 test("objective failure and retry are idempotent for every stage", async (t) => {
   for (const stageId of STAGE_IDS) {
     await t.test(stageId, () => {

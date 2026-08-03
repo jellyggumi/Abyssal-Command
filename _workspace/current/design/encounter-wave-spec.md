@@ -2,7 +2,7 @@
 
 ```yaml
 run_id: 20260729-three-stage-refinement
-status: "[CURRENT] — catalog-authored encounter truth with one explicit ordering gap"
+status: "[CURRENT] — catalog-authored encounter truth with recovery ordering closure"
 title: Abyssal Lantern
 owner_skill: author-game-levels + design-game-encounters
 authorities:
@@ -94,8 +94,7 @@ An intermediate objective completes only when:
 Completion grants its authored one-time recovery, emits `ENCOUNTER_OBJECTIVE_COMPLETED`, advances the
 immutable objective index, then emits `ENCOUNTER_OBJECTIVE_STARTED` for the next gate. The renderer may
 use those events for waypoint transition; it does not infer completion from absence of models.
-`[OBSERVED GAP]` Neither encounter event is currently mapped in `AUDIO_EVENT_POLICY`, and the completion
-event is not mapped in `VFX_MODELS`; §8 defines reuse of existing cue/effect vocabulary rather than a new event.
+Both encounter events are mapped in `AUDIO_EVENT_POLICY`; `ENCOUNTER_OBJECTIVE_COMPLETED` is mapped in `VFX_MODELS`. The mappings reuse existing cue/effect vocabulary and do not add event aliases.
 
 Every scheduled wave slot belongs to exactly one objective in ascending objective order. Duplicate,
 missing, out-of-range, or backward slot ownership invalidates the stage.
@@ -151,9 +150,7 @@ On player-triggered recovery:
 2. Objective-owned pending spawns are removed.
 3. Commander/gate rise only to the authored floors, never above current higher values.
 4. `ENCOUNTER_OBJECTIVE_FAILED` and `ENCOUNTER_RECOVERY_STARTED` expose reason, attempt, countdown.
-5. `[TARGET]` During recovery there is no enemy admission, camera orbit, warning spam, or hidden damage.
-   `[OBSERVED GAP]` `processObjectivePressure()` currently does not gate pulses on `RECOVERY`; that gap
-   must fail the recovery acceptance capture until the runtime lane closes it.
+5. `[SHIPPED]` During recovery there is no enemy admission, warning spam, hidden damage, or wave-clear grant. `processObjectivePressure()` exits for `RECOVERY`; `processEncounterRecovery()` shifts the pressure clock by the exact paused duration; `processWaveClearRecovery()` exits before interpreting recovery withdrawal as a clear. `[OBSERVED GAP]` The renderer has no `RECOVERY` camera branch yet; held camera/no-orbit remains an event-consumer contract.
 6. At expiry, `ENCOUNTER_RETRY_STARTED` increments the attempt and re-enqueues only that objective's
    previously started wave indices.
 
@@ -184,11 +181,11 @@ it may not duplicate the boss, pre-play `EXTRACTION_COMPLETED`, or synthesize a 
 | Encounter event | Joint-motion intent | Camera/VFX intent | Audio intent |
 |---|---|---|---|
 | `STAGE_STARTED` | commander `show`, then `idle/run` | stage-authored intro and ambient loop | `stage-start`; soundscape `descent` |
-| `ENCOUNTER_OBJECTIVE_STARTED` | locomotion remains responsive | ease toward objective; preserve ingress arrow | `[TARGET GAP]` reuse `objective-waypoint` priority 60; event currently unmapped |
+| `ENCOUNTER_OBJECTIVE_STARTED` | locomotion remains responsive | ease toward objective; preserve ingress arrow | `[SHIPPED]` `objective-waypoint` priority 60 |
 | `WAVE_VARIANT_STARTED` | spawned actor `show`, then routed locomotion | normal/big/mid camera tier; routed ingress equivalent | `warning-pulse` priority 64; `active-wave` |
 | `MIDBOSS_SPAWNED` | midboss `show` | bounded emphasis; no route occlusion | `warning-pulse` priority 82 |
-| `ENCOUNTER_OBJECTIVE_FAILED` / recovery | withdraw without death celebration; survivors return to locomotion/offstage | static retry countdown, no shake/orbit | `[TARGET GAP]` reuse `interrupt-alert` at objective-failure priority 84; event currently unmapped |
-| `ENCOUNTER_OBJECTIVE_COMPLETED`, `WAVE_CLEARED` | finish live one-shot before locomotion | `[TARGET GAP]` reuse objective/ember completion VFX for encounter completion; wave clear already mapped | `[TARGET GAP]` reuse `objective-complete` priority 64 for encounter completion; wave clear already uses 58 |
+| `ENCOUNTER_OBJECTIVE_FAILED` / recovery | withdraw without death celebration; survivors return to locomotion/offstage | static retry countdown, no shake/orbit | `[SHIPPED]` `interrupt-alert` at objective-failure priority 84 |
+| `ENCOUNTER_OBJECTIVE_COMPLETED`, `WAVE_CLEARED` | finish live one-shot before locomotion | `[SHIPPED]` route completion reuses objective/ember completion VFX; wave clear retains its existing mapping | `[SHIPPED]` `objective-complete` priority 64 for encounter completion; wave clear uses 58 |
 | `BOSS_SPAWNED` | boss `show`; semantic attacks/reactions thereafter | `FINALE`, fracture echo, telegraphs preserved | `boss-spawned` priority 90; state `boss` |
 | `TERMINAL` | `die` or held victory silhouette | retire transient clutter, preserve outcome/extraction direction | priority 100; `victory`/`defeat` |
 
@@ -215,16 +212,14 @@ event alias, duplicate simulation emission, or new cue/effect ID.
 | `enc-audio-priority` | Objective failure, midboss, boss, and terminal cues remain audible at the 12-voice cap; wave/kill texture yields first. |
 | `enc-vfx-budget` | One ambient stage cue plus transient pool `≤24`; warning/objective meaning remains under low quality and reduced motion. |
 | `enc-animation-continuity` | Spawn/show, routed locomotion, attack/reaction, withdrawal/retry, death, and boss transitions show no bind-pose frame or stale queued reaction. |
-| `enc-route-contract` | After the runtime ordering gap is closed, deterministic captures traverse ingress → both listed intermediate objectives → existing boss path → existing extraction point for all three stages. |
+| `enc-route-contract` | Deterministic captures traverse ingress → both listed intermediate objectives → existing boss path → existing extraction point for all three stages. |
 | `enc-glitch-reset` | Ten fail/retry/stage-reset cycles leave no duplicate reward key, withdrawn enemy, stale route arrow, ambient mixer, transient VFX, or audio voice. |
 
 ## 10. Source IDs
 
 - `defense-catalog.js#STAGE_TACTICS`, `#STAGE_ENCOUNTER_ROUTES`,
   `#STAGE_WAVE_DOCTRINE`, `#WAVE_KIND_PROFILE`, `#buildDoctrineWavePlan`, `#STAGES`
-- `defense-run-simulation.js#encounterStateFor`, `#enqueueEncounterWave`,
-  `#processEncounterSpawns`, `#beginEncounterRecovery`, `#processEncounterRecovery`,
-  `#updateEncounterObjective`, `#updateObjectivePhase`, `#processWaveClearRecovery`, `#spawnBoss`
+- `defense-run-simulation.js#encounterStateFor`, `#enqueueEncounterWave`, `#processEncounterSpawns`, `#beginEncounterRecovery`, `#processEncounterRecovery`, `#updateEncounterObjective`, `#updateObjectivePhase`, `#processObjectivePressure`, `#processWaveClearRecovery`, `#spawnBoss`
 - `stage-world-catalog.js#STAGE_WORLD_PROFILES`, `#validateProfile`, `#STAGE_SHOWCASE_IDS`
 - `battle-realtime-three.js#triggerCombatActions`, `#spawnVfx`, `#CAMERA_PHASE_TIERS`
 - `defense-audio.js#AUDIO_EVENT_POLICY`, `#audioSoundscapeForEvent`, `#DefenseAudio`
