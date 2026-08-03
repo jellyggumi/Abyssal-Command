@@ -1,0 +1,146 @@
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: register[0m
+[a_Rodin.utils-[33mWRN[0m]: [33mPort 61863 is in use[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mon_scene_load[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mensure_default_image[0m
+[a_Rodin.utils-[33mWRN[0m]: [33mServer running on port 61864[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: unregister[0m
+BlenderMCP: cannot start server in background mode (blender -b) - commands would never execute
+BlenderMCP: run Blender with a GUI, or use a virtual display: xvfb-run -a blender
+BlenderMCP addon registered
+BlenderMCP server stopped
+BlenderMCP addon unregistered
+18:28:57 | INFO: Data are loaded, start creating Blender stuff
+18:28:57 | INFO: Blender create Mesh node model.003
+18:28:57 | INFO: Blender create Mesh node model.005
+18:28:57 | INFO: Blender create Mesh node model.007
+18:28:57 | INFO: Blender create Mesh node model.009
+18:28:57 | INFO: Blender create Mesh node model.001
+18:28:57 | INFO: Blender create Mesh node model.002
+18:28:57 | INFO: Blender create Mesh node model.004
+18:28:57 | INFO: Blender create Mesh node model.006
+18:28:57 | INFO: Blender create Mesh node model.008
+18:28:57 | INFO: glTF import finished in 0.07s
+18:28:57 | INFO: Data are loaded, start creating Blender stuff
+18:28:57 | INFO: Blender create Mesh node model
+18:28:57 | INFO: glTF import finished in 0.17s
+18:28:57 | INFO: Data are loaded, start creating Blender stuff
+18:28:57 | INFO: Blender create Mesh node model.003
+18:28:57 | INFO: Blender create Mesh node model.005
+18:28:57 | INFO: Blender create Mesh node model.007
+18:28:57 | INFO: Blender create Mesh node model.009
+18:28:57 | INFO: Blender create Mesh node model.001
+18:28:57 | INFO: Blender create Mesh node model.002
+18:28:57 | INFO: Blender create Mesh node model.004
+18:28:57 | INFO: Blender create Mesh node model.006
+18:28:57 | INFO: Blender create Mesh node model.008
+18:28:57 | INFO: glTF import finished in 0.14s
+18:28:57 | INFO: Data are loaded, start creating Blender stuff
+18:28:57 | INFO: Blender create Mesh node model.003
+18:28:57 | INFO: Blender create Mesh node model.005
+18:28:57 | INFO: Blender create Mesh node model.007
+18:28:58 | INFO: Blender create Mesh node model.009
+18:28:58 | INFO: Blender create Mesh node model.001
+18:28:58 | INFO: Blender create Mesh node model.002
+18:28:58 | INFO: Blender create Mesh node model.004
+18:28:58 | INFO: Blender create Mesh node model.006
+18:28:58 | INFO: Blender create Mesh node model.008
+18:28:58 | INFO: glTF import finished in 0.12s
+18:28:58 | INFO: Data are loaded, start creating Blender stuff
+18:28:58 | INFO: Blender create Mesh node model.003
+18:28:58 | INFO: Blender create Mesh node model.005
+18:28:58 | INFO: Blender create Mesh node model.007
+18:28:58 | INFO: Blender create Mesh node model.009
+18:28:58 | INFO: Blender create Mesh node model.001
+18:28:58 | INFO: Blender create Mesh node model.002
+18:28:58 | INFO: Blender create Mesh node model.004
+18:28:58 | INFO: Blender create Mesh node model.006
+18:28:58 | INFO: Blender create Mesh node model.008
+18:28:58 | INFO: glTF import finished in 0.07s
+
+@@@BLENDER_PROBE_BEGIN@@@
+
+### CANONICAL human-command-boss
+    armature object quat (xyzw): [0.0, 0.0, 0.0, 1.0]
+    DEF-spine      parent=None           restArmature=[0.0, -0.707107, -0.707107, 0.0]
+                   restParentRel=[0.0, -0.707107, -0.707107, 0.0]
+    DEF-spine.001  parent=DEF-spine      restArmature=[0.0, 0.707107, 0.707107, 0.0]
+                   restParentRel=[0.0, -0.0, 0.0, 1.0]
+    DEF-foot.L     parent=DEF-shin.L     restArmature=[-0.0, -0.171995, 0.985098, 0.0]
+                   restParentRel=[-0.0, -0.818188, 0.57495, 0.0]
+    DEF-toe.L      parent=DEF-foot.L     restArmature=[-2e-06, 0.049814, -0.998759, 0.0]
+                   restParentRel=[0.12271, -2e-06, -0.0, 0.992443]
+
+### CANONICAL dusk-warden
+    armature object quat (xyzw): [0.0, 0.0, 0.0, 1.0]
+    DEF-spine      parent=None           restArmature=[0.707107, 0.0, 0.0, 0.707107]
+                   restParentRel=[0.707107, 0.0, 0.0, 0.707107]
+    DEF-spine.001  parent=DEF-spine      restArmature=[0.707107, 0.0, 0.0, 0.707107]
+                   restParentRel=[-0.0, 0.0, -0.0, 1.0]
+    DEF-foot.L     parent=DEF-shin.L     restArmature=[-0.940414, 0.0, -0.0, 0.34003]
+                   restParentRel=[-0.424536, 0.0, -0.0, 0.905411]
+    DEF-toe.L      parent=DEF-foot.L     restArmature=[-0.998758, 0.0, -3e-06, 0.049814]
+                   restParentRel=[-0.292763, 2e-06, -1e-06, 0.956185]
+
+### ACTOR shadow-commander-boss
+    armature object quat (xyzw): [0.0, 0.0, 0.0, 1.0]
+    DEF-spine      parent=None           restArmature=[0.0, -0.707107, -0.707107, 0.0]
+                   restParentRel=[0.0, -0.707107, -0.707107, 0.0]
+    DEF-spine.001  parent=DEF-spine      restArmature=[0.0, 0.707107, 0.707107, 0.0]
+                   restParentRel=[0.0, -0.0, 0.0, 1.0]
+    DEF-foot.L     parent=DEF-shin.L     restArmature=[-0.0, 0.319528, -0.947577, 0.0]
+                   restParentRel=[0.0, 0.895978, -0.444098, 0.0]
+    DEF-toe.L      parent=DEF-foot.L     restArmature=[-2e-06, 0.049814, -0.998759, 0.0]
+                   restParentRel=[0.271929, -2e-06, -0.0, 0.962317]
+
+### ACTOR shadow-soldier-v04
+    armature object quat (xyzw): [0.0, 0.0, 0.0, 1.0]
+    DEF-spine      parent=None           restArmature=[0.0, -0.707107, -0.707107, 0.0]
+                   restParentRel=[0.0, -0.707107, -0.707107, 0.0]
+    DEF-spine.001  parent=DEF-spine      restArmature=[0.0, 0.707107, 0.707107, 0.0]
+                   restParentRel=[0.0, -0.0, 0.0, 1.0]
+    DEF-foot.L     parent=DEF-shin.L     restArmature=[-0.0, 0.274293, -0.961646, 0.0]
+                   restParentRel=[0.0, 0.873941, -0.486032, 0.0]
+    DEF-toe.L      parent=DEF-foot.L     restArmature=[-2e-06, 0.049814, -0.998759, 0.0]
+                   restParentRel=[0.22605, -2e-06, -0.0, 0.974116]
+
+### ACTOR guard
+    armature object quat (xyzw): [0.0, 0.0, 0.0, 1.0]
+    DEF-spine      parent=None           restArmature=[0.0, -0.707107, -0.707107, 0.0]
+                   restParentRel=[0.0, -0.707107, -0.707107, 0.0]
+    DEF-spine.001  parent=DEF-spine      restArmature=[0.0, 0.707107, 0.707107, 0.0]
+                   restParentRel=[-0.0, -0.0, -0.0, 1.0]
+    DEF-foot.L     parent=DEF-shin.L     restArmature=[-0.0, 0.299576, -0.954072, 0.0]
+                   restParentRel=[0.0, 0.886463, -0.462799, 0.0]
+    DEF-toe.L      parent=DEF-foot.L     restArmature=[-2e-06, 0.049814, -0.998758, 0.0]
+                   restParentRel=[0.251678, -2e-06, -0.0, 0.967811]
+
+### RESIDUALS measured inside Blender (frozen abs() contract), ARMATURE space
+actor                       vs canonical          bone             armatureDeg  parentRelDeg
+shadow-commander-boss       human-command-boss    DEF-spine            0.00000       0.00000
+shadow-commander-boss       human-command-boss    DEF-spine.001        0.00000       0.00000
+shadow-commander-boss       human-command-boss    DEF-foot.L          17.46101      17.46092
+shadow-commander-boss       human-command-boss    DEF-toe.L            0.00000      17.46110
+shadow-soldier-v04          human-command-boss    DEF-spine            0.00000       0.00000
+shadow-soldier-v04          human-command-boss    DEF-spine.001        0.00000       0.00000
+shadow-soldier-v04          human-command-boss    DEF-foot.L          12.03208      12.03202
+shadow-soldier-v04          human-command-boss    DEF-toe.L            0.00000      12.03215
+guard                       human-command-boss    DEF-spine            0.00000       0.00000
+guard                       human-command-boss    DEF-spine.001        0.00000       0.00000
+guard                       human-command-boss    DEF-foot.L          15.05649      15.05644
+guard                       human-command-boss    DEF-toe.L            0.00000      15.05660
+shadow-commander-boss       dusk-warden           DEF-spine          180.00000     180.00000
+shadow-commander-boss       dusk-warden           DEF-spine.001      180.00000       0.00000
+shadow-commander-boss       dusk-warden           DEF-foot.L         180.00000     180.00000
+shadow-commander-boss       dusk-warden           DEF-toe.L          179.99943      65.60505
+shadow-soldier-v04          dusk-warden           DEF-spine          180.00000     180.00000
+shadow-soldier-v04          dusk-warden           DEF-spine.001      180.00000       0.00000
+shadow-soldier-v04          dusk-warden           DEF-foot.L         180.00000     180.00000
+shadow-soldier-v04          dusk-warden           DEF-toe.L          179.99943      60.17611
+guard                       dusk-warden           DEF-spine          180.00000     180.00000
+guard                       dusk-warden           DEF-spine.001      180.00000       0.00000
+guard                       dusk-warden           DEF-foot.L         180.00000     180.00000
+guard                       dusk-warden           DEF-toe.L          179.99943      63.20052
+@@@BLENDER_PROBE_END@@@
+Blender 5.1.2 (hash ec6e62d40fa9 built 2026-05-19 01:30:33)
+
+Blender quit

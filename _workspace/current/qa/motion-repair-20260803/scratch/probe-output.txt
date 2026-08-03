@@ -1,0 +1,108 @@
+####################################################################################################
+# 1. ANCESTRY ABOVE DEF-spine  (H2 probe: is the armature-object basis identical on both sides?)
+####################################################################################################
+
+human-command-boss-def-humanoid-v1:
+   node[ 34] human-command-boss rot=identity (absent)
+   node[ 33] human-command-boss_armature rot=identity (absent)
+   node[ 23] DEF-spine        rot=[  0.000000,  -1.000000,   0.000000,   0.000000]
+
+dusk-warden-def-humanoid-v1:
+   node[ 26] dusk-warden      rot=identity (absent)
+   node[ 25] dusk-warden_armature rot=identity (absent)
+   node[ 23] DEF-spine        rot=[ -0.000000,   0.000000,  -0.000000,   1.000000]
+
+shadow-commander-boss:
+   node[ 34] shadow-commander-boss rot=identity (absent)
+   node[ 33] shadow-commander-boss_armature rot=identity (absent)
+   node[ 23] DEF-spine        rot=[  0.000000,  -1.000000,   0.000000,   0.000000]
+
+shadow-soldier-v04:
+   node[ 34] shadow-soldier-v04 rot=identity (absent)
+   node[ 33] shadow-soldier-v04_armature rot=identity (absent)
+   node[ 23] DEF-spine        rot=[  0.000000,  -1.000000,   0.000000,   0.000000]
+
+guard:
+   node[ 34] guard            rot=identity (absent)
+   node[ 33] guard_armature   rot=identity (absent)
+   node[ 23] DEF-spine        rot=[  0.000000,  -1.000000,   0.000000,   0.000000]
+
+####################################################################################################
+# 2. DEF-spine LOCAL + WORLD QUATERNIONS
+####################################################################################################
+
+--- DEF-spine ---
+   human-command-boss-def-humanoid-v1   local=[  0.000000,  -1.000000,   0.000000,   0.000000]  world=[  0.000000,  -1.000000,   0.000000,   0.000000]
+   dusk-warden-def-humanoid-v1          local=[ -0.000000,   0.000000,  -0.000000,   1.000000]  world=[ -0.000000,   0.000000,  -0.000000,   1.000000]
+   shadow-commander-boss                local=[  0.000000,  -1.000000,   0.000000,   0.000000]  world=[  0.000000,  -1.000000,   0.000000,   0.000000]
+   shadow-soldier-v04                   local=[  0.000000,  -1.000000,   0.000000,   0.000000]  world=[  0.000000,  -1.000000,   0.000000,   0.000000]
+   guard                                local=[  0.000000,  -1.000000,   0.000000,   0.000000]  world=[  0.000000,  -1.000000,   0.000000,   0.000000]
+
+--- DEF-spine.001 ---
+   human-command-boss-def-humanoid-v1   local=[  0.000000,  -0.000000,   0.000000,   1.000000]  world=[  0.000000,  -1.000000,   0.000000,   0.000000]
+   dusk-warden-def-humanoid-v1          local=[ -0.000000,   0.000000,  -0.000000,   1.000000]  world=[ -0.000000,   0.000000,  -0.000000,   1.000000]
+   shadow-commander-boss                local=[  0.000000,  -0.000000,   0.000000,   1.000000]  world=[  0.000000,  -1.000000,   0.000000,   0.000000]
+   shadow-soldier-v04                   local=[  0.000000,  -0.000000,   0.000000,   1.000000]  world=[  0.000000,  -1.000000,   0.000000,   0.000000]
+   guard                                local=[  0.000000,  -0.000000,   0.000000,   1.000000]  world=[  0.000000,  -1.000000,   0.000000,  -0.000000]
+
+--- DEF-foot.L ---
+   human-command-boss-def-humanoid-v1   local=[ -0.000000,  -0.818188,   0.574951,   0.000000]  world=[  0.000000,  -0.574951,  -0.818188,   0.000000]
+   dusk-warden-def-humanoid-v1          local=[ -0.424536,   0.000000,  -0.000000,   0.905411]  world=[  0.905411,   0.000000,   0.000000,   0.424536]
+   shadow-commander-boss                local=[ -0.000000,   0.895978,  -0.444098,   0.000000]  world=[  0.000000,   0.444098,   0.895978,   0.000000]
+   shadow-soldier-v04                   local=[ -0.000000,   0.873941,  -0.486032,   0.000000]  world=[  0.000000,   0.486032,   0.873941,   0.000000]
+   guard                                local=[ -0.000000,   0.886463,  -0.462799,   0.000000]  world=[  0.000000,   0.462799,   0.886463,   0.000000]
+
+--- DEF-toe.L ---
+   human-command-boss-def-humanoid-v1   local=[  0.122710,  -0.000001,  -0.000000,   0.992443]  world=[ -0.000001,  -0.671005,  -0.741453,  -0.000001]
+   dusk-warden-def-humanoid-v1          local=[ -0.292763,   0.000002,  -0.000001,   0.956185]  world=[  0.741453,   0.000002,   0.000002,   0.671005]
+   shadow-commander-boss                local=[  0.271929,  -0.000001,  -0.000000,   0.962317]  world=[  0.000001,   0.671005,   0.741452,   0.000001]
+   shadow-soldier-v04                   local=[  0.226050,  -0.000001,  -0.000000,   0.974116]  world=[  0.000001,   0.671005,   0.741453,   0.000001]
+   guard                                local=[  0.251678,  -0.000001,  -0.000000,   0.967811]  world=[  0.000001,   0.671005,   0.741453,   0.000001]
+
+####################################################################################################
+# 3. RESIDUALS: frozen contract (with abs) vs a hypothetical missing-abs implementation
+####################################################################################################
+
+=== canonical target rig: human-command-boss-def-humanoid-v1 ===
+actor                 bone              world(abs)   local(abs)  world(noabs)  local(noabs)
+shadow-commander-boss DEF-spine            0.00000      0.00000       0.00000       0.00000
+shadow-commander-boss DEF-spine.001        0.00000      0.00000       0.00000       0.00000
+shadow-commander-boss DEF-foot.L          17.46108     17.46108     180.00000     180.00000
+shadow-commander-boss DEF-toe.L            0.00000     17.46109     180.00000      17.46109
+shadow-soldier-v04    DEF-spine            0.00000      0.00000       0.00000       0.00000
+shadow-soldier-v04    DEF-spine.001        0.00000      0.00000       0.00000       0.00000
+shadow-soldier-v04    DEF-foot.L          12.03213     12.03213     180.00000     180.00000
+shadow-soldier-v04    DEF-toe.L            0.00000     12.03213     180.00000      12.03213
+guard                 DEF-spine            0.00000      0.00000       0.00000       0.00000
+guard                 DEF-spine.001        0.00000      0.00000       0.00001       0.00001
+guard                 DEF-foot.L          15.05662     15.05662     180.00000     180.00000
+guard                 DEF-toe.L            0.00000     15.05661     180.00000      15.05661
+
+=== canonical target rig: dusk-warden-def-humanoid-v1 ===
+actor                 bone              world(abs)   local(abs)  world(noabs)  local(noabs)
+shadow-commander-boss DEF-spine          180.00000    180.00000     180.00000     180.00000
+shadow-commander-boss DEF-spine.001      180.00000      0.00000     180.00000       0.00000
+shadow-commander-boss DEF-foot.L         179.99997    179.99998     179.99997     179.99998
+shadow-commander-boss DEF-toe.L          179.99959     65.60501     179.99959      65.60501
+shadow-soldier-v04    DEF-spine          180.00000    180.00000     180.00000     180.00000
+shadow-soldier-v04    DEF-spine.001      180.00000      0.00000     180.00000       0.00000
+shadow-soldier-v04    DEF-foot.L         179.99997    179.99998     179.99997     179.99998
+shadow-soldier-v04    DEF-toe.L          179.99959     60.17604     179.99959      60.17604
+guard                 DEF-spine          180.00000    180.00000     180.00000     180.00000
+guard                 DEF-spine.001      179.99999      0.00000     180.00000       0.00002
+guard                 DEF-foot.L         179.99997    179.99998     179.99997     179.99998
+guard                 DEF-toe.L          179.99959     63.20053     179.99959      63.20053
+
+####################################################################################################
+# 4. FULL 22-BONE SPREAD PER CANONICAL RIG (uniform ~180 => H1/H2; scattered => H3)
+####################################################################################################
+
+=== human-command-boss-def-humanoid-v1 ===
+  shadow-commander-boss: n=22 worldMax=17.46108 localMax=17.46109 bonesOver90=0 []
+  shadow-soldier-v04: n=22 worldMax=12.03213 localMax=12.03213 bonesOver90=0 []
+  guard: n=22 worldMax=15.05662 localMax=15.05662 bonesOver90=0 []
+
+=== dusk-warden-def-humanoid-v1 ===
+  shadow-commander-boss: n=22 worldMax=180.00000 localMax=180.00000 bonesOver90=10 [DEF-spine DEF-spine.001 DEF-spine.002 DEF-spine.003 DEF-spine.004 DEF-spine.005 DEF-foot.L DEF-toe.L DEF-foot.R DEF-toe.R]
+  shadow-soldier-v04: n=22 worldMax=180.00000 localMax=180.00000 bonesOver90=10 [DEF-spine DEF-spine.001 DEF-spine.002 DEF-spine.003 DEF-spine.004 DEF-spine.005 DEF-foot.L DEF-toe.L DEF-foot.R DEF-toe.R]
+  guard: n=22 worldMax=180.00000 localMax=180.00000 bonesOver90=10 [DEF-spine DEF-spine.001 DEF-spine.002 DEF-spine.003 DEF-spine.004 DEF-spine.005 DEF-foot.L DEF-toe.L DEF-foot.R DEF-toe.R]
