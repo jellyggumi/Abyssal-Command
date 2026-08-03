@@ -192,6 +192,18 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
       `${name} timeout-minutes must be a positive GitHub Actions-bounded value`,
     );
   }
+  const resolveRevision = job(workflow, "resolve_revision");
+  assert.match(
+    resolveRevision,
+    /^    timeout-minutes: 30$/m,
+    "resolve_revision must leave enough bounded time to fetch a rollback revision",
+  );
+  assert.match(
+    resolveRevision,
+    /fetch-depth: \$\{\{ github\.event_name == 'workflow_dispatch' && '0' \|\| '1' \}\}/,
+    "resolve_revision must fetch full history only for dispatch rollbacks and shallow history for pushes",
+  );
+
 
 
   for (const name of ["engine_contract", "release_closure", "browser_contract"]) {

@@ -86,14 +86,14 @@ env:
 jobs:
   resolve_revision:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     outputs:
       sha: ${{ steps.revision.outputs.sha }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.rollback_revision || github.sha }}
-          fetch-depth: 0
+          fetch-depth: ${{ github.event_name == 'workflow_dispatch' && '0' || '1' }}
       - id: revision
         shell: bash
         env:
