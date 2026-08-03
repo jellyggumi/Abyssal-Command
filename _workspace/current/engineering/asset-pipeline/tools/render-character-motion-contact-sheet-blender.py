@@ -876,8 +876,13 @@ def render_pose_pairs(args: argparse.Namespace) -> int:
             "bone": bone,
             "rank": rank,
             "frame": 0,
-            "restResidualDeg": row["restResidualDeg"],
-            "localRestResidualDeg": row["localRestResidualDeg"],
+            # float() at the boundary, not a verbatim echo: the residuals input
+            # writes an exact zero as bare `0`, which json.dumps would re-emit as
+            # `0` rather than `0.0`. That is the same value but different bytes,
+            # so a manifest carrying it would miss a pinned digest while reading
+            # as correct through any JSON parser.
+            "restResidualDeg": float(row["restResidualDeg"]),
+            "localRestResidualDeg": float(row["localRestResidualDeg"]),
             "selectionReasons": reasons,
             "pair": str(pair.relative_to(REPO_ROOT)),
             "actorModel": str(actor_model.relative_to(REPO_ROOT)),
@@ -911,8 +916,8 @@ def render_pose_pairs(args: argparse.Namespace) -> int:
             entry["transformProvenance"] = measured["transformProvenance"]
             entry["boneLocalFraming"] = measured["boneLocalFraming"]
             entry["panels"] = measured["panels"]
-            entry["preWorldResidualDeg"] = row["restResidualDeg"]
-            entry["preLocalResidualDeg"] = row["localRestResidualDeg"]
+            entry["preWorldResidualDeg"] = float(row["restResidualDeg"])
+            entry["preLocalResidualDeg"] = float(row["localRestResidualDeg"])
             entry["postWorldResidualDeg"] = measured["postWorldResidualDeg"]
             entry["postLocalResidualDeg"] = measured["postLocalResidualDeg"]
             entry["appliedDeltaQuaternion"] = measured["appliedDeltaQuaternion"]
