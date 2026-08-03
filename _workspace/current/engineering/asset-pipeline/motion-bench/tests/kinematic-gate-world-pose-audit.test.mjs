@@ -928,7 +928,11 @@ class OpaqueAction:
 def install_stub_bpy():
     bpy = types.ModuleType("bpy")
     armature = types.SimpleNamespace(type="ARMATURE", name="rig", data=types.SimpleNamespace(bones=[]))
-    def import_gltf(filepath):
+    def import_gltf(filepath, guess_original_bind_pose=True, **kwargs):
+        # The stub refuses the default rather than tolerating it: left True,
+        # Blender rebuilds armature rest from the inverse bind matrices and the
+        # tool measures a re-posed rig instead of the shipped one.
+        assert guess_original_bind_pose is False, "import_scene.gltf must pass guess_original_bind_pose=False"
         bpy.data.actions = bpy._actions_by_path.get(filepath, bpy.data.actions)
     bpy.ops = types.SimpleNamespace(
         wm=types.SimpleNamespace(read_factory_settings=lambda **kwargs: None),
@@ -1679,5 +1683,68 @@ describe("pose-pair render evidence", () => {
       }
     }
     assert.equal(renderedFiles.size, 110, "55 pose rows retain one canonical and one actor PNG each");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Bind-pose import contract.
+//
+// Blender's glTF importer defaults `guess_original_bind_pose` to True, which
+// rebuilds armature rest from the inverse bind matrices instead of reading the
+// authored `node.rotation` chain. Every Blender-side tool here measures rest
+// pose, so a bare `import_scene.gltf(filepath=...)` call risks measuring a
+// re-derived rig rather than the shipped one.
+// scripts/measure-joint-articulation.py already documents and pins the flag;
+// this regression holds the pipeline tools to the same contract statically, so
+// a future bare call is caught without needing a Blender run.
+// ---------------------------------------------------------------------------
+
+const BIND_POSE_TOOLS = Object.freeze([
+  `${TOOLS_DIR}/render-character-motion-contact-sheet-blender.py`,
+  `${TOOLS_DIR}/derive-kinematic-bounds-blender.py`,
+]);
+
+/** Every `import_scene.gltf(...)` call site with its balanced argument text. */
+function gltfImportCallSites(source) {
+  const marker = "import_scene.gltf(";
+  const sites = [];
+  let cursor = source.indexOf(marker);
+  while (cursor !== -1) {
+    const open = cursor + marker.length - 1;
+    let depth = 0;
+    let end = open;
+    while (end < source.length) {
+      const character = source[end];
+      if (character === "(") {
+        depth += 1;
+      } else if (character === ")") {
+        depth -= 1;
+        if (depth === 0) {
+          break;
+        }
+      }
+      end += 1;
+    }
+    assert.ok(depth === 0 && end < source.length, `unbalanced import_scene.gltf( call at offset ${cursor}`);
+    sites.push({ line: source.slice(0, cursor).split("\n").length, args: source.slice(open + 1, end) });
+    cursor = source.indexOf(marker, end);
+  }
+  return sites;
+}
+
+describe("Blender-side tools import glTF without re-deriving armature rest", () => {
+  test("every import_scene.gltf call in both Blender tools disables bind-pose guessing", () => {
+    for (const relative of BIND_POSE_TOOLS) {
+      const sites = gltfImportCallSites(readFileSync(repositoryPath(relative), "utf8"));
+      assert.ok(sites.length >= 1, `${relative} must contain at least one import_scene.gltf call site`);
+      const bare = sites.filter((site) => !/guess_original_bind_pose\s*=\s*False/.test(site.args));
+      assert.deepEqual(
+        bare.map((site) => site.line),
+        [],
+        `${relative}: import_scene.gltf call(s) on the listed line(s) must pass guess_original_bind_pose=False, `
+          + "matching scripts/measure-joint-articulation.py; otherwise Blender rebuilds armature rest from the "
+          + "inverse bind matrices instead of the authored node.rotation chain",
+      );
+    }
   });
 });

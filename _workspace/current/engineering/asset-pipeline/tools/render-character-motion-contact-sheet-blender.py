@@ -283,9 +283,23 @@ def static_camera(scene: bpy.types.Scene) -> bpy.types.Object:
     return camera
 
 
+def import_actor_gltf(path: Path) -> None:
+    # `guess_original_bind_pose` must stay False. Left at its default, Blender
+    # rebuilds the armature rest pose from the inverse bind matrices instead of
+    # reading `node.rotation`, so a rig whose rest pose was corrected without
+    # rebaking its IBMs is silently re-posed back to the pre-correction pose and
+    # measured as if the correction never happened. Same rule and reason as
+    # `scripts/measure-joint-articulation.py:113-122`.
+    bpy.ops.import_scene.gltf(
+        filepath=str(path),
+        guess_original_bind_pose=False,
+        bone_heuristic="BLENDER",
+    )
+
+
 def render_static_pose(model: Path, output: Path, label_text: str, bone: str) -> None:
     reset_scene()
-    bpy.ops.import_scene.gltf(filepath=str(model))
+    import_actor_gltf(model)
     scene = bpy.context.scene
     armatures = [obj for obj in scene.objects if obj.type == "ARMATURE"]
     if len(armatures) != 1 or bone not in armatures[0].pose.bones:
@@ -382,7 +396,7 @@ def main() -> int:
     keypose_dir.mkdir(parents=True, exist_ok=True)
 
     reset_scene()
-    bpy.ops.import_scene.gltf(filepath=str(model))
+    import_actor_gltf(model)
     scene = bpy.context.scene
     armatures = [obj for obj in scene.objects if obj.type == "ARMATURE"]
     if len(armatures) != 1:

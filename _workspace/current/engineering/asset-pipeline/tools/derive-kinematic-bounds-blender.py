@@ -92,7 +92,15 @@ def reset_scene() -> None:
 
 def import_glb(path: Path) -> bpy.types.Object:
     reset_scene()
-    bpy.ops.import_scene.gltf(filepath=str(path))
+    # `guess_original_bind_pose` must stay False: left at its default, Blender
+    # rebuilds the armature rest from the inverse bind matrices rather than
+    # reading `node.rotation`, silently re-posing the rig this tool measures.
+    # Same rule and reason as `scripts/measure-joint-articulation.py:113-122`.
+    bpy.ops.import_scene.gltf(
+        filepath=str(path),
+        guess_original_bind_pose=False,
+        bone_heuristic="BLENDER",
+    )
     armatures = [obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE"]
     if len(armatures) != 1:
         raise KinematicGateError("KG_TARGET_RIG", f"expected one armature in {path}, found {len(armatures)}")
