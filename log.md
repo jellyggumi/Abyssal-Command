@@ -53,6 +53,92 @@ Each entry should list the files touched, the reason for the change, and any fol
   failure. Browser proof green on all three stages, 12 props each, zero console errors.
 - Digest gates repinned for cinder-span only; `abyss-chancel`, `echo-throne` and all three
   rng-at-3000 fixtures re-measured unchanged.
+## [2026-07-31] report | Stage 2 abyss-chancel composition + a validator blind spot
+
+- Executed the authored chancel composition (`_workspace/current/design/stage-dungeon-composition-spec.md`
+  §2.2/§3.3/§5.2/§6) as the atomic unit the cycle-10 retrospective specified: props, landmarks,
+  anchors, obstacles and routes in one commit. 13 props (7 obstacles), 6 landmarks, 4 motivated
+  lights, 4 fog breaks, critical route re-threaded through both objective points, detour moved to
+  the northern mirror aisle. Bound coordinates untouched.
+- Found and fixed a defect the spec would have shipped: two obstacles sat on
+  `STAGE_ENCOUNTER_ROUTES` spawn approaches (`narthex-debris` −453 over `chancel-south-entry`,
+  `nave-seal` −54 over `chancel-nave-north`). `validateProfile` never checks those paths, so the
+  module imported cleanly and every suite stayed green while a measured run collapsed from 81 spawns
+  / 7 cleared waves to 27 / 1. After the minimal correction: 83 spawns, 10 waves, boss reached.
+- Durable fix: `scripts/search-stage-dungeon-layout.mjs` gained the spawn-approach clearance filter
+  and a `--verify` mode that runs the whole filter set against an authored profile. Recorded in
+  `prompts/approved/03-procedural-layout.md` v2 and in the concept page.
+- The verifier then found two more overlaps on `echo-throne` (`fractured-dais` −19,
+  `gallery-debris` −75); both corrected, with measured runs unchanged (60 spawns, 9 waves, boss on
+  both builds).
+- Pacing: chancel now completes on every measured seed (199-204 s) where `origin/main` never
+  completed (bot capped at 325 s in gate-defense). Doctrine window is 180-360 s.
+- Evidence: focused suites 64/64 plus gate checks 11/11; full `node --test 'tests/**/*.test.mjs'`
+  607 tests, 577 pass, 5 fail — the same five pre-existing failures verified red on a pristine
+  `origin/main` worktree. Browser proof green on all three stages (chancel now 13 props).
+- Digest gates needed no repin: the pinned `abyss-chancel` and `echo-throne` windows re-measured
+  byte-identical, consistent with the cycle-10 finding that those windows never reach the changed
+  circles.
+
+## [2026-07-31] report | Stage 3 echo-throne composition — the spec's last stage lands
+
+- Executed the authored throne composition (`stage-dungeon-composition-spec.md` §2.3/§3.4/§5.3/§5.4)
+  as one atomic change: 13 props (7 obstacles), 6 landmarks, 4 motivated lights, 5 fog breaks, and
+  both routes re-authored. Bound coordinates untouched.
+- Critical route now runs the mirror axis with both intermediate waypoints on the encounter
+  objective points; the detour enters the north gallery, cuts the aisle at (10100, 6000) and exits
+  south, so the optional path physically performs the stage's mirror.
+- `fractured-dais-prop` moves to (19200, 7600) and shrinks r900 -> r700. The cycle-10 retrospective
+  flagged this as load-bearing: keeping r900 there fails the critical route by -700. At r700 it
+  clears by 200, reproducing the spec's claimed +200.00 exactly.
+- `--verify` now passes for all three stages: cinder 50, chancel 419, throne 200 route margin,
+  every spawn approach clear.
+- Pacing unchanged and inside band (209-222 s vs 209-217 s baseline, complete on every seed).
+- Evidence: focused suites 54/54 plus gate checks 11/11 with no digest repin needed; full
+  `node --test 'tests/**/*.test.mjs'` 607 tests, 577 pass, 5 fail — the same five pre-existing
+  failures. Browser proof green on all three stages (12 / 13 / 13 props).
+
+## [2026-07-31] report | Terrain tiles: the floor contract becomes machine-checked
+
+- Authored `gameplay.terrainTiles` for all three stages (3 / 4 / 5 slabs) matching the slab quads
+  the promoted terrain GLBs already ship, and re-authored the support mesh from one bounds-spanning
+  quad into two triangles per tile, in tile order.
+- Added the spec §6.1 validator extension: slab ids now pass through `claimId` (closing spec risk
+  R8, where a slab id could silently duplicate a route or prop id), rects must be integer and inside
+  bounds, tiles may not overlap, `Σ tileArea` must equal the bounds area exactly, the support mesh
+  must carry two triangles per tile, and each tile's triangles must lie inside its own rect.
+- Added `tests/stage-terrain-tiles-contract.test.mjs` (4 tests): exact tiling, per-tile triangle
+  ownership, every `plateNode` resolving inside the shipped GLB, and three negative controls that
+  import mutated copies of the real catalog and assert each new clause rejects.
+- Evidence: new suite 4/4; focused stage suites 54/54; gate checks 11/11 with no digest movement
+  (partitioning a flat quad changes its description, not its geometry); full
+  `node --test 'tests/**/*.test.mjs'` 611 tests, 581 pass, 5 fail — the same five pre-existing
+  failures. Browser proof green with `terrainIntegrity.meshCount` 4 / 5 / 6, matching 3 / 4 / 5
+  slabs plus one apron per stage.
+- Not included: gimmicks (spec §4), seam inlay geometry (R11), per-slab material merge.
+  `materialId` is authored but unread — recorded so the renderer has a source of truth later.
+
+## [2026-07-31] report | Gimmick catalog: the spatial half lands with its gates
+
+- Authored `gameplay.gimmicks[]` for all three stages (4 / 4 / 5 = 13) exactly per spec §4.2-4.4,
+  ids frozen because `EncounterPacing`, `VfxCueDesign` and `AudioFeedbackDesign` already address
+  them verbatim. Multi-point gimmicks keep the ruled single-`placement` shape and carry their extra
+  footprints in `satellitePlacements`.
+- Additive validator clauses: `claimId` on every gimmick, class enum, per-class telegraph tier
+  (deformation 180 / gate 120 or 90 / mirror 90 / hazard 60), `slabId` naming a real terrain tile
+  **and the footprint sitting inside that tile's rect**, `objectiveId` naming a real objective,
+  a declared narrowing never widening, every objective covered, and **V17**: any corridor change
+  must leave >= 900, since COMMANDER.radius 360 means the commander's diameter is 720 while the
+  generic corridor floor is only 600.
+- Added `tests/stage-gimmick-catalog.test.mjs` (5 tests): coverage and ordering, the V17 floor read
+  from `COMMANDER.radius` rather than hardcoded, per-slab containment, ring gimmicks matching their
+  occupation geometry, and four negative controls importing mutated copies of the real catalog.
+- Nothing at runtime reads the new field yet, and the report says so: the simulation half (arming,
+  the `gimmickRng` stream, the GIMMICK_* events, the R12 `event.type` dispatch discipline) is owned
+  by the lane currently working `defense-run-simulation.js`.
+- Evidence: new suite 5/5; stage suites 50/50; gate checks 11/11 with no digest movement; full
+  `node --test 'tests/**/*.test.mjs'` 616 tests, 586 pass, 5 fail -- the same five pre-existing
+  failures.
 ## [2026-07-31] ingest | Stage map / 3D dungeon / stage composition skill catalog
 
 - Added `raw/sources/2026-07-31-stage-map-composition-skill-catalog.md` (immutable capture of the

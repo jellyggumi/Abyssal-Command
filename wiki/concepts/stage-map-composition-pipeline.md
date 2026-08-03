@@ -64,6 +64,15 @@ Every clause below is executable (`validateProfile`, `stage-world-catalog.js:382
 | Terrain | promoted `assets/mesh/terrain/**/runtime/**` XOR a `procedural-flat-support` fallback with a retained ineligible candidate; `/textured-candidate/` is never runtime |
 | Identity | ids stage-scoped, unique silhouette profile per stage, profile set equal to `STAGES` |
 
+**What the validator does not check.** `validateProfile` only knows the world catalog's own routes.
+`STAGE_ENCOUNTER_ROUTES[stageId].paths` — the per-direction spawn approaches and the finale paths —
+are simulation geometry it never sees, so an obstacle can satisfy every clause above and still sit
+on a spawn entry. That is not theoretical: the authored abyss-chancel composition put a 500-radius
+debris circle 453 units over `chancel-south-entry`, and a measured bot run collapsed from 81 spawns
+and 7 cleared waves to 27 and 1 while the module imported cleanly and every suite stayed green.
+`scripts/search-stage-dungeon-layout.mjs` now enforces the clearance as filter 6 and
+`--verify` runs the whole filter set against an authored profile.
+
 The quest-point equality clause is the sharpest coupling in the repository: **the encounter design
 (prompt 01) fixes coordinates that the world profile (prompt 02) must reproduce byte-identically.**
 That is why encounters are designed before layout is authored, not after.

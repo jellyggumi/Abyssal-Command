@@ -20,6 +20,26 @@ const obstacle = (id, x, y, radius, propId) => ({
   propId,
 });
 const meshCollider = (id, triangles) => ({ id, triangles });
+/**
+ * One authored floor slab. `plateNode` addresses the quad inside the promoted terrain GLB, and
+ * `colliderTriangleIndices` names the two support-mesh triangles that carry it, so the visible
+ * floor and the walkable plane are the same rectangle by construction rather than by promise.
+ */
+const terrainTile = (stageId, index, name, materialId, minX, maxX, minY, maxY) => ({
+  id: `${stageId}:slab-${String(index).padStart(2, "0")}`,
+  index,
+  name,
+  materialId,
+  plateNode: `terrain-${stageId}-slab-${String(index).padStart(3, "0")}`,
+  elevation: 0,
+  rect: { minX, maxX, minY, maxY },
+  colliderTriangleIndices: [(index - 1) * 2, ((index - 1) * 2) + 1],
+});
+/** The two triangles of one slab rect, in slab order, so tile N owns triangles 2N and 2N+1. */
+const slabTriangles = (minX, maxX, minY, maxY) => ([
+  triangle(minX, minY, 0, maxX, minY, 0, maxX, maxY, 0),
+  triangle(minX, minY, 0, maxX, maxY, 0, minX, maxY, 0),
+]);
 const triangle = (ax, ay, ae, bx, by, be, cx, cy, ce) => ([
   { x: ax, y: ay, elevation: ae },
   { x: bx, y: by, elevation: be },
@@ -57,6 +77,27 @@ const visibilityAnchor = (id, kind, x, y, radius, sourcePropId = null) => ({
   radius,
   occlusionSafe: true,
   ...(sourcePropId ? { sourcePropId } : {}),
+});
+/**
+ * One authored stage gimmick: the spatial half of a two-lane feature. Timing, arming and state live
+ * in the simulation; this catalog owns only where a gimmick is, which chamber it belongs to, which
+ * objective it answers, and what it does to the corridor. Ids are frozen -- other lanes address them
+ * verbatim. `satellitePlacements` carries the extra footprints of the two multi-point gimmicks
+ * (Cinder's three pressure vents, Throne's two gallery shutters) without changing the ruled shape.
+ */
+const gimmick = (stageId, name, gimmickClass, slabId, objectiveId, order, telegraphTicks,
+  x, y, corridorWidthBefore = 0, corridorWidthAfter = 0, radius = 0, satellites = []) => ({
+  id: `${stageId}:gimmick-${name}`,
+  gimmickClass,
+  slabId: `${stageId}:${slabId}`,
+  objectiveId,
+  order,
+  telegraphTicks,
+  placement: { x, y, elevation: 0 },
+  satellitePlacements: satellites.map(([satelliteX, satelliteY]) => ({ x: satelliteX, y: satelliteY, elevation: 0 })),
+  radius,
+  corridorWidthBefore,
+  corridorWidthAfter,
 });
 const vfxCue = (stageId, id, effectId, x, y, elevation, yawRadians) => ({
   id,
@@ -139,10 +180,22 @@ const profiles = [
         obstacle("cinder-span:east-ash-wall", 20800, 9900, 700, "cinder-span:east-ash-wall-prop"),
       ],
       surfaces: [],
+      terrainTiles: [
+        terrainTile("cinder-span", 1, "West Ash Abutment", "ash-drift", 600, 8600, 800, 11200),
+        terrainTile("cinder-span", 2, "Ember Relay Causeway", "basalt-ember", 8600, 17000, 800, 11200),
+        terrainTile("cinder-span", 3, "Drowned Forge Court", "forge-plate", 17000, 23400, 800, 11200),
+      ],
       meshColliders: [meshCollider("cinder-span:walkable-support", [
-        triangle(600, 800, 0, 23400, 800, 0, 23400, 11200, 0),
-        triangle(600, 800, 0, 23400, 11200, 0, 600, 11200, 0),
+        ...slabTriangles(600, 8600, 800, 11200),
+        ...slabTriangles(8600, 17000, 800, 11200),
+        ...slabTriangles(17000, 23400, 800, 11200),
       ])],
+      gimmicks: [
+        gimmick("cinder-span", "ash-causeway-collapse", "deformation", "slab-02", "cinder-relay-crossing", 1, 180, 11400, 5400, 1400, 900),
+        gimmick("cinder-span", "forge-pressure-vents", "hazard", "slab-03", "cinder-forge-stand", 2, 60, 17600, 5000, 0, 0, 0, [[18500, 6500], [17500, 7000]]),
+        gimmick("cinder-span", "seal-oath-ring", "gate", "slab-03", "cinder-seal", 3, 90, 17600, 6000, 0, 0, 900),
+        gimmick("cinder-span", "warden-chain-fall", "deformation", "slab-03", "boss-kill", 4, 180, 19700, 6200, 1400, 1000),
+      ],
       routes: [
         route("cinder-span:critical-route", "critical", 1400, [
           waypoint("cinder-span:ingress", "ingress", 1800, 6000),
@@ -214,29 +267,49 @@ const profiles = [
     gameplay: {
       bounds: bounds(600, 23400, 700, 11300),
       obstacles: [
-        obstacle("abyss-chancel:oath-apse", 14000, 8750, 880, "abyss-chancel:oath-apse-prop"),
-        obstacle("abyss-chancel:nave-seal", 12200, 3150, 820, "abyss-chancel:nave-seal-prop"),
-        obstacle("abyss-chancel:west-colonnade", 5200, 2600, 650, "abyss-chancel:west-colonnade-prop"),
-        obstacle("abyss-chancel:east-colonnade", 18500, 2600, 650, "abyss-chancel:east-colonnade-prop"),
-        obstacle("abyss-chancel:vestry-debris", 6000, 10300, 500, "abyss-chancel:vestry-debris-prop"),
-        obstacle("abyss-chancel:apse-wing", 19100, 9400, 650, "abyss-chancel:apse-wing-prop"),
+        obstacle("abyss-chancel:narthex-colonnade", 5200, 3800, 650, "abyss-chancel:narthex-colonnade-prop"),
+        obstacle("abyss-chancel:narthex-debris", 6000, 8400, 500, "abyss-chancel:narthex-debris-prop"),
+        obstacle("abyss-chancel:nave-seal", 13000, 3600, 820, "abyss-chancel:nave-seal-prop"),
+        obstacle("abyss-chancel:transept-debris", 12800, 9800, 500, "abyss-chancel:transept-debris-prop"),
+        obstacle("abyss-chancel:oath-ring-plinth", 17800, 10400, 400, "abyss-chancel:oath-ring-plinth-prop"),
+        obstacle("abyss-chancel:east-colonnade", 20400, 4200, 650, "abyss-chancel:east-colonnade-prop"),
+        obstacle("abyss-chancel:apse-wing", 20200, 9600, 650, "abyss-chancel:apse-wing-prop"),
       ],
       surfaces: [],
+      terrainTiles: [
+        terrainTile("abyss-chancel", 1, "West Processional Narthex", "flagstone-oath", 600, 8000, 700, 11300),
+        terrainTile("abyss-chancel", 2, "Nave Crossing", "flagstone-oath", 8000, 16400, 700, 11300),
+        terrainTile("abyss-chancel", 3, "North Oath Apse", "oath-inlay", 16400, 23400, 700, 7200),
+        terrainTile("abyss-chancel", 4, "South Transept Arm", "vestry-tile", 16400, 23400, 7200, 11300),
+      ],
       meshColliders: [meshCollider("abyss-chancel:walkable-nave", [
-        triangle(600, 700, 0, 23400, 700, 0, 23400, 11300, 0),
-        triangle(600, 700, 0, 23400, 11300, 0, 600, 11300, 0),
+        ...slabTriangles(600, 8000, 700, 11300),
+        ...slabTriangles(8000, 16400, 700, 11300),
+        ...slabTriangles(16400, 23400, 700, 7200),
+        ...slabTriangles(16400, 23400, 7200, 11300),
       ])],
+      gimmicks: [
+        gimmick("abyss-chancel", "mirror-answer-aisle", "mirror", "slab-02", "chancel-nave-advance", 1, 90, 12000, 6000, 1400, 1400),
+        gimmick("abyss-chancel", "transept-three-way-lock", "gate", "slab-04", "chancel-transept-lock", 2, 120, 17600, 8200, 1400, 900, 0, [[16800, 8200], [17600, 9800], [18400, 7600]]),
+        gimmick("abyss-chancel", "oath-ring-shortcut", "gate", "slab-03", "chancel-oath", 3, 90, 18000, 7200, 0, 900),
+        gimmick("abyss-chancel", "classification-craze", "deformation", "slab-03", "boss-kill", 4, 180, 20600, 6000, 1400, 900),
+      ],
       routes: [
-        route("abyss-chancel:critical-route", "critical", 1000, [
+        // The critical route now threads all four authored slabs and puts its two intermediate
+        // waypoints exactly on the encounter objective points, so the route the player walks and
+        // the objectives the simulation scores are the same two places.
+        route("abyss-chancel:critical-route", "critical", 1400, [
           waypoint("abyss-chancel:ingress", "ingress", 1800, 6000),
-          waypoint("abyss-chancel:chancel-nave-advance", "intermediate-objective", 7200, 4400),
-          waypoint("abyss-chancel:chancel-transept-lock", "intermediate-gate", 14200, 6000),
+          waypoint("abyss-chancel:chancel-nave-advance", "intermediate-objective", 15000, 6000),
+          waypoint("abyss-chancel:chancel-transept-lock", "intermediate-gate", 17600, 8200),
           waypoint("abyss-chancel:final-gate", "final-gate", 22000, 6000),
         ]),
-        route("abyss-chancel:optional-detour", "optional-detour", 700, [
-          waypoint("abyss-chancel:detour-entry", "detour-entry", 5200, 7600),
-          waypoint("abyss-chancel:vestry-cache", "detour-objective", 9000, 10400),
-          waypoint("abyss-chancel:detour-exit", "detour-exit", 17800, 10400),
+        // The detour is the mirror's offered aisle along the north: shorter, lit, and exactly the
+        // answer the stage quest asks the player to refuse.
+        route("abyss-chancel:optional-detour", "optional-detour", 900, [
+          waypoint("abyss-chancel:detour-entry", "detour-entry", 6200, 2600),
+          waypoint("abyss-chancel:mirror-aisle-cache", "detour-objective", 12000, 1800),
+          waypoint("abyss-chancel:detour-exit", "detour-exit", 19800, 2600),
         ]),
       ],
     },
@@ -247,33 +320,40 @@ const profiles = [
       silhouette: { profile: "bent-nave-colonnade", primaryAxis: "x", skyline: "paired-apse-arches" },
       camera: { arenaBounds: bounds(900, 23100, 1000, 11000), focus: { x: 13600, y: 6000, elevation: 0 }, readableMargin: 600 },
       landmarks: [
-        landmark("landmark.chancel-apse", "Chancel Apse", 18000, 7600, 0, "abyss-chancel:oath-relic"),
-        landmark("landmark.chancel-nave", "Chancel Nave", 12200, 3150, 0, "abyss-chancel:nave-seal-prop"),
-        landmark("landmark.west-colonnade", "West Oath Colonnade", 5200, 2600, 0, "abyss-chancel:west-colonnade-prop"),
-        landmark("landmark.vestry-wing", "Veiled Vestry", 19100, 9400, 0, "abyss-chancel:apse-wing-prop"),
+        // `landmark.chancel-apse` and `landmark.chancel-nave` keep their ids because the Seal Atlas
+        // vocabulary in defense-catalog.js STAGE_PRESENTATION_BY_ID addresses them by id.
+        landmark("landmark.chancel-apse", "Chancel Oath Apse", 18200, 3600, 0, "abyss-chancel:oath-relic"),
+        landmark("landmark.chancel-nave", "Chancel Nave Seal", 13000, 3600, 0, "abyss-chancel:nave-seal-prop"),
+        landmark("landmark.narthex-colonnade", "Narthex Colonnade", 5200, 3800, 0, "abyss-chancel:narthex-colonnade-prop"),
+        landmark("landmark.chancel-apse-wing", "Apse Wing", 20200, 9600, 0, "abyss-chancel:apse-wing-prop"),
+        landmark("landmark.chancel-oath-ring", "Oath Ring Plinth", 17800, 10400, 0, "abyss-chancel:oath-ring-plinth-prop"),
         landmark("landmark.chancel-processional-lamp", "West Processional Lamp", 2700, 1600, 0, "abyss-chancel:west-processional-lamp-prop"),
-        landmark("landmark.chancel-vestry-screen", "Vestry Screen", 2600, 10700, 0, "abyss-chancel:vestry-screen-prop"),
       ],
       props: [
-        prop("abyss-chancel:oath-relic", PROPS.relic, "oath-lantern", 18000, 7600, 0, 0.4, 190),
-        prop("abyss-chancel:nave-blade", PROPS.blade, "objective-beacon", 12200, 4800, 0, 1.5708, 150),
-        prop("abyss-chancel:oath-apse-prop", PROPS.relic, "arch", 14000, 8750, 0, 0, 880),
-        prop("abyss-chancel:nave-seal-prop", PROPS.blade, "arch", 12200, 3150, 0, 1.5708, 820),
-        prop("abyss-chancel:west-colonnade-prop", PROPS.blade, "wall", 5200, 2600, 0, 0, 650),
-        prop("abyss-chancel:east-colonnade-prop", PROPS.blade, "wall", 18500, 2600, 0, 0, 650),
-        prop("abyss-chancel:vestry-debris-prop", PROPS.relic, "debris", 6000, 10300, 0, -0.5, 500),
-        prop("abyss-chancel:apse-wing-prop", PROPS.relic, "wall", 19100, 9400, 0, 0.5, 650),
         prop("abyss-chancel:west-processional-lamp-prop", PROPS.relic, "processional-lantern", 2700, 1600, 0, -0.2, 140),
-        prop("abyss-chancel:south-nave-screen-prop", PROPS.blade, "background-nave-screen", 9400, 1200, 0, 1.5708, 360),
-        prop("abyss-chancel:east-processional-lamp-prop", PROPS.relic, "processional-lantern", 22200, 1600, 0, 0.2, 140),
         prop("abyss-chancel:vestry-screen-prop", PROPS.blade, "background-vestry-screen", 2600, 10700, 0, 0, 300),
+        prop("abyss-chancel:narthex-colonnade-prop", PROPS.blade, "wall", 5200, 3800, 0, 0, 650),
+        prop("abyss-chancel:narthex-debris-prop", PROPS.relic, "debris", 6000, 8400, 0, -0.5, 500),
+        prop("abyss-chancel:nave-seal-prop", PROPS.blade, "arch", 13000, 3600, 0, 1.5708, 820),
+        prop("abyss-chancel:transept-debris-prop", PROPS.relic, "debris", 12800, 9800, 0, 0.4, 500),
+        prop("abyss-chancel:crossing-lamp-prop", PROPS.relic, "crossing-lantern", 13000, 7400, 0, 0.3, 150),
+        prop("abyss-chancel:nave-blade", PROPS.blade, "objective-beacon", 15000, 4200, 0, 1.5708, 150),
+        prop("abyss-chancel:oath-ring-plinth-prop", PROPS.blade, "oath-ring", 17800, 10400, 0, 0, 400),
+        prop("abyss-chancel:oath-relic", PROPS.relic, "oath-lantern", 18200, 3600, 0, 0.4, 190),
+        prop("abyss-chancel:apse-wing-prop", PROPS.relic, "wall", 20200, 9600, 0, 0.5, 650),
+        prop("abyss-chancel:east-colonnade-prop", PROPS.blade, "wall", 20400, 4200, 0, 0, 650),
+        prop("abyss-chancel:east-processional-lamp-prop", PROPS.relic, "processional-lantern", 22200, 1600, 0, 0.2, 140),
       ],
       visibilityAnchors: [
-        visibilityAnchor("abyss-chancel:apse-light-anchor", "motivated-light", 18000, 7600, 1100, "abyss-chancel:oath-relic"),
-        visibilityAnchor("abyss-chancel:nave-light-anchor", "motivated-light", 12200, 4800, 900, "abyss-chancel:nave-blade"),
         visibilityAnchor("abyss-chancel:west-processional-light", "motivated-light", 2700, 1600, 720, "abyss-chancel:west-processional-lamp-prop"),
+        visibilityAnchor("abyss-chancel:crossing-light-anchor", "motivated-light", 13000, 7400, 900, "abyss-chancel:crossing-lamp-prop"),
+        visibilityAnchor("abyss-chancel:oath-light-anchor", "motivated-light", 18200, 3600, 1100, "abyss-chancel:oath-relic"),
         visibilityAnchor("abyss-chancel:east-processional-light", "motivated-light", 22200, 1600, 720, "abyss-chancel:east-processional-lamp-prop"),
-        visibilityAnchor("abyss-chancel:nave-fog-break", "fog-break", 15000, 6000, 1500),
+        // One readable pocket per authored slab, so no chamber goes dark.
+        visibilityAnchor("abyss-chancel:narthex-fog-break", "fog-break", 4200, 6000, 1400),
+        visibilityAnchor("abyss-chancel:nave-fog-break", "fog-break", 10000, 6000, 1500),
+        visibilityAnchor("abyss-chancel:apse-fog-break", "fog-break", 20800, 2400, 1200),
+        visibilityAnchor("abyss-chancel:transept-fog-break", "fog-break", 19000, 8800, 1200),
       ],
       vfxCues: [vfxCue("abyss-chancel", "abyss-chancel:mirror-static", "abyss-chancel-mirror-static", 14200, 6000, 0, 0)],
       npcs: [lookout("abyss-chancel:veil-lookout", 17300, 7850, 0, 3.1416, 9000, 6000, "watch-the-apse", "abyss-chancel:refuse-repeated-answer")],
@@ -296,29 +376,51 @@ const profiles = [
     gameplay: {
       bounds: bounds(600, 23400, 600, 11400),
       obstacles: [
-        obstacle("echo-throne:fractured-dais", 15400, 8600, 900, "echo-throne:fractured-dais-prop"),
-        obstacle("echo-throne:echo-aisle", 11800, 3000, 800, "echo-throne:echo-aisle-prop"),
         obstacle("echo-throne:west-fractured-wing", 5400, 9000, 650, "echo-throne:west-fractured-wing-prop"),
-        obstacle("echo-throne:east-fractured-wing", 19000, 9000, 650, "echo-throne:east-fractured-wing-prop"),
-        obstacle("echo-throne:gallery-debris", 6200, 1200, 500, "echo-throne:gallery-debris-prop"),
-        obstacle("echo-throne:crown-shard", 19400, 2400, 600, "echo-throne:crown-shard-prop"),
+        obstacle("echo-throne:gallery-debris", 9200, 1400, 500, "echo-throne:gallery-debris-prop"),
+        obstacle("echo-throne:south-fractured-wing", 9800, 9800, 650, "echo-throne:south-fractured-wing-prop"),
+        obstacle("echo-throne:echo-aisle", 12000, 2600, 800, "echo-throne:echo-aisle-prop"),
+        obstacle("echo-throne:crown-shard", 15600, 1600, 600, "echo-throne:crown-shard-prop"),
+        obstacle("echo-throne:fractured-dais", 19200, 7600, 700, "echo-throne:fractured-dais-prop"),
+        obstacle("echo-throne:east-fractured-wing", 20600, 9000, 650, "echo-throne:east-fractured-wing-prop"),
       ],
       surfaces: [],
+      terrainTiles: [
+        terrainTile("echo-throne", 1, "West Echo Narthex", "polished-echo", 600, 6800, 600, 11400),
+        terrainTile("echo-throne", 2, "North Repeating Gallery", "fracture-glass", 6800, 16600, 600, 4000),
+        terrainTile("echo-throne", 3, "Sovereign Aisle", "gilt-compass", 6800, 16600, 4000, 8000),
+        terrainTile("echo-throne", 4, "South Repeating Gallery", "fracture-glass", 6800, 16600, 8000, 11400),
+        terrainTile("echo-throne", 5, "Crescent Throne Court", "polished-echo", 16600, 23400, 600, 11400),
+      ],
       meshColliders: [meshCollider("echo-throne:walkable-court", [
-        triangle(600, 600, 0, 23400, 600, 0, 23400, 11400, 0),
-        triangle(600, 600, 0, 23400, 11400, 0, 600, 11400, 0),
+        ...slabTriangles(600, 6800, 600, 11400),
+        ...slabTriangles(6800, 16600, 600, 4000),
+        ...slabTriangles(6800, 16600, 4000, 8000),
+        ...slabTriangles(6800, 16600, 8000, 11400),
+        ...slabTriangles(16600, 23400, 600, 11400),
       ])],
+      gimmicks: [
+        gimmick("echo-throne", "returning-aisle", "mirror", "slab-03", "throne-aisle-break", 1, 90, 15200, 6000, 1400, 1400),
+        gimmick("echo-throne", "dais-command-echo", "hazard", "slab-05", "throne-dais-stand", 2, 60, 18000, 6000),
+        gimmick("echo-throne", "crescent-gallery-shutters", "gate", "slab-05", "throne-dais-stand", 3, 120, 16600, 3000, 1400, 900, 0, [[16600, 9600]]),
+        gimmick("echo-throne", "domain-command-ring", "gate", "slab-05", "throne-domain", 4, 90, 18400, 6000, 0, 0, 800),
+        gimmick("echo-throne", "sovereign-command-shear", "deformation", "slab-05", "boss-kill", 5, 180, 20800, 6000, 1400, 900),
+      ],
       routes: [
-        route("echo-throne:critical-route", "critical", 1100, [
+        // Critical thread: narthex -> sovereign aisle -> crescent court, with both intermediate
+        // waypoints sitting exactly on the encounter objective points.
+        route("echo-throne:critical-route", "critical", 1400, [
           waypoint("echo-throne:ingress", "ingress", 1800, 6000),
-          waypoint("echo-throne:throne-aisle-break", "intermediate-objective", 7600, 6000),
-          waypoint("echo-throne:throne-dais-stand", "intermediate-gate", 13800, 6000),
+          waypoint("echo-throne:throne-aisle-break", "intermediate-objective", 15200, 6000),
+          waypoint("echo-throne:throne-dais-stand", "intermediate-gate", 18000, 6000),
           waypoint("echo-throne:final-gate", "final-gate", 22000, 6000),
         ]),
-        route("echo-throne:optional-detour", "optional-detour", 700, [
-          waypoint("echo-throne:detour-entry", "detour-entry", 5600, 4400),
-          waypoint("echo-throne:gallery-cache", "detour-objective", 9000, 1600),
-          waypoint("echo-throne:detour-exit", "detour-exit", 17200, 1600),
+        // The detour physically performs the stage's mirror: enter the north gallery, cut the
+        // sovereign aisle under fire, exit through the south gallery.
+        route("echo-throne:optional-detour", "optional-detour", 900, [
+          waypoint("echo-throne:detour-entry", "detour-entry", 7800, 2200),
+          waypoint("echo-throne:mirror-gallery-cache", "detour-objective", 12400, 9800),
+          waypoint("echo-throne:detour-exit", "detour-exit", 19200, 9200),
         ]),
       ],
     },
@@ -329,33 +431,41 @@ const profiles = [
       silhouette: { profile: "axial-crescent-court", primaryAxis: "x", skyline: "shattered-dais-crown" },
       camera: { arenaBounds: bounds(900, 23100, 900, 11100), focus: { x: 14200, y: 6000, elevation: 0 }, readableMargin: 600 },
       landmarks: [
-        landmark("landmark.throne-dais", "Fractured Throne Dais", 18200, 7200, 0, "echo-throne:dais-relic"),
-        landmark("landmark.throne-aisle", "Echo Aisle", 11800, 3000, 0, "echo-throne:echo-aisle-prop"),
-        landmark("landmark.fractured-wing", "Fractured Court Wing", 19000, 9000, 0, "echo-throne:east-fractured-wing-prop"),
-        landmark("landmark.crown-shard", "Sovereign Crown Shard", 19400, 2400, 0, "echo-throne:crown-shard-prop"),
-        landmark("landmark.echo-west-crown-light", "West Crown Light", 2700, 10500, 0, "echo-throne:west-crown-light-prop"),
-        landmark("landmark.echo-court-crescent", "Echo Court Crescent", 10400, 10800, 0, "echo-throne:court-crescent-prop"),
+        // `landmark.throne-dais` and `landmark.throne-aisle` keep their ids for the Seal Atlas
+        // vocabulary in defense-catalog.js STAGE_PRESENTATION_BY_ID.
+        landmark("landmark.throne-dais", "Throne Dais Relic", 18400, 4200, 0, "echo-throne:dais-relic"),
+        landmark("landmark.throne-aisle", "Echo Aisle", 12000, 2600, 0, "echo-throne:echo-aisle-prop"),
+        landmark("landmark.throne-fractured-dais", "Fractured Dais", 19200, 7600, 0, "echo-throne:fractured-dais-prop"),
+        landmark("landmark.throne-crown-shard", "Sovereign Crown Shard", 15600, 1600, 0, "echo-throne:crown-shard-prop"),
+        landmark("landmark.throne-east-wing", "East Court Horn", 20600, 9000, 0, "echo-throne:east-fractured-wing-prop"),
+        landmark("landmark.throne-west-crown-light", "West Crown Light", 2700, 10500, 0, "echo-throne:west-crown-light-prop"),
       ],
       props: [
-        prop("echo-throne:dais-relic", PROPS.relic, "throne-lantern", 18200, 7200, 0, 0, 190),
-        prop("echo-throne:aisle-blade", PROPS.blade, "objective-beacon", 11800, 4400, 0, 1.5708, 150),
-        prop("echo-throne:fractured-dais-prop", PROPS.relic, "arch", 15400, 8600, 0, 0, 900),
-        prop("echo-throne:echo-aisle-prop", PROPS.blade, "arch", 11800, 3000, 0, 1.5708, 800),
-        prop("echo-throne:west-fractured-wing-prop", PROPS.blade, "wall", 5400, 9000, 0, -0.5, 650),
-        prop("echo-throne:east-fractured-wing-prop", PROPS.blade, "wall", 19000, 9000, 0, 0.5, 650),
-        prop("echo-throne:gallery-debris-prop", PROPS.relic, "debris", 6200, 1200, 0, 0.4, 500),
-        prop("echo-throne:crown-shard-prop", PROPS.relic, "debris", 19400, 2400, 0, -0.4, 600),
+        prop("echo-throne:narthex-shard-prop", PROPS.blade, "background-gallery-shard", 2800, 1200, 0, 1.1, 300),
         prop("echo-throne:west-crown-light-prop", PROPS.relic, "crown-lantern", 2700, 10500, 0, -0.6, 140),
-        prop("echo-throne:court-crescent-prop", PROPS.blade, "background-court-crescent", 10400, 10800, 0, 0, 380),
+        prop("echo-throne:west-fractured-wing-prop", PROPS.blade, "wall", 5400, 9000, 0, -0.5, 650),
+        prop("echo-throne:gallery-debris-prop", PROPS.relic, "debris", 9200, 1400, 0, 0.4, 500),
+        prop("echo-throne:south-fractured-wing-prop", PROPS.blade, "wall", 9800, 9800, 0, 0.5, 650),
+        prop("echo-throne:echo-aisle-prop", PROPS.blade, "arch", 12000, 2600, 0, 1.5708, 800),
+        prop("echo-throne:compass-inlay-lamp-prop", PROPS.relic, "compass-lantern", 13400, 7400, 0, 0.2, 160),
+        prop("echo-throne:aisle-blade", PROPS.blade, "objective-beacon", 15200, 4600, 0, 1.5708, 150),
+        prop("echo-throne:crown-shard-prop", PROPS.relic, "debris", 15600, 1600, 0, -0.4, 600),
+        prop("echo-throne:dais-relic", PROPS.relic, "throne-lantern", 18400, 4200, 0, 0, 190),
+        prop("echo-throne:fractured-dais-prop", PROPS.relic, "arch", 19200, 7600, 0, 0, 700),
+        prop("echo-throne:east-fractured-wing-prop", PROPS.blade, "wall", 20600, 9000, 0, 0.5, 650),
         prop("echo-throne:east-crown-light-prop", PROPS.relic, "crown-lantern", 22200, 10500, 0, 0.6, 140),
-        prop("echo-throne:south-gallery-shard-prop", PROPS.blade, "background-gallery-shard", 2800, 1200, 0, 1.1, 300),
       ],
       visibilityAnchors: [
-        visibilityAnchor("echo-throne:dais-light-anchor", "motivated-light", 18200, 7200, 1100, "echo-throne:dais-relic"),
-        visibilityAnchor("echo-throne:aisle-light-anchor", "motivated-light", 11800, 4400, 900, "echo-throne:aisle-blade"),
         visibilityAnchor("echo-throne:west-crown-light", "motivated-light", 2700, 10500, 780, "echo-throne:west-crown-light-prop"),
+        visibilityAnchor("echo-throne:compass-light-anchor", "motivated-light", 13400, 7400, 900, "echo-throne:compass-inlay-lamp-prop"),
+        visibilityAnchor("echo-throne:dais-light-anchor", "motivated-light", 18400, 4200, 1100, "echo-throne:dais-relic"),
         visibilityAnchor("echo-throne:east-crown-light", "motivated-light", 22200, 10500, 780, "echo-throne:east-crown-light-prop"),
-        visibilityAnchor("echo-throne:court-fog-break", "fog-break", 14800, 6000, 1600),
+        // One readable pocket per authored slab.
+        visibilityAnchor("echo-throne:narthex-fog-break", "fog-break", 3800, 6000, 1400),
+        visibilityAnchor("echo-throne:north-gallery-fog-break", "fog-break", 10600, 3000, 1200),
+        visibilityAnchor("echo-throne:aisle-fog-break", "fog-break", 11000, 6000, 1500),
+        visibilityAnchor("echo-throne:south-gallery-fog-break", "fog-break", 13000, 9800, 1200),
+        visibilityAnchor("echo-throne:court-fog-break", "fog-break", 21000, 3600, 1300),
       ],
       vfxCues: [vfxCue("echo-throne", "echo-throne:fracture-echo", "echo-throne-fracture-echo", 15400, 6000, 0, 0)],
       npcs: [lookout("echo-throne:throne-lookout", 17800, 8100, 0, 3.1416, 9200, 6000, "watch-the-court", "echo-throne:break-the-command")],
@@ -436,6 +546,83 @@ const validateProfile = (profile) => {
       if (!Number.isFinite(area) || area === 0) throw new Error(`Degenerate mesh collider triangle: ${collider.id}[${index}]`);
     });
   });
+
+  // Terrain tiles are the authored floor. Until they were claimed here a slab id could silently
+  // duplicate a route or prop id, and nothing checked that the visible slabs actually tile the
+  // walkable bounds -- the four tiling contracts were promised in a spec, not machine-checked.
+  const tiles = profile.gameplay.terrainTiles ?? [];
+  if (!Array.isArray(tiles) || tiles.length < 1) throw new Error(`Stage world requires authored terrain tiles: ${profile.stageId}`);
+  let tiledArea = 0;
+  tiles.forEach((tile, index) => {
+    claimId(tile);
+    const rect = tile.rect;
+    if (!(tile.index === index + 1
+      && tile.id === `${profile.stageId}:slab-${String(index + 1).padStart(2, "0")}`
+      && tile.plateNode === `terrain-${profile.stageId}-slab-${String(index + 1).padStart(3, "0")}`
+      && tile.elevation === 0
+      && typeof tile.materialId === "string" && tile.materialId.length > 0
+      && Number.isInteger(rect.minX) && Number.isInteger(rect.maxX)
+      && Number.isInteger(rect.minY) && Number.isInteger(rect.maxY)
+      && rect.minX < rect.maxX && rect.minY < rect.maxY
+      && inside(rect.minX, minX, maxX) && inside(rect.maxX, minX, maxX)
+      && inside(rect.minY, minY, maxY) && inside(rect.maxY, minY, maxY)
+      && tile.colliderTriangleIndices[0] === index * 2
+      && tile.colliderTriangleIndices[1] === (index * 2) + 1)) throw new Error(`Invalid terrain tile: ${tile.id}`);
+    tiledArea += (rect.maxX - rect.minX) * (rect.maxY - rect.minY);
+    for (let other = 0; other < index; other += 1) {
+      const previous = tiles[other].rect;
+      if (Math.max(0, Math.min(rect.maxX, previous.maxX) - Math.max(rect.minX, previous.minX))
+        * Math.max(0, Math.min(rect.maxY, previous.maxY) - Math.max(rect.minY, previous.minY)) !== 0) throw new Error(`Terrain tiles overlap: ${tile.id}, ${tiles[other].id}`);
+    }
+  });
+  if (tiledArea !== (maxX - minX) * (maxY - minY)) throw new Error(`Terrain tiles must tile the walkable bounds exactly: ${profile.stageId}`);
+  if (meshColliders[0].triangles.length !== tiles.length * 2) throw new Error(`Support mesh must carry two triangles per terrain tile: ${profile.stageId}`);
+  tiles.forEach((tile) => {
+    const [firstIndex, secondIndex] = tile.colliderTriangleIndices;
+    const rect = tile.rect;
+    const covered = [firstIndex, secondIndex].every((index) => meshColliders[0].triangles[index]
+      ?.every(({ x, y }) => x >= rect.minX && x <= rect.maxX && y >= rect.minY && y <= rect.maxY));
+    if (!covered) throw new Error(`Terrain tile does not own its support triangles: ${tile.id}`);
+  });
+
+  // Gimmicks are authored spatial data whose runtime half lives in the simulation. What this
+  // catalog can prove is the part that is geometry: a gimmick belongs to a real chamber, sits
+  // inside it, answers a real objective, and never narrows a corridor below what the commander
+  // physically fits through (COMMANDER.radius 360, so diameter 720; the authored floor is 900).
+  const gimmicks = profile.gameplay.gimmicks ?? [];
+  const tileIds = new Set(tiles.map(({ id }) => id));
+  const tileById = new Map(tiles.map((tile) => [tile.id, tile]));
+  const encounterObjectiveIds = (STAGE_ENCOUNTER_ROUTES[profile.stageId]?.objectives ?? []).map(({ id }) => id);
+  const gimmickTargets = new Set([
+    ...encounterObjectiveIds,
+    STAGE_TACTICS[profile.stageId]?.occupation?.id,
+    "boss-kill",
+  ].filter(Boolean));
+  const telegraphTiers = { deformation: [180], gate: [120, 90], mirror: [90], hazard: [60] };
+  gimmicks.forEach((entry, index) => {
+    claimId(entry);
+    const tier = telegraphTiers[entry.gimmickClass];
+    if (!tier) throw new Error(`Unknown gimmick class: ${entry.id}`);
+    if (!tier.includes(entry.telegraphTicks)) throw new Error(`Gimmick telegraph is off its class tier: ${entry.id}`);
+    if (entry.order !== index + 1) throw new Error(`Gimmick order must follow authored sequence: ${entry.id}`);
+    if (!tileIds.has(entry.slabId)) throw new Error(`Gimmick names an unknown slab: ${entry.id}`);
+    if (!gimmickTargets.has(entry.objectiveId)) throw new Error(`Gimmick answers no authored objective: ${entry.id}`);
+    if (!(entry.radius >= 0)) throw new Error(`Invalid gimmick radius: ${entry.id}`);
+    const rect = tileById.get(entry.slabId).rect;
+    for (const placement of [entry.placement, ...entry.satellitePlacements]) {
+      if (!(placement.elevation === 0 && pointInside(placement)
+        && placement.x >= rect.minX && placement.x <= rect.maxX
+        && placement.y >= rect.minY && placement.y <= rect.maxY)) throw new Error(`Gimmick footprint leaves its own slab: ${entry.id}`);
+    }
+    // V17: a narrowing that leaves less than 900 is a skill check the commander cannot pass.
+    const narrows = entry.corridorWidthBefore !== 0 || entry.corridorWidthAfter !== 0;
+    if (narrows && !(entry.corridorWidthAfter >= 900)) throw new Error(`Gimmick narrows below the commander floor: ${entry.id}`);
+    if (entry.corridorWidthBefore !== 0 && entry.corridorWidthAfter > entry.corridorWidthBefore) throw new Error(`Gimmick widens a corridor it declares narrowing: ${entry.id}`);
+  });
+  if (gimmicks.length) {
+    if (new Set(gimmicks.map(({ objectiveId }) => objectiveId)).size !== gimmickTargets.size) throw new Error(`Every authored objective needs a bound gimmick: ${profile.stageId}`);
+    if (gimmicks.filter(({ gimmickClass }) => gimmickClass === "deformation").length < 1) throw new Error(`Stage requires a deformation gimmick on its boss block: ${profile.stageId}`);
+  }
 
   const routes = profile.gameplay.routes ?? [];
   if (!Array.isArray(routes) || routes.filter(({ kind }) => kind === "critical").length !== 1
