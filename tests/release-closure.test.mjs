@@ -122,7 +122,7 @@ const DIRECT_RUNTIME_ASSETS = Object.freeze([
 ]);
 const RUNTIME_PATHS = [
   "index.html", "campaign.html", "sprite-2-5d.html", "sprite-2-5d.css", "sprite-2-5d.js", "sealbound.html", "sealbound.css", "sealbound.js", "app.js", "rpg-catalog.js", "stage-world-catalog.js", "stage-story-catalog.js", "defense-viewport.js", "defense-catalog.js", "defense-run-simulation.js",
-  "campaign-state.js", "defense-storage.js", "defense-audio.js", "defense-cutscene.js", "defense-telemetry.js",
+  "campaign-state.js", "defense-storage.js", "defense-audio.js", "defense-cutscene.js", "defense-speech-bubble.js", "defense-telemetry.js",
   "battle-canvas-text.js", "battle-realtime-three.js", "battle-visualizer.js", "lobby-cinematic.js", "styles.css", "react-game-ui.css", "sw.js", "manifest.json", "icon.svg", "privacy.html", "abyssal-oneline.html", "abbysal-oneline.html",
   "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
   "assets/icons/icon-192.png", "assets/icons/icon-512.png",

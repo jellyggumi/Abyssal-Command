@@ -10,6 +10,7 @@ import { advanceDefenseRun, createDefenseRun, getRunSnapshot } from "../defense-
 import { TICK_RATE } from "../defense-catalog.js";
 import { cutsceneFromEvent } from "../defense-cutscene.js";
 import { DefenseAudio } from "../defense-audio.js";
+import { SpeechBubbleDirector } from "../defense-speech-bubble.js";
 
 function noop() {}
 
@@ -144,6 +145,104 @@ function stopAndDismissCutscenes(session) {
   session.stopped = true;
   session.cutsceneQueue.length = 0;
   session.dismissCutscene();
+}
+
+/**
+ * Shared fixture for the narration-presentation tests at the end of this file.
+ *
+ * Narration is no longer spoken. `audio.narrate` is now only the audio-side presentation channel
+ * (priority, dedup, teardown), and the visible layer is a SpeechBubbleDirector driven from
+ * render(). Both are fed the SAME deduplicated frame batch, so the coupling between them is a
+ * session-level contract -- which needs a real DefenseAudio, a real director, and a session
+ * complete enough to run render() and remountForStage() end to end.
+ *
+ * The director's clock is injected rather than wall-clock: hold expiry is the one bubble behavior
+ * a test must advance without sleeping, so `advanceClock` is the only way time moves here.
+ */
+function createNarrationSession(BattleSession, t) {
+  const surface = new TestElement("main");
+  const audio = new DefenseAudio({ reducedMotion: true });
+  const narrateReturns = [];
+  const narrate = audio.narrate.bind(audio);
+  // Wrapped, not replaced: the boolean still comes from the real channel -- it is what gates
+  // rememberStoryNarration -- and the mute test asserts that real return value.
+  audio.narrate = (event, priority) => {
+    const accepted = narrate(event, priority);
+    narrateReturns.push(accepted);
+    return accepted;
+  };
+  let clockMs = 0;
+  const session = Object.create(BattleSession.prototype);
+  Object.assign(session, {
+    stageId: "cinder-span",
+    surface,
+    canvas: { height: 360, width: 640 },
+    statusNode: new TestElement(),
+    renderer: { renderSnapshot: noop },
+    audio,
+    speechBubbles: new SpeechBubbleDirector({ now: () => clockMs }),
+    audioTick: null,
+    audioEventKeys: new Set(),
+    recordedEliteIds: new Set(),
+    extractionEvents: [],
+    questEvents: [],
+    questEventKeys: new Set(),
+    questEventKeyGroups: [],
+    cutsceneEventKeys: new Set(),
+    cutsceneTimer: null,
+    cutsceneRelayTimers: [],
+    cutsceneQueue: [],
+    cutsceneActive: false,
+    feedbackTimer: null,
+    started: true,
+    stopped: false,
+    rallyAcknowledgedBossIds: new Set(),
+    motionQuery: { matches: true },
+    lastStanceBlockEventId: null,
+    lastStanceSwitchEventId: null,
+    userPaused: false,
+    terminalHandled: false,
+    camera: { x: 0, y: 0 },
+    lastFrameAt: 0,
+    accumulator: 0,
+    frame: 0,
+  });
+  session.run = session.createRunForStage(session.stageId);
+  session.projected = (snapshot) => snapshot;
+  session.updateCamera = () => ({ x: 0, y: 0 });
+  session.renderControls = noop;
+  session.renderPauseOverlay = noop;
+  // Deliberately left stubbed. The world-HUD pass projects each bubble's anchor through the live
+  // three.js renderer (projectEntityToScreen / projectStageDecorToScreen) and appends into a real
+  // #world-hud-overlay node; this DOM double has neither. Where a bubble lands on screen is the
+  // browser suite's contract. What a *session* owes is the director's state, so that is what the
+  // tests below assert.
+  session.renderWorldHud = noop;
+  session.renderEventFeedback = noop;
+  session.resetCamera = noop;
+  session.resetLobbyShowcase = noop;
+  session.syncAppearanceLoadout = noop;
+  t.after(() => {
+    // Releases narrate()'s pending hold timers, which would otherwise outlive the test.
+    audio.stopNarration();
+    stopAndDismissCutscenes(session);
+  });
+
+  const openingStory = session.run.events.find((event) => event.type === "STAGE_STARTED");
+  const authoredDialogue = openingStory?.storyBeat?.dialogue;
+  assert(authoredDialogue?.text, "the stable Cinder run must expose authored tick-zero stage dialogue");
+  assert(authoredDialogue?.speaker, "the authored tick-zero beat must name its speaker");
+
+  return {
+    advanceClock: (deltaMs) => { clockMs += deltaMs; },
+    audio,
+    authoredDialogue,
+    clockNow: () => clockMs,
+    narrateReturns,
+    openingStory,
+    session,
+    surface,
+  };
 }
 
 test("BattleSession defers opening cutscenes until beginRun synchronously renders the committed run", async (t) => {
@@ -789,4 +888,152 @@ test("BattleSession keeps timer-completed cutscenes paused by user intent until 
   session.userPaused = false;
   session.loop(11_000 + (1_000 / TICK_RATE) + 0.001);
   assert.equal(tick(), openingTick + 1, "clearing user pause must advance exactly one tick on the next frame");
+});
+
+test("BattleSession presents the authored story beat as a speech bubble from the deduplicated frame batch", async (t) => {
+  const BattleSession = await loadBattleSession();
+  const { audio, authoredDialogue, session } = createNarrationSession(BattleSession, t);
+
+  session.render();
+
+  const bubbles = session.speechBubbles.list();
+  assert.equal(bubbles.length, 1, "the tick-zero batch carries exactly one displayable story beat");
+  assert.equal(
+    bubbles[0].text,
+    authoredDialogue.text,
+    "the bubble must carry the authored story dialogue, not the stage's cutscene caption lines",
+  );
+  assert.equal(bubbles[0].speaker, authoredDialogue.speaker, "the bubble must label the authored speaker");
+  assert.equal(bubbles[0].role, "keeper", "the authored quest-giver must classify as the keeper role");
+  assert.deepEqual(
+    audio.debugMetrics().presentedNarrations,
+    [authoredDialogue.text],
+    "the audio channel and the visible bubble must resolve the same line out of the same batch",
+  );
+});
+
+test("BattleSession keeps the story beat's speech bubble when mute gates the audio narration channel", async (t) => {
+  const BattleSession = await loadBattleSession();
+  const { audio, authoredDialogue, narrateReturns, session } = createNarrationSession(BattleSession, t);
+  audio.setMuted(true);
+
+  session.render();
+
+  assert(narrateReturns.length > 0, "the story beat must still reach the audio narration channel");
+  assert.deepEqual(
+    narrateReturns.filter((accepted) => accepted !== false),
+    [],
+    "a muted channel must refuse every narration it is offered",
+  );
+  assert.deepEqual(
+    audio.debugMetrics().presentedNarrations,
+    [],
+    "a muted channel must present no narration",
+  );
+
+  const bubbles = session.speechBubbles.list();
+  assert.equal(bubbles.length, 1, "the visible layer is not mute-gated: a muted player still reads the beat");
+  assert.equal(bubbles[0].text, authoredDialogue.text, "the surviving bubble must still carry the authored line");
+});
+
+test("BattleSession replaying the same snapshot does not re-present or restart the story beat's bubble", async (t) => {
+  const BattleSession = await loadBattleSession();
+  const { advanceClock, session } = createNarrationSession(BattleSession, t);
+
+  session.render();
+  const [presented] = session.speechBubbles.list();
+  assert(presented, "the first render must present the opening beat");
+  // Captured as primitives on purpose: list() hands out the director's live records, so holding
+  // the record itself would turn the comparisons below into `x === x`.
+  const firstKey = presented.key;
+  const firstStartedAt = presented.startedAt;
+
+  advanceClock(500);
+  // Re-arm the frame-level dedup so the identical batch reaches the director a second time. The
+  // director's own identity memory -- not this filter -- is what has to absorb the replay.
+  session.audioTick = null;
+  session.render();
+
+  const replayed = session.speechBubbles.list();
+  assert.equal(replayed.length, 1, "a replayed snapshot must not stack a second copy of the same beat");
+  assert.equal(replayed[0].key, firstKey, "the replayed beat keeps its deterministic identity");
+  assert.equal(
+    replayed[0].startedAt,
+    firstStartedAt,
+    "a replayed beat must not restart its hold -- the player would otherwise never finish reading it",
+  );
+});
+
+test("BattleSession freezes speech bubble read time while the simulation is paused", async (t) => {
+  const BattleSession = await loadBattleSession();
+  const { advanceClock, clockNow, session } = createNarrationSession(BattleSession, t);
+
+  session.render();
+  const [presented] = session.speechBubbles.list();
+  assert(presented, "the opening beat must be live before the pause");
+  // Primitives again: hold() extends `expiresAt` on the very record list() just returned.
+  const holdBudgetMs = presented.expiresAt - presented.startedAt;
+  const expiresAtBeforePause = presented.expiresAt;
+
+  // A paused sim runs the frame loop but advances no ticks; render() is stubbed out from here so
+  // the loop cannot re-present the beat and mask an expiry.
+  session.userPaused = true;
+  session.render = noop;
+  const frameStepMs = 100;
+  const frozenFrames = 80;
+  let frameAt = 0;
+  for (let frame = 0; frame < frozenFrames; frame += 1) {
+    frameAt += frameStepMs;
+    advanceClock(frameStepMs);
+    session.loop(frameAt);
+  }
+
+  assert(
+    frameAt > holdBudgetMs,
+    "the frozen span must outlast the beat's natural hold, or surviving it proves nothing",
+  );
+  const held = session.speechBubbles.list();
+  assert.equal(held.length, 1, "a frozen simulation must not burn the beat's read time");
+  assert(
+    held[0].expiresAt > clockNow(),
+    "the held bubble must still have read time left after the pause",
+  );
+  assert(
+    held[0].expiresAt > expiresAtBeforePause,
+    "every frozen frame must push the beat's expiry out by the wall-clock time it consumed",
+  );
+});
+
+test("BattleSession same-stage remount lets the opening beat present its speech bubble again", async (t) => {
+  const BattleSession = await loadBattleSession();
+  const { advanceClock, session } = createNarrationSession(BattleSession, t);
+
+  session.render();
+  const [presented] = session.speechBubbles.list();
+  assert(presented, "the first run must present the opening beat");
+  const firstKey = presented.key;
+  const firstStartedAt = presented.startedAt;
+
+  advanceClock(500);
+  session.remountForStage("cinder-span");
+
+  assert.deepEqual(session.speechBubbles.list(), [], "a remount must dismiss whatever was still live");
+
+  // The same two moves the replay test above makes: commit the stage (remountForStage parks the
+  // surface pre-run, and the director feed is gated on `started`) and re-arm the frame-level dedup
+  // that remount's own closing render() just burnt. The ONLY difference between the two tests is
+  // that a remount also resets the director's identity memory -- which is why this beat presents
+  // where the replayed one was suppressed.
+  session.started = true;
+  session.audioTick = null;
+  session.render();
+
+  const replayed = session.speechBubbles.list();
+  assert.equal(replayed.length, 1, "the remounted stage must be able to present its opening beat again");
+  assert.equal(replayed[0].key, firstKey, "same-stage remount preserves the deterministic beat identity");
+  assert.equal(
+    replayed[0].startedAt,
+    firstStartedAt + 500,
+    "the remounted beat starts a fresh hold -- the identity memory that suppressed the replay above is gone",
+  );
 });

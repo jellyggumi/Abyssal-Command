@@ -51,20 +51,60 @@
 - 장황한 설명은 접고, 첫 화면에는 `스테이지 → 목표 → 편성 → 출전`만 남긴다.
 ## Observed implementation [8.1]
 
+> Corrected 2026-08-03 against the code. The VFX cap and one API claim below were
+> wrong as written; both are fixed in place with the line that decides them.
+
 **Lobby minimap**: `app.js#renderSortieTabBody` renders the fixed
 Cinder→Chancel→Throne route as three native stage buttons. A new campaign reveals
 Cinder only; later nodes become enabled through `campaign.unlockedStageIndex`
 after the preceding stage clear. Selection reuses the existing briefing and
 battle canvas—there is no per-node preview renderer or simulation advance.
+Note: `#stage-progression` (a `<select>`) is a **second** control for the same
+decision and is documented in-code as the primary pre-run one, so §A's
+"first screen = stage → objective → formation → sortie" is only partly met.
 
 **Lobby camera**: `lobby-cinematic.js#showcaseCamera` emits a commander-focused
 animated `distanceScale` of `0.9–1.1`; reduced motion is a static `1.0`.
-`app.js#applyShowcaseCamera` applies the shot through public renderer APIs.
+`app.js#applyShowcaseCamera` applies the shot through the public `orbit()`/`zoom()`
+methods, but also **reads the non-contract fields** `renderer.orbitYaw`,
+`orbitPitch`, `zoomFactor` (guarded with `Number.isFinite`). That is the one place
+the UI reaches past the renderer's frozen five-method surface.
 Framing thresholds are `.96/1.05`.
 
-**VFX/audio**: impact VFX are short-lived and capped at 24; critical boss
-telegraphs preempt expendable cold loads. `defense-audio.js#AUDIO_EVENT_POLICY`
-owns cue priority, voice caps, mute, and pause/resume behavior.
+**VFX/audio**: impact VFX are short-lived and capped at
+`MAX_VISUAL_EFFECTS = 40` (`battle-realtime-three.js:22`, enforced in the
+transient-pool eviction) — **not 24**, which this section previously claimed;
+critical boss telegraphs preempt expendable cold loads.
+`defense-audio.js#AUDIO_EVENT_POLICY` owns cue priority, voice caps, mute, and
+pause/resume behavior.
+
+**Narration is visual, not spoken** (2026-08-03): story beats no longer reach the
+player through `speechSynthesis`. `defense-speech-bubble.js` resolves each beat to
+`{ text, speaker, anchor }` and `app.js#renderWorldHud` draws it as a
+`.world-speech-bubble` over the speaker's body, projected through
+`projectEntityToScreen` (commander/boss/actors) or the new
+`projectStageDecorToScreen` (authored quest-giver NPCs, which live in
+`stageDecorRecords` and are not projectable as actors). `DefenseAudio.narrate()`
+is retained as the audio-side presentation channel — it owns priority,
+preemption, dedup and lifecycle teardown, and is still mute-gated — while the
+bubble deliberately is **not** mute-gated: a muted player needs the text more.
+A paused simulation calls `SpeechBubbleDirector.hold()` so a beat's read time
+freezes with the sim instead of expiring behind the pause overlay.
+
+**Visual pipeline** (2026-08-03): the renderer now applies
+`ACESFilmicToneMapping` at exposure `0.92` (the scene is emissive-heavy and
+previously clipped highlights flat under `NoToneMapping`) and a single key-light
+shadow map, `PCFShadowMap` over 1024², with an orthographic frustum sized from
+`WORLD_SCALE`. Shadows are gated off on the software renderer and under reduced
+motion, and `setReducedMotion` retoggles them live. Terrain receives but never
+casts (a near-flat receiver casting into itself produces acne); actors, props,
+pickups and stage NPCs do both.
+
+**Semantic tokens** (2026-08-03): §F's six roles now exist as
+`--sem-focus/-ready/-warning/-danger/-reward/-disabled` (plus `-soft` variants),
+each an indirection onto the existing palette so adoption changes no computed
+color. Previously only `focus` existed and the other five were open-coded
+literals at component rules.
 
 **Verification** [8.1]: desktop `1440×900` observed WebGL, three minimap nodes,
 one initial reveal, and zero console errors. Mobile `390×844` observed WebGL,

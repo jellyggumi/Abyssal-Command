@@ -2041,6 +2041,27 @@ function applyCelShading(root) {
   return root;
 }
 
+/**
+ * Marks which side of the shadow pass a subtree participates in.
+ *
+ * Set unconditionally: three.js reads `castShadow`/`receiveShadow` only when
+ * `renderer.shadowMap.enabled` is true, so tagging a mesh on the software path
+ * (where shadows stay off, see mount) costs nothing and keeps the decision in
+ * one place instead of threading a renderer flag through every loader.
+ *
+ * Roles are asymmetric on purpose. Terrain receives but never casts: it is the
+ * floor, and letting a near-flat plane cast into itself produces acne at grazing
+ * light angles rather than any visible shadow. Actors and props do both.
+ */
+function applyShadowRoles(root, { cast = true, receive = true } = {}) {
+  root.traverse((node) => {
+    if (!node.isMesh) return;
+    node.castShadow = cast;
+    node.receiveShadow = receive;
+  });
+  return root;
+}
+
 async function instantiateActorModel(relPath, targetHeight) {
   // Load the character GLB and overlay delta pack in parallel.
   // If overlay fails to load, overlayDeltaEntries is null — fall back to base clips.
@@ -2054,6 +2075,7 @@ async function instantiateActorModel(relPath, targetHeight) {
     const instance = SkeletonUtils.clone(gltf.scene);
     fitHeight(instance, targetHeight);
     applyCelShading(instance);
+    applyShadowRoles(instance);
     const baseEntries = (gltf.animations ?? []).map((clip) => ({ clip, source: "base" }));
     if (!baseEntries.length) return { instance, mixer: null, actions: {}, actionSources: {} };
     const mixer = new THREE.AnimationMixer(instance);
@@ -2161,6 +2183,7 @@ async function instantiateTerrainModel(relPath) {
   const gltf = await loadGltf(relPath);
   const instance = SkeletonUtils.clone(gltf.scene);
   ownRenderableResources(instance);
+  applyShadowRoles(instance, { cast: false, receive: true });
   fitFootprint(instance, TERRAIN_TARGET_HALF_EXTENT);
   instance.userData.meshIntegrity = inspectMeshIntegrityOnce(instance, `terrain:${relPath}`, relPath);
   instance.userData.terrainSource = "promoted-glb";
@@ -2180,11 +2203,11 @@ function instantiateProceduralTerrain(profile) {
   });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.position.set((min.x + max.x) / 2, 0, (min.z + max.z) / 2);
-  mesh.receiveShadow = false;
   const root = new THREE.Group();
   root.name = `procedural-terrain:${profile.stageId}`;
   root.add(mesh);
   ownRenderableResources(root);
+  applyShadowRoles(root, { cast: false, receive: true });
   root.userData.meshIntegrity = inspectMeshIntegrityOnce(root, `procedural-terrain:${profile.stageId}`, root.name);
   root.userData.terrainSource = profile.terrainFallback?.kind ?? "procedural-flat-support";
   return root;
@@ -2194,6 +2217,7 @@ async function instantiatePickupModel(relPath) {
   const gltf = await loadGltf(relPath);
   const instance = SkeletonUtils.clone(gltf.scene);
   ownRenderableResources(instance);
+  applyShadowRoles(instance);
   fitHeight(instance, TARGET_HEIGHT.pickup);
   instance.userData.meshIntegrity = inspectMeshIntegrityOnce(instance, `pickup:${relPath}`, relPath);
   instance.userData.groundedMinY = groundObjectOnPlane(instance, 0, relPath);
@@ -2241,6 +2265,7 @@ async function instantiateStageProp(prop) {
   const instance = SkeletonUtils.clone(source);
   if (prop.modelNode) source.matrixWorld.decompose(instance.position, instance.quaternion, instance.scale);
   ownRenderableResources(instance);
+  applyShadowRoles(instance);
   const radius = finite(prop.footprintRadius, 180) * WORLD_SCALE / (WORLD_WIDTH / 2);
   fitFootprint(instance, radius);
   const integrityKey = `prop:${prop.modelPath}#${prop.modelNode ?? "scene"}`;
@@ -2934,6 +2959,7 @@ async function instantiateStageNpc(npc) {
     TARGET_HEIGHT.stageNpc,
   );
   ownRenderableResources(instance);
+  applyShadowRoles(instance);
   const point = worldPoint(npc.placement);
   const restGroundY = instance.position.y;
   instance.position.set(point.x, point.y + restGroundY, point.z);
@@ -3425,6 +3451,10 @@ export class RealtimeBattle {
     // 20260725.md §1.2, D22 판정 9). ambientLight/keyLight are kept as
     // instance fields so applyStagePalette() can retint them per stage.
     this.softwareRenderer = false;
+    // Resolved for real in mount() once the GL context is probed. Declared here
+    // so a setReducedMotion() call before mount reads a boolean rather than
+    // undefined.
+    this.shadowsEnabled = false;
     this.pixelRatio = 1;
     this.ambientLight = null;
     this.keyLight = null;
@@ -3521,6 +3551,31 @@ export class RealtimeBattle {
     });
     this.renderer.setClearColor(COLORS.backgroundBottom, 0);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    // ACES filmic response instead of the default NoToneMapping. This scene is
+    // authored emissive-heavy — the gate torus, pressure rings, rift VFX and the
+    // IBL environment all push values past 1.0 — and with no tone curve every one
+    // of those clipped to flat white, losing the shape of exactly the elements
+    // meant to read as light sources. ACES compresses that highlight range back
+    // into gradient. Exposure slightly under 1 keeps the abyss reading dark after
+    // the curve lifts the midtones.
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 0.92;
+    // Shadows, gated. A single key-light shadow map is what makes bodies sit ON
+    // the floor rather than hover above a flat-lit plane, but every shadow caster
+    // costs an extra depth pass and this scene's casters are SKINNED — the most
+    // expensive kind. So it is off on the software renderer (which is already
+    // clamped to SOFTWARE_MAX_BACKBUFFER_PX and cannot afford a second pass) and
+    // off under reduced motion, where the cheaper flat read is also the calmer
+    // one. A 1024 map is the quality/cost knee for a single light.
+    this.shadowsEnabled = !this.softwareRenderer && !this.reducedMotion;
+    this.renderer.shadowMap.enabled = this.shadowsEnabled;
+    // PCF, not PCFSoft: this three.js build deprecated PCFSoftShadowMap and
+    // downgrades it to PCFShadowMap inside WebGLShadowMap.render — asking for the
+    // deprecated mode buys a console warning and then the same result, and it also
+    // rewrites `type` on the first shadow render, which makes the setting look
+    // like it was lost. Set unconditionally so a live setReducedMotion(false) does
+    // not have to remember to install it.
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
 
     this.scene = new THREE.Scene();
     // envMap (not envMapIntensity=0 default): every actor/terrain/gate
@@ -3538,6 +3593,33 @@ export class RealtimeBattle {
     this.ambientLight = new THREE.AmbientLight(COLORS.ambient, 1.1);
     this.keyLight = new THREE.DirectionalLight(COLORS.key, 1.6);
     this.keyLight.position.set(6, 10, 4);
+    // Shadow frustum configured UNCONDITIONALLY, with only `castShadow` gated.
+    // The world is a fixed WORLD_SCALE diorama, so the frustum can be a tight
+    // orthographic box around it instead of tracking the camera. Sized from
+    // WORLD_SCALE rather than a magic number so it stays correct if the diorama
+    // is rescaled; a loose box would spend the whole 1024 map on empty space and
+    // read as blocky.
+    //
+    // Unconditional because setReducedMotion can turn shadows on later in the
+    // session: if this block only ran when shadows started enabled, a session
+    // mounted under reduced motion would light up with three.js's default 5×5
+    // shadow frustum the moment the preference flipped, and everything outside
+    // that box would go unlit-but-unshadowed. Configuring it costs nothing while
+    // castShadow is false.
+    const shadowExtent = WORLD_SCALE * 1.35;
+    this.keyLight.shadow.mapSize.set(1024, 1024);
+    this.keyLight.shadow.camera.left = -shadowExtent;
+    this.keyLight.shadow.camera.right = shadowExtent;
+    this.keyLight.shadow.camera.top = shadowExtent;
+    this.keyLight.shadow.camera.bottom = -shadowExtent;
+    this.keyLight.shadow.camera.near = 0.5;
+    this.keyLight.shadow.camera.far = WORLD_SCALE * 6;
+    // Bias pair tuned for skinned casters on a near-flat receiver: the constant
+    // bias alone leaves acne on the floor at grazing angles, and normalBias is
+    // what stops a character's own limbs self-shadowing into stripes.
+    this.keyLight.shadow.bias = -0.0006;
+    this.keyLight.shadow.normalBias = 0.02;
+    this.keyLight.castShadow = this.shadowsEnabled;
     // rimLight starts at the legacy fixed world position; updateCamera()
     // repositions it every frame relative to the live camera orbit once
     // rendering begins (stage-composition-20260725.md §1.2, D22 판정 9) --
@@ -5090,6 +5172,21 @@ export class RealtimeBattle {
       this.clearCameraShakeOffset();
       this.cameraShake = null;
     }
+    // Shadows are part of the reduced-motion contract (see mount): the flat read
+    // is the calmer one, and it is also the cheaper one. Retoggled live rather
+    // than only at mount, because the OS preference can change mid-session and
+    // this is the observer that hears about it. Meshes keep their role tags — the
+    // renderer-level switch is what actually turns the pass on and off, so
+    // flipping back does not need to re-walk every subtree.
+    this.shadowsEnabled = !this.softwareRenderer && !this.reducedMotion;
+    if (this.renderer) {
+      this.renderer.shadowMap.enabled = this.shadowsEnabled;
+      // three.js caches compiled programs per shadow configuration; a live
+      // toggle needs the material cache invalidated or already-drawn meshes keep
+      // their old shader and silently ignore the new state.
+      this.renderer.shadowMap.needsUpdate = true;
+    }
+    if (this.keyLight) this.keyLight.castShadow = this.shadowsEnabled;
     for (const flash of this.hitFlashes.values()) flash.static = this.reducedMotion;
     for (const record of this.stageDecorRecords) {
       if (record.kind === "stage-vfx") applyStageVfxPolicy(record, this.reducedMotion);
@@ -5419,6 +5516,29 @@ export class RealtimeBattle {
    */
   projectEntityToScreen(entityId) {
     const record = this.actors.get(entityId);
+    if (!record?.root) return null;
+    return this.worldToNDC(record.root.position);
+  }
+
+  /**
+   * NDC projection of a stage decor body — specifically the quest-giver NPCs a
+   * speech bubble anchors to.
+   *
+   * This exists because `projectEntityToScreen` above searches `this.actors`,
+   * which is populated exclusively from the simulation snapshot (commander,
+   * enemies, companions, pickups, projectiles). Stage NPCs are authored scenery:
+   * they live in `this.stageDecorRecords` and never appear in a snapshot, so
+   * `projectEntityToScreen(questGiverNpcId)` returns null for every one of them.
+   *
+   * The lookup deliberately mirrors `triggerStageNpcStoryBeat`'s own record
+   * resolution — same `id`-or-`questId` disjunction — so a bubble and the NPC's
+   * story animation can never disagree about which body they mean.
+   */
+  projectStageDecorToScreen(decorId, questId = null) {
+    if (this.disposed) return null;
+    if (!decorId && !questId) return null;
+    const record = this.stageDecorRecords.find((candidate) => candidate.kind === "stage-npc"
+      && ((decorId && candidate.id === decorId) || (questId && candidate.questId === questId)));
     if (!record?.root) return null;
     return this.worldToNDC(record.root.position);
   }

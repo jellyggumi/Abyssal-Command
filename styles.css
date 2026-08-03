@@ -525,13 +525,131 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
 .world-damage-number { position: absolute; left: 0; top: 0; pointer-events: none; }
 .world-damage-number-rise { display: block; transform: translate(-50%, -50%); color: #fff3a1; font-size: .78rem; font-weight: 800; text-shadow: 0 1px 2px rgb(0 0 0 / .6); animation: world-damage-rise 900ms ease-out forwards; }
 .world-damage-number-rise.is-crit { color: #ff9a7a; font-size: .92rem; }
+/* World-space speech bubbles — narration, presented over the speaker's body
+   instead of spoken (see defense-speech-bubble.js).
+
+   Same two-node discipline as .world-damage-number above: .world-speech-bubble
+   carries ONLY the JS-computed screen position, .world-speech-frame carries the
+   entry animation. The tail is an ::after on the frame, lifted from
+   .lobby-dialogue-bubble's rotated-square technique so both bubble surfaces read
+   as one language; it points DOWN here because a world bubble sits above its
+   speaker rather than beside a portrait.
+
+   Speaker identity is keyed off [data-speaker], exactly as the lobby cinematic
+   keys its own variants — role is carried by border/accent AND by the visible
+   speaker name, never by color alone. */
+/* Width cap is a PERCENTAGE of the overlay, not `vw`. In portrait the overlay is
+   rotated 90deg and sized from --defense-logical-width/height, so `vw` names the
+   physical short edge while the bubble lays out along the overlay's long axis — a
+   vw cap squeezed the line into a narrow vertical sliver there. A percentage
+   resolves against the overlay itself, so it is axis-correct in both orientations. */
+.world-speech-bubble { position: absolute; left: 0; top: 0; pointer-events: none; max-width: min(16rem, 42%); }
+.world-speech-frame {
+  position: relative;
+  display: grid;
+  gap: .12rem;
+  padding: .42rem .6rem .5rem;
+  border: 1px solid rgb(128 216 255 / .5);
+  border-radius: .5rem .5rem .5rem .5rem;
+  background: linear-gradient(145deg, rgb(10 18 33 / .95), rgb(20 13 35 / .9));
+  box-shadow: 0 .5rem 1.1rem rgb(0 0 0 / .45);
+  animation: world-speech-enter 220ms ease-out both;
+}
+/*
+ * Portrait counter-rotation.
+ *
+ * #world-hud-overlay is rotated 90deg in portrait so that worldToNDC()
+ * projections land in the same coordinate space as the 3D scene (see the rule
+ * above the overlay). Its children inherit that rotation. For a nameplate — one
+ * short horizontal row — that is invisible. For a multi-line bubble it is not:
+ * the text renders sideways.
+ *
+ * So the OUTER node keeps living in the rotated space (its inline transform is
+ * the projected position and must not be touched), and the frame counter-rotates
+ * -90deg about its own bottom-centre — the point the tail marks and the point
+ * that sits over the speaker — so the copy reads upright while the bubble stays
+ * anchored to the same body.
+ *
+ * The width bound has to change with it. After counter-rotation the frame's box
+ * extends along the PHYSICAL x axis, which in portrait is the short edge, so a cap
+ * expressed against the overlay's LONG axis let the frame run off screen. `62vw`
+ * bounds it against the short edge instead.
+ *
+ * `position: fixed` is deliberately NOT used to centre it. A transformed ancestor
+ * becomes the containing block for fixed descendants, and both the overlay
+ * (rotate 90deg) and the outer node (inline translate) are transformed — fixed
+ * insets resolve in rotated space against a shrink-wrapped box and collapse the
+ * bubble to a min-content column. The residual overflow is clamped in JS instead,
+ * where the projected position already lives (see renderWorldHud).
+ */
+html[data-defense-portrait="true"] .world-speech-frame {
+  transform: rotate(-90deg);
+  transform-origin: 50% 100%;
+  animation-name: world-speech-enter-portrait;
+  width: max-content;
+  max-width: min(13rem, 62vw);
+}
+html[data-defense-portrait="true"] .world-speech-bubble { max-width: none; }
+.world-speech-frame::after {
+  position: absolute;
+  left: 50%;
+  bottom: -.3rem;
+  width: .52rem;
+  height: .52rem;
+  margin-left: -.26rem;
+  content: "";
+  border-right: 1px solid rgb(128 216 255 / .5);
+  border-bottom: 1px solid rgb(128 216 255 / .5);
+  background: rgb(14 16 32 / .95);
+  transform: rotate(45deg);
+}
+.world-speech-speaker { color: var(--rc-cyan); font-size: .56rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.world-speech-text { color: #eef4fb; font-size: .7rem; line-height: 1.38; overflow-wrap: anywhere; }
+/* Antagonist beats read as threat; keeper beats as guidance; warden as the
+   player's own channel. Border + eyebrow color only — the name above is the
+   non-color channel that actually identifies the speaker. */
+.world-speech-bubble[data-speaker="antagonist"] .world-speech-frame { border-color: rgb(243 89 44 / .55); background: linear-gradient(145deg, rgb(30 12 20 / .95), rgb(20 10 18 / .92)); }
+.world-speech-bubble[data-speaker="antagonist"] .world-speech-frame::after { border-color: rgb(243 89 44 / .55); background: rgb(28 12 19 / .95); }
+.world-speech-bubble[data-speaker="antagonist"] .world-speech-speaker { color: var(--canon-cinder-ember); }
+.world-speech-bubble[data-speaker="keeper"] .world-speech-frame { border-color: rgb(233 196 106 / .5); }
+.world-speech-bubble[data-speaker="keeper"] .world-speech-frame::after { border-color: rgb(233 196 106 / .5); }
+.world-speech-bubble[data-speaker="keeper"] .world-speech-speaker { color: var(--sem-warning); }
+.world-speech-bubble[data-speaker="warden"] .world-speech-frame { border-color: rgb(112 211 174 / .5); }
+.world-speech-bubble[data-speaker="warden"] .world-speech-frame::after { border-color: rgb(112 211 174 / .5); }
+.world-speech-bubble[data-speaker="warden"] .world-speech-speaker { color: var(--sem-ready); }
+@keyframes world-speech-enter { from { opacity: 0; transform: translateY(.35rem) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+/* The portrait twin. A keyframe animating `transform` replaces the whole computed
+   value, so the landscape keyframe would silently drop the -90deg counter-rotation
+   for its 220ms — the bubble would flash sideways on entry. This variant carries
+   the rotation through every step. */
+@keyframes world-speech-enter-portrait {
+  from { opacity: 0; transform: rotate(-90deg) translateY(.35rem) scale(.97); }
+  to { opacity: 1; transform: rotate(-90deg) translateY(0) scale(1); }
+}
 @keyframes world-capture-pulse { 0%, 100% { opacity: .78; } 50% { opacity: 1; } }
 @keyframes world-damage-rise { from { opacity: 1; transform: translate(-50%, -50%); } to { opacity: 0; transform: translate(-50%, calc(-50% - 1.4rem)); } }
 @media (prefers-reduced-motion: reduce) {
   .world-capture-prompt { animation: none; }
   .world-damage-number-rise { animation: none; opacity: 0; transition: opacity 250ms linear 550ms; }
+  /* The bubble must stay fully readable — only the entry motion goes. The global
+     `animation: none !important` below would strip the `both` fill and leave
+     opacity at the keyframe's 0, so opacity is restored explicitly.
+
+     `transform` is NOT reset to none: in portrait the frame's transform is the
+     -90deg counter-rotation that makes the copy readable, not decoration.
+     Clearing it would leave a reduced-motion portrait player with sideways text. */
+  .world-speech-frame { animation: none; opacity: 1; }
+  html:not([data-defense-portrait="true"]) .world-speech-frame { transform: none; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+/* High contrast: drop the layered gradient for a flat opaque fill so the bubble
+   text keeps its contrast ratio, matching the blur-stripping rule the other HUD
+   surfaces already use. */
+@media (prefers-contrast: more) {
+  .world-speech-frame { background: #05080f; border-color: #dff3ff; box-shadow: none; }
+  .world-speech-frame::after { background: #05080f; border-color: #dff3ff; }
+  .world-speech-text { color: #ffffff; }
+}
 
 .panel-heading { display: flex; align-items: center; gap: .75rem; justify-content: space-between; margin-bottom: .85rem; }
 .eyebrow, .hud-eyebrow { margin: 0; color: rgba(92, 200, 255, 0.85); font-size: .68rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; text-shadow: 0 0 8px rgba(92, 200, 255, 0.4); }
@@ -815,6 +933,30 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
      from a pad geometry the spec rejected (S5). Per-composition overrides sit with each
      composition's #combat-input-cluster rule. */
   --combat-cluster-width: 9.4rem;
+  /* ------------------------------------------------------------------
+     Semantic state tokens (UI/UX spec §F).
+
+     The block above is a PALETTE — hues named after the world's materials.
+     These are the six SEMANTIC roles the spec asks to be separable from it, so a
+     component can say "this is a warning" instead of restating a hex value. Each
+     is an indirection onto an existing palette entry or the literal already in
+     use at the component rules below, so adopting a token changes no computed
+     color; what changes is that the meaning now has one definition to audit.
+
+     Never the only channel: every consumer pairs a token with a shape, glyph, or
+     text state, per the spec's no-color-only rule.
+     ------------------------------------------------------------------ */
+  --sem-focus: var(--lantern-focus, #fff0a8);
+  --sem-ready: var(--rc-green);
+  --sem-warning: var(--rc-amber);
+  --sem-danger: #d46f75;
+  --sem-reward: var(--canon-zenith-gold);
+  --sem-disabled: var(--canon-cold-steel);
+  /* Soft companions, for fills/rings that must not compete with foreground text. */
+  --sem-ready-soft: rgb(112 211 174 / .18);
+  --sem-warning-soft: rgb(233 196 106 / .18);
+  --sem-danger-soft: rgb(212 111 117 / .20);
+  --sem-reward-soft: rgb(221 200 105 / .18);
 }
 
 /* Glass panel: layered depth via blur + soft border, replaces flat opaque panel fills on
@@ -2130,8 +2272,19 @@ body {
 .skill-radial .skill-action:nth-child(3) { right: .15rem; top: .15rem; }
 .skill-radial .skill-action:nth-child(4) { right: .05rem; bottom: 3.9rem; }
 .skill-radial .skill-action:nth-child(5) { left: 2.35rem; bottom: .15rem; }
-.skill-radial .skill-action:not(:disabled):hover,
-.skill-radial .skill-action:not(:disabled):focus-visible { transform: scale(1.08); filter: brightness(1.25); border-color: #b992ff; }
+/* Interaction affordance now keys off the state attribute, not `:disabled` — the
+   button stays enabled (and focusable) while cooling and refuses the cast in JS,
+   so `:not(:disabled)` would have matched a cooling skill too. */
+.skill-radial .skill-action[data-skill-state="ready"]:hover,
+.skill-radial .skill-action[data-skill-state="ready"]:focus-visible { transform: scale(1.08); filter: brightness(1.25); border-color: var(--sem-ready); }
+/* Ready vs cooling carries THREE separate channels, per §C's no-color-only rule:
+   the border color, the border STYLE (solid vs dashed — survives grayscale and
+   color-blindness), and the copy underneath (`준비됨` vs a live seconds count,
+   written by renderControls). */
+.skill-radial .skill-action[data-skill-state="ready"] { border: 2px solid var(--sem-ready); box-shadow: 0 0 0 .16rem var(--sem-ready-soft); }
+.skill-radial .skill-action[data-skill-state="cooling"] { border: 2px dashed var(--sem-disabled); box-shadow: none; filter: saturate(.5); cursor: not-allowed; }
+.skill-radial .skill-action[data-skill-state="cooling"] .skill-copy small { color: var(--sem-warning); }
+.skill-radial .skill-action[data-skill-state="ready"] .skill-copy small { color: var(--sem-ready); }
 .skill-radial .skill-glyph { font-size: 1rem; line-height: 1; }
 .skill-radial .skill-copy { display: grid; justify-items: center; min-width: 0; }
 .skill-radial .skill-copy strong { max-width: 4.2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .48rem; }

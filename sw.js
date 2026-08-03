@@ -37,6 +37,7 @@ const CORE_ASSETS = [
   "./battle-visualizer.js",
   "./defense-audio.js",
   "./defense-cutscene.js",
+  "./defense-speech-bubble.js",
   "./defense-telemetry.js",
   // app.js statically imports both of these, so a cold offline load fails on a
   // module-resolution error without them in the install-time precache.

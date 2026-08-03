@@ -18,6 +18,11 @@ const AMBIENT_NARRATION_PRIORITY = 45;
 const CRITICAL_AUDIO_PRIORITY = 80;
 const MAX_ACTIVE_NARRATIONS = 8;
 const MAX_STORY_NARRATION_KEYS = 32;
+// Ring buffer of presented narration text. This is the observable seam that
+// replaced `speechSynthesis.utterances` when narration became visual: it is the
+// only way a test can assert WHICH beats the presentation channel accepted, in
+// what order. Bounded because a long run would otherwise retain every line.
+const MAX_PRESENTED_NARRATIONS = 16;
 // Footstep cadence. The simulation already computes this exact interval for its own `cue` field
 // (defense-run-simulation.js:2886 `run.tick % 12 === 0`); deriving the gate from `event.tick`
 // mirrors it without reading `event.cue`, keeping AUDIO_EVENT_POLICY the sole event->cue
@@ -63,40 +68,6 @@ const byId = Object.freeze(Object.fromEntries(
   [...Object.values(AUDIO_CUES), ...Object.values(SYNTHETIC_CUES)].map((cue) => [cue.id, cue]),
 ));
 
-const NARRATION_VOICE_HINTS = Object.freeze(["ko-KR", "ko_KR", "Korean"]);
-const NARRATION_VOICE_PROFILES = Object.freeze({
-  narrator: Object.freeze({
-    hints: Object.freeze([]),
-    settings: Object.freeze({ rate: 0.92, pitch: 0.88, volume: 0.86 }),
-  }),
-  keeper: Object.freeze({
-    hints: Object.freeze(["sora", "sunhi", "yuna", "female"]),
-    settings: Object.freeze({ rate: 0.86, pitch: 0.98, volume: 0.84 }),
-  }),
-  antagonist: Object.freeze({
-    hints: Object.freeze(["minsu", "inhyeok", "male"]),
-    settings: Object.freeze({ rate: 0.82, pitch: 0.72, volume: 0.9 }),
-  }),
-  warden: Object.freeze({
-    hints: Object.freeze(["minsu", "hyun", "male"]),
-    settings: Object.freeze({ rate: 0.88, pitch: 0.82, volume: 0.88 }),
-  }),
-});
-const NARRATION_STAGE_TUNING = Object.freeze({
-  "cinder-span": Object.freeze({ rate: 0.02, pitch: 0.02 }),
-  "abyss-chancel": Object.freeze({ rate: -0.02, pitch: -0.02 }),
-  "echo-throne": Object.freeze({ rate: -0.04, pitch: -0.04 }),
-});
-const koreanVoice = (voice) => NARRATION_VOICE_HINTS.some((hint) =>
-  `${voice?.lang || ""} ${voice?.name || ""}`.includes(hint)
-) || String(voice?.lang || "").toLowerCase().startsWith("ko");
-const pickNarrationVoice = (voices = [], hints = []) => {
-  const preferred = voices.filter(koreanVoice);
-  const roleVoice = preferred.find((voice) => hints.some((hint) =>
-    String(voice?.name || "").toLowerCase().includes(hint)
-  ));
-  return roleVoice || preferred[0] || voices[0] || null;
-};
 
 const CUE_PROFILES = Object.freeze({
   "stage-start": Object.freeze([
@@ -956,43 +927,22 @@ const narrationText = (event) => {
   return event.text.trim().slice(0, MAX_NARRATION_CHARS);
 };
 
-const narrationVoiceProfile = (event) => {
-  const beat = event?.storyBeat;
-  const voiced = beat?.voiceLine && typeof beat.voiceLine === "object" ? beat.voiceLine : null;
-  const dialogue = beat?.dialogue && typeof beat.dialogue === "object" ? beat.dialogue : null;
-  const metadata = [
-    event?.voiceRole,
-    event?.speakerRole,
-    voiced?.role,
-    voiced?.speaker,
-    dialogue?.role,
-    dialogue?.speaker,
-    beat?.kind,
-  ].filter((value) => typeof value === "string").join(" ").toLowerCase();
-  let name = "narrator";
-  if (/dusk warden|commander|player|황혼/u.test(metadata)) {
-    name = "warden";
-  } else if (/questacquisition|lookout|keeper|quest.?giver|감시/u.test(metadata)) {
-    name = "keeper";
-  } else if (/bossentry|occupationreversal|antagonist|tactician|sovereign|cinder warden|boss/u.test(metadata)) {
-    name = "antagonist";
-  } else if (storyNarrationText(event)
-    && ["OBJECTIVE_COMPLETED", "EXTRACTION_COMPLETED", "TERMINAL"].includes(event?.type)) {
-    name = "warden";
-  }
-  const profile = NARRATION_VOICE_PROFILES[name];
-  const storyStageId = typeof beat?.id === "string" ? beat.id.split(":")[0] : null;
-  const stageId = event?.stageId || beat?.event?.stageId || storyStageId;
-  const tuning = NARRATION_STAGE_TUNING[stageId] || {};
-  return Object.freeze({
-    name,
-    hints: profile.hints,
-    settings: Object.freeze({
-      rate: Math.max(0.7, Math.min(1.1, profile.settings.rate + (tuning.rate || 0))),
-      pitch: Math.max(0.55, Math.min(1.15, profile.settings.pitch + (tuning.pitch || 0))),
-      volume: profile.settings.volume,
-    }),
-  });
+/**
+ * How long a narration beat holds the presentation channel.
+ *
+ * Speech used to define this implicitly: the channel was busy until the
+ * utterance finished. With narration presented as a bubble, the duration has to
+ * be stated, and it must be the READING time of the line rather than a fixed
+ * interval, or a long beat is preempted before it can be read.
+ *
+ * Kept numerically in step with defense-speech-bubble.js's `speechBubbleHoldMs`
+ * so the audio channel and the visible bubble release together; the bubble module
+ * owns the presentation, this owns the preemption channel, and a disagreement
+ * would let a cue preempt a beat still on screen.
+ */
+const narrationHoldMs = (text) => {
+  const length = typeof text === "string" ? text.length : 0;
+  return Math.min(5200, Math.max(2200, 1500 + length * 58));
 };
 
 const feedbackEventKey = (event) => {
@@ -1162,6 +1112,7 @@ export class DefenseAudio {
     this.narrationPriorities = new Map();
     this.activeNarrationPriority = 0;
     this.storyNarrationKeys = new Set();
+    this.presentedNarrations = [];
     this.visibilityTarget = null;
     this.windowTarget = null;
     this.onVisibilityChange = () => {
@@ -1362,6 +1313,7 @@ export class DefenseAudio {
     this.stopTransientVoices();
     this.feedbackEventKeys.clear();
     this.storyNarrationKeys.clear();
+    this.presentedNarrations.length = 0;
     this.lastCueAt.clear();
     // buffId is `buff-<n>` from a run-local counter, so a re-entered stage reuses ids. Clearing
     // here — the same path BattleSession takes on remount — is what lets a reused id re-warn.
@@ -1829,65 +1781,91 @@ export class DefenseAudio {
     }
   }
 
+  /**
+   * Narration presentation hand-off. Formerly this spoke `text` through
+   * `speechSynthesis`; narration is now presented visually as a world-space
+   * speech bubble (see defense-speech-bubble.js), so this method no longer
+   * synthesizes anything.
+   *
+   * It is deliberately NOT deleted. Three things still depend on it:
+   *
+   *  - `consume()`'s narration pass (below) uses the boolean return to decide
+   *    whether a story beat has been *presented*, which is what
+   *    `rememberStoryNarration` keys off — dedup across a replayed snapshot is
+   *    still this method's job.
+   *  - `activeNarrations` / `narrationPriorities` keep expressing "a narration
+   *    beat currently holds the channel", so `CRITICAL_AUDIO_PRIORITY` cues can
+   *    still preempt a lower-priority beat and every lifecycle stop
+   *    (visibility, background, pause, resetRun, tick-zero rerun, stop) keeps
+   *    clearing it for free.
+   *  - `debugMetrics()` keeps reporting the same counters, so the QA harnesses
+   *    that need them do not need a parallel bubble metric to stay meaningful.
+   *
+   * A synthetic token stands in for the utterance object. It carries no audio,
+   * and it is released on the beat's own reading duration rather than on an
+   * `onend` callback, because nothing is speaking to end.
+   *
+   * `muted` still gates, deliberately. This method owns the *audio-side*
+   * presentation channel — the thing a critical cue preempts and a lifecycle
+   * stop clears — and muting that channel is coherent. The visible bubble is a
+   * separate layer driven from app.js by SpeechBubbleDirector, which is NOT
+   * mute-gated: a muted player still reads the beat. Keeping the gate here also
+   * keeps every existing channel semantic (priority, dedup, teardown) intact
+   * rather than silently redefining what mute means.
+   *
+   * `presentedNarrations` is the observable seam that replaced `speechSynthesis`
+   * as the thing a test can assert against: the text of each beat this channel
+   * accepted, in arrival order.
+   */
   narrate(event, priority = AMBIENT_NARRATION_PRIORITY) {
     const text = narrationText(event);
     const story = Boolean(storyNarrationText(event));
-    const speech = globalThis.speechSynthesis;
-    const Utterance = globalThis.SpeechSynthesisUtterance;
-    if (!text || this.muted || this.paused || this.backgrounded
-      || typeof speech?.speak !== "function" || typeof Utterance !== "function") return false;
+    if (!text || this.muted || this.paused || this.backgrounded) return false;
     if (this.activeNarrations.size) {
       if (priority > this.activeNarrationPriority) {
         this.stopNarration();
       } else if (!story || priority < this.activeNarrationPriority) {
         return false;
       }
-    } else if (!story && (speech.speaking || speech.pending)) {
-      return false;
     }
     if (this.activeNarrations.size >= MAX_ACTIVE_NARRATIONS) {
-      // Keep the earliest authored milestones in native speech order.
+      // Keep the earliest authored milestones in arrival order.
       return false;
     }
-    let utterance = null;
-    try {
-      const profile = narrationVoiceProfile(event);
-      utterance = new Utterance(text);
-      const voices = typeof speech.getVoices === "function" ? speech.getVoices() : [];
-      const voice = pickNarrationVoice(voices, profile.hints);
-      if (voice) utterance.voice = voice;
-      utterance.lang = voice?.lang || "ko-KR";
-      utterance.rate = profile.settings.rate;
-      utterance.pitch = profile.settings.pitch;
-      utterance.volume = profile.settings.volume * this.volume;
-      const release = () => {
-        if (!this.activeNarrations.delete(utterance)) return;
-        this.narrationPriorities.delete(utterance);
-        this.updateActiveNarrationPriority();
-      };
-      utterance.onend = release;
-      utterance.onerror = release;
-      this.activeNarrations.add(utterance);
-      this.narrationPriorities.set(utterance, priority);
+    const token = { text, story };
+    this.activeNarrations.add(token);
+    this.narrationPriorities.set(token, priority);
+    this.presentedNarrations.push(text);
+    if (this.presentedNarrations.length > MAX_PRESENTED_NARRATIONS) this.presentedNarrations.shift();
+    this.updateActiveNarrationPriority();
+    // Hold the channel for the beat's reading duration, then release. Guarded so
+    // a synchronous re-entrant release cannot double-decrement.
+    const release = () => {
+      if (!this.activeNarrations.delete(token)) return;
+      this.narrationPriorities.delete(token);
       this.updateActiveNarrationPriority();
-      speech.speak(utterance);
-      return true;
-    } catch {
-      this.activeNarrations.delete(utterance);
-      this.narrationPriorities.delete(utterance);
-      this.updateActiveNarrationPriority();
-      return false;
+    };
+    const holdMs = narrationHoldMs(text);
+    if (typeof globalThis.setTimeout === "function") {
+      token.timer = globalThis.setTimeout(release, holdMs);
+    } else {
+      release();
     }
+    return true;
   }
 
   stopNarration() {
     const hadActiveNarration = this.activeNarrations.size > 0;
+    // Narration is presented as a bubble now, so there is no utterance to
+    // cancel — but the hold timers must die with the beat, or a release that
+    // fires after a resetRun would decrement a channel it no longer owns.
+    for (const token of this.activeNarrations) {
+      if (token?.timer !== undefined) clearTimeout(token.timer);
+    }
     this.activeNarrations.clear();
     this.narrationPriorities.clear();
     this.activeNarrationPriority = 0;
-    if (hadActiveNarration) {
-      try { globalThis.speechSynthesis?.cancel?.(); } catch { /* optional speech synthesis failure */ }
-    }
+    return hadActiveNarration;
   }
 
   consume(events = []) {
@@ -1909,6 +1887,7 @@ export class DefenseAudio {
       this.stopNarration();
       this.feedbackEventKeys.clear();
       this.storyNarrationKeys.clear();
+      this.presentedNarrations.length = 0;
       this.lastCueAt.clear();
       this.lastFeedbackTick = null;
     }
@@ -1986,6 +1965,7 @@ export class DefenseAudio {
     this.lastCueAt.clear();
     this.feedbackEventKeys.clear();
     this.storyNarrationKeys.clear();
+    this.presentedNarrations.length = 0;
     this.buffWarnedIds.clear();
     this.lastFeedbackTick = null;
     this.stoppableNodes.clear();
@@ -2031,6 +2011,9 @@ export class DefenseAudio {
       narrationPriority: this.activeNarrationPriority,
       narrationQueue: Math.max(0, this.activeNarrations.size - 1),
       storyNarrations: this.storyNarrationKeys.size,
+      // Text of the beats this channel accepted, newest last. Replaces the
+      // former `speechSynthesis.utterances` as the assertable presentation trace.
+      presentedNarrations: [...this.presentedNarrations],
     };
   }
 }

@@ -62,6 +62,7 @@ import { ARENA, COMPANIONS, CUTSCENES, DIRECT_COMBAT, REWARDS, RULES_VERSION, SK
 // destructured at module scope, so the binding is picked up live rather than snapshotted.
 import * as defenseCatalog from "./defense-catalog.js";
 import { cutsceneEventKey, cutsceneFromEvent } from "./defense-cutscene.js";
+import { SpeechBubbleDirector } from "./defense-speech-bubble.js";
 import { DefenseAudio } from "./defense-audio.js";
 import { DefenseViewport } from "./defense-viewport.js";
 import { DefenseTelemetry } from "./defense-telemetry.js";
@@ -168,6 +169,11 @@ const CAMERA_FOLLOW_EASING = 0.18;
 const WORLD_NAMEPLATE_LIFT_PX = 34;
 const WORLD_DAMAGE_NUMBER_LIFT_PX = 18;
 const WORLD_CAPTURE_PROMPT_LIFT_PX = 12;
+// Above WORLD_NAMEPLATE_LIFT_PX so a companion's bubble clears its own nameplate.
+const WORLD_SPEECH_BUBBLE_LIFT_PX = 62;
+// Inset the on-screen clamp keeps between a bubble and the viewport edge, mirroring
+// WORLD_WAYPOINT_EDGE_MARGIN_PX's role for the offscreen arrow.
+const WORLD_SPEECH_BUBBLE_EDGE_MARGIN_PX = 8;
 const WORLD_WAYPOINT_EDGE_MARGIN_PX = 28; // clamped inset from the viewport edge, row 17's screen-clamp margin
 // 3-stance formation selector (D22 판정11/Implementation interface, §2-a
 // ui-redesign-delta-20260725.md) — glyph/label lookup keyed by
@@ -1933,6 +1939,13 @@ export class BattleSession {
     this.audio = new DefenseAudio({ sampleMapUrl: "assets/audio/elevenlabs/index.json" });
     this.audioTick = null;
     this.audioEventKeys = new Set();
+    // Narration used to be spoken; it is now presented as world-space speech
+    // bubbles. The director owns which beat is live and for how long; the
+    // per-frame pass in renderWorldHud only draws what it reports. Fed the same
+    // clock the frame loop reads, so a paused frame can hold a beat's read time
+    // rather than burning it (see the hold() call in render()).
+    this.speechBubbles = new SpeechBubbleDirector({ now: () => performance.now() });
+    this.speechBubbleFrameAt = null;
     // Cycle 10 §5.3a. One-shot pre-expiry warning ledger, keyed by buffId. Presentation-only:
     // never read by the simulation, so getRunDigest is unaffected.
     this.warnedBuffIds = new Set();
@@ -2119,6 +2132,11 @@ export class BattleSession {
     this.pendingCombatControls = new Map();
     this.combatControlFeedback = new Map();
     this.audioEventKeys.clear();
+    // Full reset, not just a dismissal: a remounted stage must be able to replay
+    // its opening beat, which the director's identity memory would otherwise
+    // suppress. Optional-chained because the test fixtures build a session with
+    // Object.create(BattleSession.prototype) and never run the constructor.
+    this.speechBubbles?.reset();
     // Cycle 10 §5.3a: a buff warns ONCE, not every frame for 180 ticks. Reset here as well as
     // in beginRun() because `nextId` is a shared per-run counter, so a re-entered stage can
     // reissue a `buff-<n>` this Set already holds -- without the remount reset that buff would
@@ -2809,6 +2827,11 @@ export class BattleSession {
       }
     } else {
       this.accumulator = 0;
+      // The simulation is frozen (pause, blocking cutscene, hidden tab, terminal
+      // run). A bubble's hold is wall-clock, so without this it would expire
+      // behind a pause overlay and the player would return to a beat they never
+      // read. Extending by the real elapsed time freezes read-time with the sim.
+      if (this.started && Number.isFinite(elapsed) && elapsed > 0) this.speechBubbles?.hold(elapsed);
     }
     this.render(frameEvents);
     telemetry.recordFrameProbe({
@@ -3170,6 +3193,17 @@ export class BattleSession {
       return true;
     });
     this.audio.consume(newAudioEvents);
+    // Fed from the RAW snapshot events, not `newAudioEvents`, and for the same
+    // reason consumeCutscenes below is: `audioEventKeys` is consumed on every
+    // render including the pre-run lobby ones, so the tick-0 STAGE_STARTED beat is
+    // already marked seen by the time `started` flips true and would never reach a
+    // consumer gated behind that flag. The director carries its own identity
+    // memory, so re-seeing an event is a no-op rather than a duplicate bubble.
+    //
+    // Also deliberately independent of the audio channel's own gating: a beat the
+    // audio channel refuses (muted, for instance) still gets its bubble, because
+    // muting silences audio and a bubble is not audio.
+    if (this.started) for (const event of snapshot.events) this.speechBubbles?.present(event);
     this.recordExtraction(snapshot);
     if (this.started) this.consumeCutscenes(snapshot.events);
     for (const event of snapshot.events) {
@@ -3846,6 +3880,100 @@ export class BattleSession {
       rise.addEventListener("animationend", () => number.remove());
       setTimeout(() => number.remove(), 1200); // fallback if reduced-motion suppresses the animationend event
     }
+
+    // World-space speech bubbles (the visual replacement for spoken narration).
+    //
+    // The director (defense-speech-bubble.js) already decided WHICH beats are
+    // live and for how long; this pass only projects each one onto its speaker's
+    // body and reconciles the DOM. Three anchor classes, because the renderer
+    // keeps its subjects in two different collections and the narrator has no
+    // body at all:
+    //   entity     -> projectEntityToScreen (commander, bosses, combat actors)
+    //   stage-npc  -> projectStageDecorToScreen (authored quest-giver scenery,
+    //                 which is NOT in `actors` and would project to null)
+    //   none       -> no bubble; the caption strip keeps that beat (the cutscene
+    //                 overlay is the aria-live announcer, so nothing is lost).
+    //
+    // Structure copies the damage-number two-node pattern for the same reason:
+    // a CSS animation replaces the entire computed transform, so the outer node
+    // carries only the JS-computed position and the inner node carries the
+    // keyframe. Collapsing them pins every bubble to the overlay's corner.
+    const liveBubbles = this.speechBubbles?.list() ?? [];
+    // Existing nodes indexed by key rather than looked up with a selector: a
+    // bubble key embeds `:` and JSON quoting, which is not a valid attribute
+    // selector value without escaping.
+    const bubbleNodes = new Map();
+    overlay.querySelectorAll("[data-world-speech]").forEach((node) => {
+      bubbleNodes.set(node.dataset.worldSpeech, node);
+    });
+    const bubbleAnchors = new Set();
+    for (const bubble of liveBubbles) {
+      const ndc = bubble.anchor.kind === "entity"
+        ? this.renderer?.projectEntityToScreen?.(bubble.anchor.id)
+        : bubble.anchor.kind === "stage-npc"
+          ? this.renderer?.projectStageDecorToScreen?.(bubble.anchor.id, bubble.anchor.questId)
+          : null;
+      // An anchorless or offscreen speaker gets no bubble this frame. Not a
+      // dismissal: the beat stays live in the director, so a bubble reappears if
+      // the camera brings its speaker back before the hold elapses.
+      if (!ndc?.visible) continue;
+      const point = toScreen(ndc);
+      let node = bubbleNodes.get(bubble.key);
+      if (!node) {
+        node = document.createElement("div");
+        node.className = "world-speech-bubble";
+        node.dataset.worldSpeech = bubble.key;
+        node.dataset.speaker = bubble.role;
+        node.dataset.speechEventType = bubble.eventType;
+        const frame = document.createElement("div");
+        frame.className = "world-speech-frame";
+        const who = document.createElement("strong");
+        who.className = "world-speech-speaker";
+        who.textContent = bubble.speaker;
+        const line = document.createElement("span");
+        line.className = "world-speech-text";
+        line.textContent = bubble.text;
+        frame.append(who, line);
+        node.append(frame);
+        overlay.append(node);
+      }
+      // Base placement: the projected anchor, lifted in screen pixels.
+      node.style.transform = "translate(" + point.x + "px, " + (point.y - WORLD_SPEECH_BUBBLE_LIFT_PX) + "px) translate(-50%, -100%)";
+      // Then keep it on screen.
+      //
+      // A bubble is wide enough that a speaker near an edge pushes it out of the
+      // viewport, and no CSS width cap can prevent that on its own — the anchor is
+      // a projected world position, so for a speaker at the very edge any non-zero
+      // width overflows. Measuring the rendered frame and correcting by the
+      // observed overshoot is also the only approach that survives the portrait
+      // composition, where the overlay is rotated 90deg and the frame counter-
+      // rotated: a measured rect is already in physical screen space, so this needs
+      // to know nothing about orientation. Applied to the OUTER node in overlay
+      // space, which the rotation maps back onto the physical axis for free.
+      const frameNode = node.firstElementChild;
+      const box = (frameNode ?? node).getBoundingClientRect();
+      if (box.width > 0 && box.height > 0) {
+        const overshootRight = Math.max(0, box.right + WORLD_SPEECH_BUBBLE_EDGE_MARGIN_PX - window.innerWidth);
+        const overshootLeft = Math.max(0, WORLD_SPEECH_BUBBLE_EDGE_MARGIN_PX - box.left);
+        const overshootBottom = Math.max(0, box.bottom + WORLD_SPEECH_BUBBLE_EDGE_MARGIN_PX - window.innerHeight);
+        const overshootTop = Math.max(0, WORLD_SPEECH_BUBBLE_EDGE_MARGIN_PX - box.top);
+        const physicalDx = overshootLeft - overshootRight;
+        const physicalDy = overshootTop - overshootBottom;
+        if (physicalDx || physicalDy) {
+          // Rotate the physical correction back into the overlay's own axes. The
+          // overlay is either unrotated or rotated +90deg, and the inverse of a
+          // +90deg rotation maps (dx, dy) -> (dy, -dx).
+          const rotated = document.documentElement.dataset.defensePortrait === "true";
+          const dx = rotated ? physicalDy : physicalDx;
+          const dy = rotated ? -physicalDx : physicalDy;
+          node.style.transform = "translate(" + (point.x + dx) + "px, " + (point.y - WORLD_SPEECH_BUBBLE_LIFT_PX + dy) + "px) translate(-50%, -100%)";
+        }
+      }
+      bubbleAnchors.add(bubble.key);
+    }
+    overlay.querySelectorAll("[data-world-speech]").forEach((node) => {
+      if (!bubbleAnchors.has(node.dataset.worldSpeech)) node.remove();
+    });
   }
   renderDirectCombatControls(snapshot) {
     const commander = snapshot.commander;
@@ -3940,18 +4068,64 @@ export class BattleSession {
   renderControls(snapshot) {
     const skills = root.querySelector("#skill-actions");
     const activeSkills = snapshot.commander.skills.filter((id) => SKILLS[id]?.kind === "active");
-    const markup = activeSkills.map((id) => {
-      const cooldown = snapshot.commander.cooldowns[id] ?? 0;
-      const skill = SKILLS[id] ?? {};
-      const glyph = { "rift-bolt": "✦", "soul-lance": "╱", "grave-pulse": "◉", "void-aegis": "⬡", "shadow-step": "◇" }[id] ?? "✦";
-      return `<button class="skill-action" data-cast="${id}" data-defense-skill="${id}" aria-label="${escapeHtml(skill.name ?? id)} 스킬 사용" ${cooldown ? "disabled" : ""}><span class="skill-glyph" aria-hidden="true">${glyph}</span><span class="skill-copy"><strong>${escapeHtml(skill.name ?? id)}</strong><small>${cooldown ? `${(cooldown / TICK_RATE).toFixed(1)}s` : "준비됨"}</small></span></button>`;
-    }).join("");
-    if (skills.dataset.skills !== markup) {
-      skills.dataset.skills = markup;
-      skills.innerHTML = markup;
+    // The ROSTER decides DOM identity; the per-tick cooldown text does not.
+    //
+    // This used to key the whole innerHTML swap on the rendered markup, which
+    // included the live seconds count — so every tick of every cooldown destroyed
+    // and rebuilt all five buttons. That is what actually dropped keyboard focus
+    // (to <body>) during a cooldown, and it made the `aria-disabled`-instead-of-
+    // `disabled` change below pointless on its own: the node holding the tab stop
+    // did not survive long enough to keep it.
+    //
+    // So: rebuild only when the roster changes, then patch state in place.
+    const rosterKey = activeSkills.join("|");
+    if (skills.dataset.skillRoster !== rosterKey) {
+      skills.dataset.skillRoster = rosterKey;
+      skills.innerHTML = activeSkills.map((id) => {
+        const skill = SKILLS[id] ?? {};
+        const glyph = { "rift-bolt": "✦", "soul-lance": "╱", "grave-pulse": "◉", "void-aegis": "⬡", "shadow-step": "◇" }[id] ?? "✦";
+        const name = escapeHtml(skill.name ?? id);
+        return `<button class="skill-action" type="button" data-cast="${id}" data-defense-skill="${id}" data-skill-state="ready" aria-disabled="false"><span class="skill-glyph" aria-hidden="true">${glyph}</span><span class="skill-copy"><strong>${name}</strong><small></small></span></button>`;
+      }).join("");
       skills.querySelectorAll("[data-cast]").forEach((button) => {
-        button.addEventListener("click", () => this.send("SKILL_CAST", { skillId: button.dataset.cast }));
+        button.addEventListener("click", () => {
+          // The refusal `disabled` used to perform in the platform. Read off the
+          // attribute rather than a captured boolean so it stays correct as the
+          // state is patched underneath a listener bound once.
+          if (button.getAttribute("aria-disabled") === "true") return;
+          this.send("SKILL_CAST", { skillId: button.dataset.cast });
+        });
       });
+    }
+    // In-place state patch. `aria-disabled` + `data-skill-state` rather than the
+    // bare `disabled` this used to set: §C wants a skill to read glyph + name +
+    // remaining cooldown + ready/blocked with state never carried by color alone
+    // (the CSS pairs each state with a border STYLE and the copy below), and §G
+    // wants the aria state to match. `disabled` conveyed no reason and silently
+    // removed the control from the tab order for the whole cooldown.
+    for (const button of skills.querySelectorAll("[data-cast]")) {
+      const id = button.dataset.cast;
+      const cooldown = snapshot.commander.cooldowns[id] ?? 0;
+      const name = SKILLS[id]?.name ?? id;
+      const remaining = cooldown ? (cooldown / TICK_RATE).toFixed(1) : null;
+      const state = cooldown ? "cooling" : "ready";
+      if (button.dataset.skillState !== state) button.dataset.skillState = state;
+      const ariaDisabled = cooldown ? "true" : "false";
+      if (button.getAttribute("aria-disabled") !== ariaDisabled) button.setAttribute("aria-disabled", ariaDisabled);
+      // The accessible name is quantized to WHOLE seconds while the visible copy
+      // below keeps tenths. Now that the node survives a cooldown, focus stays on
+      // the button the player just cast with — and a screen reader re-announces the
+      // accessible name of the focused control whenever it changes. At tenths that
+      // is a 10 Hz stream of "재사용까지 3.2초 … 3.1초 …". Whole seconds keep the
+      // information and drop the chatter to 1 Hz; the tenths remain visible for
+      // sighted players, who are reading rather than being read to.
+      const label = cooldown
+        ? `${name} 스킬 · 재사용까지 ${Math.ceil(cooldown / TICK_RATE)}초`
+        : `${name} 스킬 사용 · 준비됨`;
+      if (button.getAttribute("aria-label") !== label) button.setAttribute("aria-label", label);
+      const copy = cooldown ? `${remaining}s` : "준비됨";
+      const small = button.querySelector(".skill-copy small");
+      if (small && small.textContent !== copy) small.textContent = copy;
     }
 
     // Persistent read-only badges for acquired PASSIVE skills. #skill-actions
@@ -4043,8 +4217,21 @@ export class BattleSession {
     const secondsRemaining = Math.ceil(ticksRemaining / TICK_RATE);
     const isBlocked = performance.now() < this.stanceShakeUntil;
     const isSwitched = performance.now() < this.stanceConfirmUntil;
-    const stanceLabel = `편성 스탠스: ${STANCE_LABELS[stance]}${onCooldown ? ` (전환까지 ${secondsRemaining}초)` : ""}`;
-    const stanceMarkup = `<button id="stance-cycle" class="stance-cycle-button${isBlocked ? " is-blocked" : ""}${isSwitched ? " is-switched" : ""}" style="--rc-cooldown-pct:${cooldownPct}" aria-live="polite" aria-label="${escapeHtml(stanceLabel)}"><span class="stance-glyph" aria-hidden="true">${STANCE_GLYPHS[stance]}</span></button>`;
+    // §C wants the stance control to read its CURRENT state, its NEXT transition,
+    // and the reason it is blocked. The cycle order is the simulation's
+    // (defense-run-simulation.js advances FORMATION_STANCES by one on
+    // STANCE_CYCLE), so the next label is derived from the same frozen array
+    // rather than restated here — a reordered cycle cannot desync this copy.
+    const nextStance = FORMATION_STANCES[(FORMATION_STANCES.indexOf(stance) + 1) % FORMATION_STANCES.length];
+    const stanceLabel = onCooldown
+      ? `편성 스탠스: ${STANCE_LABELS[stance]} · 전환 대기 ${secondsRemaining}초 · 다음 ${STANCE_LABELS[nextStance]}`
+      : `편성 스탠스: ${STANCE_LABELS[stance]} · 누르면 ${STANCE_LABELS[nextStance]}(으)로 전환`;
+    // No `aria-live` on this button. It is a control, not a status region, and
+    // app.js's route-rail note records the deliberate decision that #battle-status
+    // is the single combat announcer — a live region on a focusable control
+    // double-announces on every cooldown tick. The accessible name above already
+    // carries the whole state, and a screen reader reads it on focus.
+    const stanceMarkup = `<button id="stance-cycle" type="button" class="stance-cycle-button${isBlocked ? " is-blocked" : ""}${isSwitched ? " is-switched" : ""}" style="--rc-cooldown-pct:${cooldownPct}" data-stance-state="${onCooldown ? "cooling" : "ready"}" data-stance-next="${nextStance}" aria-disabled="${onCooldown ? "true" : "false"}" aria-label="${escapeHtml(stanceLabel)}"><span class="stance-glyph" aria-hidden="true">${STANCE_GLYPHS[stance]}</span></button>`;
 
     const actions = root.querySelector("#battle-actions");
     const candidate = snapshot.eliteCandidate;

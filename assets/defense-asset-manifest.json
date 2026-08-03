@@ -9633,6 +9633,15 @@
       "generator": "scripts/build-defense-asset-manifest.mjs",
       "runtimeReference": false,
       "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/video/nan2026-cinder-court-play.mp4",
+      "replacementPath": null,
+      "extension": ".mp4",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
     }
   ],
   "historicalDeletionRows": [

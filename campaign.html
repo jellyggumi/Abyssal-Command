@@ -20,7 +20,13 @@
         <p>이 게임은 전장 시뮬레이션과 로컬 저장을 브라우저에서 실행합니다. JavaScript를 켠 뒤 새로고침하세요.</p>
       </section>
     </noscript>
-    <main id="defense-app" aria-live="polite"></main>
+    <!-- No `aria-live` here. The whole HUD is written into this element every
+         frame, so a live region at this level made 60 Hz of stage/objective/
+         integrity text an announcement stream and contradicted the in-code rule
+         that #battle-status is the single combat announcer. Real announcements are
+         owned by #battle-status, #battle-event-feedback and the cutscene overlay,
+         each of which carries its own scoped live region. -->
+    <main id="defense-app"></main>
     <script type="module" src="app.js"></script>
     <script>
       if (new URLSearchParams(window.location.search).has("agentation")) {

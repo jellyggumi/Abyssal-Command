@@ -119,55 +119,28 @@ function startAudio(t) {
   return { audio, context: FakeAudioContext.instances[0] };
 }
 
-class FakeSpeechSynthesisUtterance {
-  constructor(text) {
-    this.text = text;
-    this.onend = null;
-    this.onerror = null;
-  }
-}
+// Narration is presented, not spoken: `narrate()` no longer drives the browser
+// speech API, so there is nothing to observe there and no end-of-speech callback.
+// A beat holds the presentation channel for its own reading duration and is
+// released by a real `setTimeout`, so releasing a beat means advancing a clock.
+// Mock timers make that instantaneous and exact, which is what lets a test say
+// "the first beat released while the second still holds" without a wall-clock wait.
+const NARRATION_HOLD_CEILING_MS = 5200;
 
-function installSpeechSynthesis(t) {
-  const speech = {
-    cancelCount: 0,
-    current: null,
-    finishedCount: 0,
-    pending: false,
-    speaking: false,
-    utterances: [],
-    cancel() {
-      this.cancelCount += 1;
-      this.current = null;
-      this.finishedCount = this.utterances.length;
-      this.pending = false;
-      this.speaking = false;
-    },
-    finish() {
-      const utterance = this.current;
-      if (!utterance) return;
-      this.finishedCount += 1;
-      this.current = this.utterances[this.finishedCount] ?? null;
-      this.speaking = Boolean(this.current);
-      this.pending = this.utterances.length - this.finishedCount > 1;
-      utterance.onend?.();
-    },
-    getVoices() {
-      return [];
-    },
-    speak(utterance) {
-      this.utterances.push(utterance);
-      if (!this.speaking && !this.current) {
-        this.current = utterance;
-        this.speaking = true;
-        this.pending = false;
-      } else {
-        this.pending = true;
-      }
-    },
+// Mirrors defense-audio.js `narrationHoldMs`. Duplicated deliberately and only
+// here: a test that advances a clock has to know the instant a beat is due, and
+// pinning it means a change to the hold curve surfaces as a failure rather than
+// as a silently vacuous tick.
+const narrationHoldMs = (text) =>
+  Math.min(NARRATION_HOLD_CEILING_MS, Math.max(2200, 1500 + text.length * 58));
+
+function useNarrationClock(t) {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  return {
+    advance: (ms) => t.mock.timers.tick(ms),
+    // Past the hold ceiling, so every outstanding beat is due.
+    releaseAll: () => t.mock.timers.tick(NARRATION_HOLD_CEILING_MS),
   };
-  replaceGlobal(t, "speechSynthesis", speech);
-  replaceGlobal(t, "SpeechSynthesisUtterance", FakeSpeechSynthesisUtterance);
-  return speech;
 }
 
 const event = (type, eventSequence, extra = {}) => ({
@@ -178,8 +151,8 @@ const event = (type, eventSequence, extra = {}) => ({
   ...extra,
 });
 
-test("authored story milestones speak one Korean line and retain their established cue", (t) => {
-  const speech = installSpeechSynthesis(t);
+test("authored story milestones present one Korean line and retain their established cue", (t) => {
+  const clock = useNarrationClock(t);
   const audio = new DefenseAudio({ reducedMotion: true });
   const cases = [
     {
@@ -249,20 +222,34 @@ test("authored story milestones speak one Korean line and retain their establish
       { method: "narrate", cueId, priority: 76 },
       `${name} must add narration without replacing its established cue`,
     );
-    const spokenBefore = speech.utterances.length;
+    const presentedBefore = audio.presentedNarrations.length;
     audio.consume([source]);
-    assert.equal(speech.utterances.length, spokenBefore + 1, `${name} must start one utterance`);
     assert.equal(
-      speech.utterances.at(-1).text,
-      spoken,
-      `${name} must speak only the first Korean story line, not direction or metadata`,
+      audio.presentedNarrations.length,
+      presentedBefore + 1,
+      `${name} must present exactly one narration beat`,
     );
-    speech.finish();
+    assert.equal(
+      audio.presentedNarrations.at(-1),
+      spoken,
+      `${name} must present only the first Korean story line, not direction or metadata`,
+    );
+    assert.equal(
+      audio.debugMetrics().narrations,
+      1,
+      `${name} must hold the presentation channel with exactly one beat`,
+    );
+    clock.releaseAll();
+    assert.equal(
+      audio.debugMetrics().narrations,
+      0,
+      `${name} must release the channel once its reading hold ends`,
+    );
   }
 });
 
 test("story narration outranks lore when both arrive in one event batch", (t) => {
-  const speech = installSpeechSynthesis(t);
+  useNarrationClock(t);
   const audio = new DefenseAudio({ reducedMotion: true });
   const lore = event("LORE_SURPRISE_RESOLVED", 1, {
     outcomeId: "ash-echo-whisper",
@@ -280,82 +267,145 @@ test("story narration outranks lore when both arrive in one event batch", (t) =>
   audio.consume([lore, story]);
 
   assert.deepEqual(
-    speech.utterances.map(({ text }) => text),
+    [...audio.presentedNarrations],
     ["봉쇄선이 열렸다."],
     "lower-priority lore must not displace or queue behind active story narration",
   );
+  assert.equal(
+    audio.debugMetrics().narrations,
+    1,
+    "only the authored story may hold the presentation channel",
+  );
 });
 
-test("same-batch authored stories use the native queue once in arrival order", (t) => {
-  const speech = installSpeechSynthesis(t);
+test("a textless narration event never enters the presented trace or holds the channel", (t) => {
+  useNarrationClock(t);
   const audio = new DefenseAudio({ reducedMotion: true });
+  // Reachable, not hypothetical: a lore event with no `text` still resolves a
+  // `narrate` cue, so `narrate()` is genuinely invoked with an empty line. If the
+  // emptiness gate went, the trace would collect "" and a contentless beat would
+  // hold the channel against every real beat behind it.
+  const textlessLore = event("LORE_SURPRISE_RESOLVED", 40, { outcomeId: "ash-echo-silence" });
+
+  assert.equal(
+    audioCueForEvent(textlessLore)?.method,
+    "narrate",
+    "this event must still route through the narration channel, or the gate below is unreachable",
+  );
+  audio.consume([textlessLore]);
+
+  assert.deepEqual(
+    [...audio.presentedNarrations],
+    [],
+    "an event with no narratable line must not be recorded as a presented beat",
+  );
+  assert.equal(
+    audio.debugMetrics().narrations,
+    0,
+    "an event with no narratable line must not hold the presentation channel",
+  );
+});
+
+test("same-batch authored stories are admitted once in arrival order and hold the channel together", (t) => {
+  const clock = useNarrationClock(t);
+  const audio = new DefenseAudio({ reducedMotion: true });
+  const firstLine = "첫 번째 봉쇄 명령이다.";
+  // Deliberately longer than the first line. Each beat's hold is derived from its
+  // OWN text, so unequal lengths are the only way "the first beat released while
+  // the second still holds" is observable rather than an accident of one shared timer.
+  const secondLine = "두 번째 귀환 명령이니 결속 지점까지 대형을 유지한 채로 후퇴하라.";
+  const firstHoldMs = narrationHoldMs(firstLine);
+  const secondHoldMs = narrationHoldMs(secondLine);
   const firstStory = event("STAGE_STARTED", 10, {
     tick: 0,
     stageId: "cinder-span",
-    voiceLine: "첫 번째 봉쇄 명령이다.",
+    voiceLine: firstLine,
   });
   const secondStory = event("OBJECTIVE_COMPLETED", 11, {
     tick: 0,
     objectiveId: "boss-kill",
-    storyBeat: { voiceLine: "두 번째 귀환 명령이다." },
+    storyBeat: { voiceLine: secondLine },
   });
 
+  assert.ok(
+    secondHoldMs > firstHoldMs,
+    "the staggered-release assertions below are vacuous unless the two beats hold for different durations",
+  );
+
   audio.consume([firstStory, secondStory]);
 
   assert.deepEqual(
-    speech.utterances.map(({ text }) => text),
-    ["첫 번째 봉쇄 명령이다.", "두 번째 귀환 명령이다."],
-    "both authored stories must enter the native speech queue once in arrival order",
+    [...audio.presentedNarrations],
+    [firstLine, secondLine],
+    "both authored stories must be admitted exactly once, in arrival order",
   );
-  assert.equal(speech.current?.text, "첫 번째 봉쇄 명령이다.", "the first story must speak immediately");
-  assert.equal(speech.pending, true, "the second story must remain pending behind the first");
-  assert.equal(audio.debugMetrics().narrations, 2, "both native-queued utterances must be tracked");
-  assert.equal(audio.debugMetrics().narrationQueue, 1, "the second authored story must be queued");
+  assert.equal(audio.debugMetrics().narrations, 2, "both admitted beats must hold the channel");
+  assert.equal(
+    audio.debugMetrics().narrationQueue,
+    1,
+    "the second authored story must be queued behind the first",
+  );
 
-  speech.finish();
+  clock.advance(firstHoldMs);
 
   assert.equal(
-    speech.current?.text,
-    "두 번째 귀환 명령이다.",
-    "ending the first utterance must automatically promote the second native-queued story",
+    audio.debugMetrics().narrations,
+    1,
+    "the first beat's own reading hold must release that beat and only that beat",
   );
-  assert.equal(audio.debugMetrics().narrations, 1, "only the promoted second utterance remains tracked");
-  assert.equal(audio.debugMetrics().narrationQueue, 0, "the native queue must be drained");
+  assert.equal(
+    audio.debugMetrics().narrationQueue,
+    0,
+    "the queue must drain as the first beat releases, promoting the second",
+  );
 
-  speech.finish();
+  clock.advance(secondHoldMs - firstHoldMs);
+
+  assert.equal(
+    audio.debugMetrics().narrations,
+    0,
+    "the longer second beat must release on its own hold, not the first beat's",
+  );
+
   audio.consume([firstStory, secondStory]);
 
   assert.deepEqual(
-    speech.utterances.map(({ text }) => text),
-    ["첫 번째 봉쇄 명령이다.", "두 번째 귀환 명령이다."],
+    [...audio.presentedNarrations],
+    [firstLine, secondLine],
     "immediately replaying the same tick-zero authored events must not duplicate narration",
   );
 });
 
-test("authored story narration joins an already-pending native speech queue once", (t) => {
-  const speech = installSpeechSynthesis(t);
-  speech.speaking = true;
-  speech.pending = true;
+test("an authored story beat is admitted once while it still holds the channel", (t) => {
+  useNarrationClock(t);
   const audio = new DefenseAudio({ reducedMotion: true });
   const story = event("STAGE_STARTED", 12, {
     stageId: "cinder-span",
-    voiceLine: "외부 음성 뒤에도 이 명령을 보존하라.",
+    voiceLine: "이 명령은 한 번만 보존하라.",
   });
 
+  // Both consumes land inside the first beat's reading hold, so the channel is
+  // still occupied by that beat when the replay arrives: dedup may not depend on
+  // the beat having been released first.
   audio.consume([story]);
   audio.consume([story]);
 
   assert.deepEqual(
-    speech.utterances.map(({ text }) => text),
-    ["외부 음성 뒤에도 이 명령을 보존하라."],
-    "external pending speech must not drop or duplicate authored story narration",
+    [...audio.presentedNarrations],
+    ["이 명령은 한 번만 보존하라."],
+    "a replayed story beat must not be presented again while the first is still held",
   );
-  assert.equal(audio.debugMetrics().narrations, 1, "the accepted authored utterance must be tracked");
+  assert.equal(audio.debugMetrics().narrations, 1, "the replay must not double-count the held beat");
+  assert.equal(
+    audio.debugMetrics().storyNarrations,
+    1,
+    "the beat must be remembered under exactly one story key",
+  );
   audio.stop();
 });
 
 test("critical feedback preempts active story narration", (t) => {
-  const speech = installSpeechSynthesis(t);
+  useNarrationClock(t);
   const { audio } = startAudio(t);
   audio.consume([
     event("STAGE_STARTED", 1, {
@@ -370,14 +420,28 @@ test("critical feedback preempts active story narration", (t) => {
     true,
     "critical feedback must remain audible during narration",
   );
-  assert.equal(speech.cancelCount, 1, "critical feedback must cancel the displaced narration");
-  assert.equal(audio.debugMetrics().narrations, 0);
-  assert.equal(audio.debugMetrics().voices, 2, "the story cue and critical cue both remain bounded voices");
+  const preempted = audio.debugMetrics();
+  assert.equal(
+    preempted.narrations,
+    0,
+    "critical feedback must release the narration channel it displaced",
+  );
+  assert.equal(
+    preempted.narrationPriority,
+    0,
+    "the displaced beat must surrender its priority claim on the channel",
+  );
+  assert.equal(preempted.voices, 2, "the story cue and critical cue both remain bounded voices");
+  assert.deepEqual(
+    preempted.presentedNarrations,
+    ["봉쇄선을 사수하라."],
+    "preemption must release the channel without erasing what was already presented",
+  );
   audio.stop();
 });
 
-test("a completed story utterance is not replayed for the same event key", (t) => {
-  const speech = installSpeechSynthesis(t);
+test("a released story beat is not replayed for the same event key", (t) => {
+  const clock = useNarrationClock(t);
   const audio = new DefenseAudio({ reducedMotion: true });
   const stageStarted = event("STAGE_STARTED", 1, {
     stageId: "cinder-span",
@@ -385,58 +449,124 @@ test("a completed story utterance is not replayed for the same event key", (t) =
   });
 
   audio.consume([stageStarted]);
-  speech.finish();
+  clock.releaseAll();
+
+  assert.equal(
+    audio.debugMetrics().narrations,
+    0,
+    "the beat must have released the channel before the replay is attempted",
+  );
   audio.consume([{ ...stageStarted, voiceLine: "중복 재생되면 안 된다." }]);
 
   assert.deepEqual(
-    speech.utterances.map(({ text }) => text),
+    [...audio.presentedNarrations],
     ["봉쇄선을 사수하라."],
-    "deduplication must hold after the first utterance has ended",
+    "deduplication must key on the event, not the text, and must hold after the beat released",
   );
 });
 
 test("mute, pause, background suspension, and stop dispose active and queued narration", (t) => {
-  const speech = installSpeechSynthesis(t);
+  useNarrationClock(t);
   FakeAudioContext.instances.length = 0;
   replaceGlobal(t, "AudioContext", FakeAudioContext);
   replaceGlobal(t, "webkitAudioContext", undefined);
   const cases = [
-    ["mute", (audio) => audio.setMuted(true), (audio) => audio.setMuted(false)],
-    ["pause", (audio) => audio.pause(), (audio) => audio.resume()],
-    ["background", (audio) => audio.suspendForBackground(), (audio) => audio.resumeFromBackground()],
-    ["stop/dispose", (audio) => audio.stop(), (audio) => audio.start()],
+    // Two separate contracts per dispose path, and clearing the channel proves
+    // only the first: `stopNarration()` empties it regardless, so a dropped
+    // `narrate()` gate is invisible unless a beat ARRIVES while disposed.
+    // `refusesWhileDisposed` marks the paths `narrate()` actually gates on
+    // (`muted` / `paused` / `backgrounded`). Stop is excluded deliberately:
+    // `narrate()` has no `started` gate, so a post-stop beat is a caller error
+    // rather than a channel contract, and pinning today's behaviour there would
+    // fossilise it. Only stop is a run boundary, so only stop erases the trace.
+    {
+      name: "mute",
+      dispose: (audio) => audio.setMuted(true),
+      restore: (audio) => audio.setMuted(false),
+      clearsPresentedTrace: false,
+      refusesWhileDisposed: true,
+    },
+    {
+      name: "pause",
+      dispose: (audio) => audio.pause(),
+      restore: (audio) => audio.resume(),
+      clearsPresentedTrace: false,
+      refusesWhileDisposed: true,
+    },
+    {
+      name: "background",
+      dispose: (audio) => audio.suspendForBackground(),
+      restore: (audio) => audio.resumeFromBackground(),
+      clearsPresentedTrace: false,
+      refusesWhileDisposed: true,
+    },
+    {
+      name: "stop/dispose",
+      dispose: (audio) => audio.stop(),
+      restore: (audio) => audio.start(),
+      clearsPresentedTrace: true,
+      refusesWhileDisposed: false,
+    },
   ];
 
-  for (const [index, [name, cancel, restore]] of cases.entries()) {
+  for (const [index, {
+    name,
+    dispose,
+    restore,
+    clearsPresentedTrace,
+    refusesWhileDisposed,
+  }] of cases.entries()) {
     const audio = new DefenseAudio({ reducedMotion: true });
     assert.equal(audio.start(), true);
-    const utterancesBefore = speech.utterances.length;
+    const activeLine = `${name} 전 첫 번째 명령.`;
+    const queuedLine = `${name} 뒤 재생되면 안 되는 대기 명령.`;
     audio.consume([
-      event("STAGE_STARTED", index * 2 + 20, {
+      event("STAGE_STARTED", index * 4 + 20, {
         stageId: "cinder-span",
-        voiceLine: `${name} 전 첫 번째 명령.`,
+        voiceLine: activeLine,
       }),
-      event("OBJECTIVE_COMPLETED", index * 2 + 21, {
+      event("OBJECTIVE_COMPLETED", index * 4 + 21, {
         objectiveId: "boss-kill",
-        storyBeat: { voiceLine: `${name} 뒤 재생되면 안 되는 대기 명령.` },
+        storyBeat: { voiceLine: queuedLine },
       }),
     ]);
-    assert.equal(
-      speech.utterances.length,
-      utterancesBefore + 2,
-      `${name} setup must submit the active and native-queued narrations`,
+    assert.deepEqual(
+      [...audio.presentedNarrations],
+      [activeLine, queuedLine],
+      `${name} setup must present the active and queued narrations`,
     );
     assert.equal(audio.debugMetrics().narrations, 2, `${name} setup must track both narrations`);
     assert.equal(audio.debugMetrics().narrationQueue, 1, `${name} setup must queue the second narration`);
-    const activeUtterances = speech.utterances.slice(-2);
-    const cancellationsBefore = speech.cancelCount;
 
-    cancel(audio);
+    dispose(audio);
 
-    assert.equal(speech.cancelCount, cancellationsBefore + 1, `${name} must cancel speech synthesis`);
-    assert.equal(audio.debugMetrics().narrations, 0, `${name} must release narration ownership`);
-    assert.equal(audio.debugMetrics().narrationQueue, 0, `${name} must clear queued narration`);
-    assert.equal(speech.speaking, false, `${name} must leave no speech playing`);
+    const disposed = audio.debugMetrics();
+    assert.equal(disposed.narrations, 0, `${name} must release narration ownership`);
+    assert.equal(disposed.narrationQueue, 0, `${name} must clear queued narration`);
+    assert.equal(disposed.narrationPriority, 0, `${name} must surrender the channel's priority claim`);
+    assert.deepEqual(
+      disposed.presentedNarrations,
+      clearsPresentedTrace ? [] : [activeLine, queuedLine],
+      `${name} must ${clearsPresentedTrace ? "erase" : "preserve"} the presented narration trace`,
+    );
+
+    if (refusesWhileDisposed) {
+      const refusedLine = `${name} 중 도착한 명령.`;
+      const traceBeforeRefusal = [...audio.presentedNarrations];
+      audio.consume([
+        event("STAGE_STARTED", index * 4 + 22, { stageId: "cinder-span", voiceLine: refusedLine }),
+      ]);
+      assert.equal(
+        audio.debugMetrics().narrations,
+        0,
+        `${name} must refuse a beat that arrives while the channel is disposed, not merely clear the old one`,
+      );
+      assert.deepEqual(
+        [...audio.presentedNarrations],
+        traceBeforeRefusal,
+        `${name} must leave a refused beat out of the presented trace`,
+      );
+    }
 
     restore(audio);
     const restored = audio.debugMetrics();
@@ -445,15 +575,23 @@ test("mute, pause, background suspension, and stop dispose active and queued nar
       [true, false, false, false],
       `${name} setup must become eligible for audio again`,
     );
-    for (const utterance of activeUtterances) {
-      utterance.onend?.();
-      utterance.onerror?.();
-    }
 
+    // Disposal must not poison the channel: a beat arriving after restore is
+    // admitted again, which is what the disposed counters would hide if they
+    // leaked instead of clearing.
+    const revivedLine = `${name} 복구 후 명령.`;
+    audio.consume([
+      event("STAGE_STARTED", index * 4 + 23, { stageId: "cinder-span", voiceLine: revivedLine }),
+    ]);
     assert.equal(
-      speech.utterances.length,
-      utterancesBefore + 2,
-      `${name} must clear tracked narration so stale callbacks cannot revive it`,
+      audio.debugMetrics().narrations,
+      1,
+      `${name} must admit narration again once the channel is restored`,
+    );
+    assert.equal(
+      audio.presentedNarrations.at(-1),
+      revivedLine,
+      `${name} must present the beat that arrives after restore`,
     );
     audio.stop();
   }
@@ -654,7 +792,7 @@ test("consume emits each public event once without collapsing distinct event IDs
 });
 
 test("resetRun clears run-local audio while preserving the live soundscape graph", (t) => {
-  const speech = installSpeechSynthesis(t);
+  useNarrationClock(t);
   FakeAudioContext.instances.length = 0;
   replaceGlobal(t, "AudioContext", FakeAudioContext);
   replaceGlobal(t, "webkitAudioContext", undefined);
@@ -685,16 +823,19 @@ test("resetRun clears run-local audio while preserving the live soundscape graph
   audio.consume([ordinary, firstStory, secondStory]);
   audio.setSoundscape("boss", "echo-throne");
   const beforeReset = audio.debugMetrics();
-  const staleUtterances = speech.utterances.slice(-2);
+  const presentedBeforeReset = [...audio.presentedNarrations];
 
   assert.ok(beforeReset.voices > 0, "setup must own transient feedback voices");
   assert.equal(beforeReset.feedbackEvents, 1, "setup must remember the ordinary event");
   assert.equal(beforeReset.storyNarrations, 2, "setup must remember both authored stories");
-  assert.equal(beforeReset.narrations, 2, "setup must track active and native-pending narration");
-  assert.equal(beforeReset.narrationQueue, 1, "setup must expose one native-pending narration");
-  assert.equal(speech.pending, true, "setup must leave the second story pending");
+  assert.equal(beforeReset.narrations, 2, "setup must track the active and the queued narration");
+  assert.equal(beforeReset.narrationQueue, 1, "setup must expose one queued narration");
+  assert.deepEqual(
+    presentedBeforeReset,
+    ["재설정 전 첫 번째 명령.", "재설정 전 대기 명령."],
+    "setup must have presented both authored stories",
+  );
 
-  const cancellationsBefore = speech.cancelCount;
   assert.equal(audio.resetRun(), true);
 
   const reset = audio.debugMetrics();
@@ -721,10 +862,13 @@ test("resetRun clears run-local audio while preserving the live soundscape graph
   assert.equal(reset.feedbackEvents, 0, "resetRun must clear general event deduplication");
   assert.equal(reset.storyNarrations, 0, "resetRun must clear story deduplication");
   assert.equal(reset.narrations, 0, "resetRun must clear tracked narration");
-  assert.equal(reset.narrationQueue, 0, "resetRun must clear native-pending narration");
-  assert.equal(speech.cancelCount, cancellationsBefore + 1, "resetRun must cancel native speech once");
-  assert.equal(speech.speaking, false, "resetRun must leave no active native speech");
-  assert.equal(speech.pending, false, "resetRun must leave no pending native speech");
+  assert.equal(reset.narrationQueue, 0, "resetRun must clear queued narration");
+  assert.equal(reset.narrationPriority, 0, "resetRun must surrender the channel's priority claim");
+  assert.deepEqual(
+    reset.presentedNarrations,
+    [],
+    "resetRun must erase the presented narration trace so it cannot bleed into the next run",
+  );
   assert.equal(context.closeCount, 0, "resetRun must not close the live audio context");
   assert.equal(
     persistentOscillators.every(({ stopCount, disconnectCount }) =>
@@ -734,10 +878,6 @@ test("resetRun clears run-local audio while preserving the live soundscape graph
     "resetRun must not stop or disconnect persistent soundscape layers",
   );
 
-  for (const utterance of staleUtterances) {
-    utterance.onend?.();
-    utterance.onerror?.();
-  }
   const lowTickOrdinary = { ...ordinary, tick: 1 };
   const stableTickZeroStory = { ...firstStory, tick: 0 };
 
@@ -745,8 +885,8 @@ test("resetRun clears run-local audio while preserving the live soundscape graph
   audio.consume([lowTickOrdinary, stableTickZeroStory]);
 
   assert.deepEqual(
-    speech.utterances.map(({ text }) => text),
-    ["재설정 전 첫 번째 명령.", "재설정 전 대기 명령.", "재설정 전 첫 번째 명령."],
+    [...audio.presentedNarrations],
+    ["재설정 전 첫 번째 명령."],
     "the stable tick-zero story must be accepted once after reset and then deduplicated",
   );
   assert.equal(audio.debugMetrics().feedbackEvents, 1, "the low-tick ordinary cue must be accepted once");
@@ -757,6 +897,113 @@ test("resetRun clears run-local audio while preserving the live soundscape graph
     "cleared tick and refractory state must allow one low-tick cue plus its story cue",
   );
 
+  audio.stop();
+});
+
+test("stop clears the presented narration trace so it cannot leak into the next run", (t) => {
+  useNarrationClock(t);
+  const { audio } = startAudio(t);
+  const firstRunStory = event("STAGE_STARTED", 90, {
+    stageId: "cinder-span",
+    voiceLine: "첫 번째 출격 명령이다.",
+  });
+  const secondRunStory = event("STAGE_STARTED", 91, {
+    stageId: "cinder-span",
+    voiceLine: "두 번째 출격 명령이다.",
+  });
+
+  audio.consume([firstRunStory]);
+
+  assert.deepEqual(
+    [...audio.presentedNarrations],
+    ["첫 번째 출격 명령이다."],
+    "the first run must record the beat it presented",
+  );
+
+  audio.stop();
+
+  assert.deepEqual(audio.presentedNarrations, [], "stop must erase the presented narration trace");
+  assert.deepEqual(
+    audio.debugMetrics().presentedNarrations,
+    [],
+    "the reported trace must be empty after stop rather than a stale copy",
+  );
+
+  assert.equal(audio.start(), true);
+  audio.consume([secondRunStory]);
+
+  assert.deepEqual(
+    [...audio.presentedNarrations],
+    ["두 번째 출격 명령이다."],
+    "the next run must start from an empty trace instead of inheriting the prior run's beats",
+  );
+  audio.stop();
+});
+
+test("a tick-zero rerun clears the presented trace, the third run boundary alongside resetRun and stop", (t) => {
+  useNarrationClock(t);
+  const { audio } = startAudio(t);
+  const priorRunStory = event("STAGE_STARTED", 92, {
+    stageId: "cinder-span",
+    voiceLine: "이전 회차의 명령이다.",
+  });
+  // A previously unseen STAGE_STARTED at tick 0, arriving after a run has already
+  // advanced, is how a re-entered stage announces itself. It is a run boundary
+  // like resetRun and stop, so it owes the same guarantee: the next run may not
+  // read the previous run's beats out of the trace.
+  const rerunStory = event("STAGE_STARTED", 93, {
+    tick: 0,
+    stageId: "cinder-span",
+    voiceLine: "재시작 회차의 명령이다.",
+  });
+
+  audio.consume([priorRunStory]);
+
+  assert.deepEqual(
+    [...audio.presentedNarrations],
+    ["이전 회차의 명령이다."],
+    "the prior run must record the beat it presented",
+  );
+
+  audio.consume([rerunStory]);
+
+  assert.deepEqual(
+    [...audio.presentedNarrations],
+    ["재시작 회차의 명령이다."],
+    "a tick-zero rerun must erase the prior run's trace rather than append to it",
+  );
+  audio.stop();
+});
+
+test("the presented trace is bounded, dropping oldest beats instead of retaining a whole run", (t) => {
+  const clock = useNarrationClock(t);
+  const { audio } = startAudio(t);
+  const TRACE_CAP = 16;
+  const beats = 18;
+  const lineFor = (index) => `${index}번째 봉쇄 명령이다.`;
+
+  for (let index = 1; index <= beats; index += 1) {
+    audio.consume([
+      event("STAGE_STARTED", 200 + index, { stageId: "cinder-span", voiceLine: lineFor(index) }),
+    ]);
+    // Release between beats so each one is admitted on its own merits rather than
+    // being refused by the active-narration cap, which would make the overflow below
+    // an artifact of concurrency instead of the trace bound under test.
+    clock.releaseAll();
+  }
+
+  const expected = Array.from({ length: TRACE_CAP }, (_, offset) => lineFor(beats - TRACE_CAP + offset + 1));
+
+  assert.equal(
+    audio.presentedNarrations.length,
+    TRACE_CAP,
+    "a run longer than the trace bound must not grow the trace past it",
+  );
+  assert.deepEqual(
+    [...audio.presentedNarrations],
+    expected,
+    "the bounded trace must retain the newest beats in order and drop the oldest",
+  );
   audio.stop();
 });
 
