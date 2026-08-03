@@ -2399,7 +2399,17 @@ li.md-task.is-done > .md-check {
 }
 
 /* Below 1100px: one column. Sidebar becomes an overlay drawer, split view
-   stacks editor above preview. */
+   stacks editor above preview.
+
+   TIGHTEST-DOCUMENT BAND lives just ABOVE this breakpoint. At 1100px the
+   sidebar is an overlay and the split preview gets the full 1100px (~118
+   chars per line in a frontmatter value). At 1101px the sidebar returns to
+   the flow and the preview collapses to 395px (~37). Recovery is gradual, not
+   a spike — measured column capacity: 1130 -> 39, 1160 -> 41, 1200 -> 44,
+   1240 -> 46, 1280 -> 49, 1320 -> 52. So roughly 1101-1320 is a ~220px band
+   at 37-52 chars, and common laptop widths (1152, 1280) sit inside it. That
+   is survivable, not broken, which is why it is left untuned — but do not
+   assume the narrow case is a one-pixel edge if you retune this breakpoint. */
 @media (max-width: 1100px) {
   .shell {
     grid-template-columns: minmax(0, 1fr);
@@ -2514,4 +2524,591 @@ li.md-task.is-done > .md-check {
       rules set explicit transition shorthands that would win otherwise. */
     scroll-behavior: auto !important;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Gate view
+
+   Second organising axis beside the folder tree. The filesystem answers
+   "what documents exist"; this answers "where does this run stand on
+   G1-G8", which the harness gates on and the folder layout cannot show
+   because a live run scatters gate evidence across every role folder.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Only one axis renders at a time; #sidebar[data-mode] owns the switch. */
+.sidebar[data-mode="folder"] > .gates,
+.sidebar[data-mode="gate"] > .tree {
+  display: none;
+}
+
+.sidemode {
+  display: flex;
+  gap: 3px;
+  padding: 0 8px 6px;
+}
+
+.sidemode__btn {
+  flex: 1;
+  padding: 4px 0;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--bg-elev);
+  color: var(--fg-dim);
+  font: 500 11.5px/1 var(--font-ui);
+  letter-spacing: .02em;
+  cursor: pointer;
+  transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
+}
+
+.sidemode__btn:hover {
+  color: var(--fg);
+  border-color: var(--amber-dim);
+}
+
+.sidemode__btn.is-active {
+  border-color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 12%, var(--bg-elev));
+  color: var(--amber);
+}
+
+.sidemode__btn:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+
+.gates {
+  min-height: 0;
+  overflow: auto;
+  padding: 2px 0 8px;
+}
+
+.gates__empty {
+  padding: 14px 12px;
+  color: var(--fg-faint);
+  font-size: 12px;
+}
+
+/* ── authority block: the contract's two evidence surfaces ───────────── */
+
+.gates__authority {
+  margin: 0 8px 8px;
+  padding: 6px;
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+  background: var(--bg-input);
+}
+
+.auth__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 5px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--fg-dim);
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.auth__row:hover { background: var(--bg-elev); }
+
+.auth__row code {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+
+.auth__mark { font-size: 9px; }
+.auth__row.is-present .auth__mark { color: var(--green); }
+.auth__row.is-absent  .auth__mark { color: var(--red); }
+
+.auth__note {
+  flex: none;
+  color: var(--fg-faint);
+  font-size: 10px;
+}
+
+.auth__row.is-absent .auth__note { color: var(--red); }
+
+/* ── one gate ────────────────────────────────────────────────────────── */
+
+.gate { border-bottom: 1px solid var(--line-soft); }
+
+.gate__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  background: none;
+  color: var(--fg);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gate__head:hover { background: var(--bg-elev); }
+.gate.is-open > .gate__head { background: var(--bg-elev); }
+
+.gate__head:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: -2px;
+}
+
+.gate__id {
+  flex: none;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--violet) 20%, transparent);
+  color: var(--violet);
+  font: 600 10.5px/1.5 var(--font-mono);
+}
+
+.gate__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gate__stages {
+  flex: none;
+  color: var(--fg-faint);
+  font: 10px/1 var(--font-mono);
+}
+
+.gate__count {
+  flex: none;
+  min-width: 18px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--bg-input);
+  color: var(--fg-dim);
+  font: 10.5px/1.5 var(--font-mono);
+  text-align: center;
+}
+
+/* Zero citations is the signal worth seeing, not a neutral count. */
+.gate__count.is-zero {
+  background: color-mix(in srgb, var(--red) 18%, transparent);
+  color: var(--red);
+}
+
+.gate__body {
+  padding: 2px 8px 8px;
+  background: color-mix(in srgb, var(--bg-input) 60%, transparent);
+}
+
+.gate__threshold {
+  padding: 5px 6px;
+  border-left: 2px solid var(--cyan);
+  margin-bottom: 5px;
+  color: var(--fg-dim);
+  font-size: 10.5px;
+  line-height: 1.6;
+}
+
+.gate__meta {
+  padding: 0 6px 5px;
+  color: var(--fg-faint);
+  font-size: 10.5px;
+}
+
+.gate__meta b { color: var(--fg-dim); font-weight: 600; }
+.gate__warn { color: var(--yellow); }
+
+.gate__none {
+  padding: 5px 6px;
+  color: var(--red);
+  font-size: 10.5px;
+}
+
+.gate__doc {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--fg-dim);
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gate__doc:hover { background: var(--bg-elev); color: var(--fg); }
+
+.gate__docpath {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+
+.gate__v {
+  flex: none;
+  padding: 0 4px;
+  border-radius: 3px;
+  font: 600 9.5px/1.6 var(--font-mono);
+}
+
+.gate__v--pass  { background: color-mix(in srgb, var(--green) 20%, transparent);  color: var(--green); }
+.gate__v--fix   { background: color-mix(in srgb, var(--yellow) 20%, transparent); color: var(--yellow); }
+.gate__v--redo  { background: color-mix(in srgb, var(--red) 22%, transparent);    color: var(--red); }
+.gate__v--nonum { background: transparent; color: var(--fg-faint); font-weight: 400; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   Asset lane
+
+   Third organising axis. The folder tree lists documents, the gate view
+   locates evidence, and this answers the only question that matters for a
+   runtime asset: does the game actually load it. Reference state is the
+   primary signal, so it is what carries colour here.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.sidebar[data-mode="folder"] > .assets,
+.sidebar[data-mode="gate"]   > .assets,
+.sidebar[data-mode="asset"]  > .tree,
+.sidebar[data-mode="asset"]  > .gates,
+.sidebar[data-mode="asset"]  > .sidebar__legend {
+  display: none;
+}
+
+.assets {
+  min-height: 0;
+  overflow: auto;
+  padding: 2px 0 8px;
+}
+
+.assets__empty {
+  padding: 14px 12px;
+  color: var(--fg-faint);
+  font-size: 12px;
+}
+
+.assetfilter {
+  display: flex;
+  gap: 4px;
+  padding: 0 8px 6px;
+}
+
+.assetfilter__sel {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 4px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg-input);
+  color: var(--fg-dim);
+  font: 11px/1.4 var(--font-ui);
+}
+
+.assetfilter__sel:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+
+/* ── broken references: the runtime 404 case, stated first ───────────── */
+
+.assets__broken {
+  margin: 0 8px 8px;
+  padding: 6px 7px;
+  border: 1px solid var(--red);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--red) 10%, transparent);
+}
+
+.broken__head {
+  margin-bottom: 4px;
+  color: var(--red);
+  font: 600 11px/1.4 var(--font-ui);
+}
+
+.broken__row {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 3px 0;
+  border-top: 1px solid color-mix(in srgb, var(--red) 22%, transparent);
+}
+
+.broken__row code {
+  color: var(--fg);
+  font: 10.5px/1.4 var(--font-mono);
+  word-break: break-all;
+}
+
+.broken__row span {
+  color: var(--fg-faint);
+  font: 10px/1.4 var(--font-mono);
+}
+
+/* ── summary ─────────────────────────────────────────────────────────── */
+
+.assets__summary {
+  margin: 0 8px 6px;
+  padding: 5px 7px;
+  border: 1px solid var(--line-soft);
+  border-radius: 5px;
+  background: var(--bg-input);
+  color: var(--fg-faint);
+  font-size: 10.5px;
+}
+
+.assets__summary b { color: var(--fg-dim); font-weight: 600; }
+.assets__stale { color: var(--yellow); }
+
+/* ── one asset row ───────────────────────────────────────────────────── */
+
+.asset__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: var(--row-h);
+  padding: 0 8px;
+  border: 0;
+  border-left: 2px solid transparent;
+  background: none;
+  color: var(--fg-dim);
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.asset__row:hover { background: var(--bg-elev); color: var(--fg); }
+
+.asset__row.is-active {
+  border-left-color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 10%, var(--bg-elev));
+  color: var(--fg);
+}
+
+.asset__row:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: -2px;
+}
+
+/* Unreferenced is the default state here, so referenced is what stands out. */
+.asset__row:not(.is-ref) .asset__name { color: var(--fg-faint); }
+
+.asset__dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fg-faint);
+}
+
+.asset__dot--audio { background: var(--green); }
+.asset__dot--image { background: var(--cyan); }
+.asset__dot--mesh  { background: var(--amber); }
+.asset__dot--video { background: var(--violet); }
+.asset__dot--text  { background: var(--fg-dim); }
+
+.asset__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;               /* keep the filename visible, elide the path */
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+
+.asset__badge {
+  flex: none;
+  padding: 0 4px;
+  border-radius: 3px;
+  font: 600 9.5px/1.6 var(--font-mono);
+}
+
+.asset__badge--ref {
+  background: color-mix(in srgb, var(--green) 20%, transparent);
+  color: var(--green);
+}
+
+.asset__badge--stale {
+  background: color-mix(in srgb, var(--yellow) 20%, transparent);
+  color: var(--yellow);
+}
+
+.asset__size {
+  flex: none;
+  color: var(--fg-faint);
+  font: 9.5px/1 var(--font-mono);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Asset inspector
+   ══════════════════════════════════════════════════════════════════════ */
+
+.inspect {
+  grid-area: doc;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px 16px;
+}
+
+.inspect__head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.inspect__path {
+  flex: 1;
+  min-width: 0;
+  color: var(--fg);
+  font: 12px/1.5 var(--font-mono);
+  word-break: break-all;
+}
+
+.inspect__kind {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--bg-elev);
+  color: var(--fg-dim);
+  font: 10.5px/1.6 var(--font-ui);
+}
+
+.inspect__stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  padding: 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  /* Checkerboard so image transparency reads as transparency, not as black. */
+  background-color: var(--bg-input);
+  background-image:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.028) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.028) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.028) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.028) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+
+.inspect__img {
+  max-width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+}
+
+.inspect__audio { width: 100%; max-width: 460px; }
+.inspect__video { max-width: 100%; max-height: 360px; }
+
+.inspect__binary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  color: var(--fg-dim);
+  font-size: 11.5px;
+  text-align: center;
+}
+
+.inspect__binary b { color: var(--fg); font: 600 12.5px/1.5 var(--font-mono); }
+.inspect__binary a { color: var(--cyan); }
+
+/* ── the reflection verdict ──────────────────────────────────────────── */
+
+.inspect__reflect {
+  padding: 8px 10px;
+  border-left: 3px solid var(--line);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--bg-elev);
+  color: var(--fg-dim);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.inspect__reflect b { color: var(--fg); }
+
+.inspect__reflect.is-ingame {
+  border-left-color: var(--green);
+  background: color-mix(in srgb, var(--green) 8%, var(--bg-elev));
+}
+
+.inspect__reflect.is-ingame b { color: var(--green); }
+
+.inspect__reflect.is-detached {
+  border-left-color: var(--yellow);
+  background: color-mix(in srgb, var(--yellow) 8%, var(--bg-elev));
+}
+
+.inspect__reflect.is-detached b { color: var(--yellow); }
+.inspect__reflect span { color: var(--fg-faint); font-size: 11px; }
+
+.inspect__refs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inspect__ref {
+  display: flex;
+  gap: 4px;
+  align-items: baseline;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--bg-input);
+  font: 10.5px/1.6 var(--font-mono);
+}
+
+.inspect__ref code { color: var(--cyan); }
+.inspect__ref span { color: var(--fg-faint); }
+.inspect__ref--manifest code { color: var(--fg-dim); }
+.inspect__ref--manifest.is-stale span { color: var(--yellow); }
+
+.inspect__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.inspect__spacer { flex: 1; }
+.inspect__replace { cursor: pointer; }
+
+/* Delete is the only destructive control in this editor -- assets have a
+   deletion ledger, workspace documents do not. It reads as destructive. */
+.btn--danger {
+  border-color: color-mix(in srgb, var(--red) 55%, var(--line));
+  background: color-mix(in srgb, var(--red) 12%, var(--bg-elev));
+  color: var(--red);
+}
+
+.btn--danger:hover:not(:disabled) {
+  border-color: var(--red);
+  background: color-mix(in srgb, var(--red) 20%, var(--bg-elev));
+}
+
+.inspect__note {
+  margin: 0;
+  color: var(--fg-faint);
+  font-size: 10.5px;
+  line-height: 1.7;
 }

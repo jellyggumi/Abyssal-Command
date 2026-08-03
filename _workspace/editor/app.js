@@ -49,6 +49,47 @@ const CONTRACT = {
 };
 
 /**
+ * G1-G8 as `references/quality-gates.md` defines them. Thresholds are quoted
+ * so the sidebar can state what a gate demands without the reader leaving the
+ * editor; `owner` is who measures it, `evidence` the contract's evidence path.
+ * This is reference data only -- the editor never renders a verdict, because
+ * QA owns measurement and the director owns the verdict.
+ */
+const GATES = {
+  G1: { label: '세계관 서사 일관성', owner: 'qa',
+        threshold: 'un-waived lore 위반 0 · 표시 문자열·이펙트·시나리오 100%가 worldview로 추적',
+        evidence: 'qa/gate-measurements.md#g1' },
+  G2: { label: '규칙·밸런스 수치', owner: 'qa',
+        threshold: 'balance-sheet 100% 커버 · 매치업 승률 45–55% · TTK ±15% · 지배 조합 EV ≤1.3× 중앙값',
+        evidence: 'qa/gate-measurements.md#g2' },
+  G3: { label: '플레이어 타입 다양성', owner: 'qa',
+        threshold: '≥3 아키타입 독립 성립 · 최적 플레이에서 어느 아키타입도 >50% 지배 없음 · ≥5종 테스트',
+        evidence: 'qa/playtest-report.md' },
+  G4: { label: '이펙트·애니메이션 몰입감', owner: 'qa',
+        threshold: '몰입 점수 중앙값 ≥4.0/5 · 이펙트 피드백 지연 ≤100ms · 미해결 판독성 S1/S2 0',
+        evidence: 'qa/gate-measurements.md#g4' },
+  G5: { label: '매출·밸런스 시너지', owner: 'qa + pm',
+        threshold: '유·무료 승률차 ≤5%p · 일발역전 확률 ≤30%/발동 · 무료 경로 10–20판 패리티 · 매출점마다 서명된 협상 기록',
+        evidence: 'pm/reward-bands.md · qa/gate-measurements.md#g5' },
+  G6: { label: '게임운영 계획', owner: 'programmer → qa 검증',
+        threshold: '텔레메트리 계약 구현 · 롤백 런북 1회 시험 · 릴리스 체크리스트 100% · p95 프레임 ≤16.7ms · 롱프레임 <0.5% · 30분 메모리 안정 · 입력 ≤100ms',
+        evidence: 'engineering/perf-budget.md · ops/*' },
+  G7: { label: '코어루프 ≥1', owner: 'designer + qa',
+        threshold: '주기 30–180s · ≥3 행동/루프 · ≥1 보상 이벤트/루프 · 재진입률 ≥70%',
+        evidence: 'design/core-loop.md · qa/playtest-report.md' },
+  G8: { label: '참신성 요소 ≥1', owner: 'designer + qa',
+        threshold: '조사한 ≥5개 유사 타이틀 중 ≤2개에만 등장 · QA 인상 점수 ≥4/5',
+        evidence: 'design/novelty-scorecard.md · design/trend-survey/' },
+};
+
+/** Stage → gates required to exit it (quality-gates.md stage mapping). */
+const STAGE_GATES = {
+  'Stage 1': ['G7', 'G1', 'G6'],
+  'Stage 2': ['G2', 'G3', 'G5', 'G7', 'G8'],
+  'Stage 3': ['G4', 'G6', 'G1'],
+};
+
+/**
  * Boilerplate for a contract artifact created from a ghost row.
  *
  * `runId` is resolved from the run's own documents, not from the directory
@@ -88,6 +129,12 @@ const state = {
   filter: '',
   conflict: false,
   runId: null,             // real {YYYYMMDD}-{label}, read from the run's briefs
+  sideMode: 'folder',      // 'folder' | 'gate' | 'asset'
+  gateScan: null,          // /api/gates payload for the current run
+  assetScan: null,         // /api/assets payload (repo-wide, not per-run)
+  asset: null,             // inspected asset row
+  assetKind: '',           // kind filter
+  assetRefs: '',           // '' | 'referenced' | 'orphan'
 };
 
 const DRAFTS = 'ws-editor:drafts';
@@ -103,7 +150,14 @@ const el = {
   btnSync: $('btn-sync'), btnReload: $('btn-reload'), btnSave: $('btn-save'),
   filter: $('filter-input'), btnGrep: $('btn-grep'), btnDrawer: $('btn-drawer'),
   btnNewFile: $('btn-new-file'), btnNewFolder: $('btn-new-folder'), btnCollapse: $('btn-collapse'),
-  legend: $('legend'), tree: $('tree'), treeStat: $('tree-stat'), toggleMissing: $('toggle-missing'),
+  legend: $('legend'), tree: $('tree'), gates: $('gates'), assets: $('assets'),
+  assetFilter: $('assetfilter'), assetKind: $('asset-kind'), assetRefs: $('asset-refs'),
+  inspect: $('inspect'), inspectPath: $('inspect-path'), inspectKind: $('inspect-kind'),
+  inspectStage: $('inspect-stage'), inspectReflect: $('inspect-reflect'),
+  inspectRefs: $('inspect-refs'), inspectFile: $('inspect-file'),
+  inspectRegister: $('inspect-register'), inspectDelete: $('inspect-delete'),
+  inspectNote: $('inspect-note'),
+  treeStat: $('tree-stat'), toggleMissing: $('toggle-missing'),
   gutterSidebar: $('gutter-sidebar'), gutterPanes: $('gutter-panes'),
   main: $('main'), sidebar: $('sidebar'),
   mdtools: $('mdtools'), conflictFlag: $('conflict-flag'),
@@ -287,6 +341,502 @@ function runTotals() {
   return { docs, md, missing };
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   Gate view
+
+   The folder tree answers "what documents exist". This answers "where does
+   this run stand on G1-G8" -- the question the harness actually gates on, and
+   the one the filesystem cannot answer, because a live run scatters gate
+   evidence across every role folder.
+   ══════════════════════════════════════════════════════════════════════ */
+
+async function loadGates() {
+  try {
+    state.gateScan = await api(`/api/gates?run=${encodeURIComponent(state.run)}`);
+  } catch (err) {
+    state.gateScan = null;
+    toast(`게이트 조사 실패: ${err.message}`, 'err');
+  }
+  if (state.sideMode === 'gate') renderGates();
+}
+
+function renderGates() {
+  el.gates.innerHTML = '';
+  const scan = state.gateScan;
+  if (!scan) {
+    const wait = document.createElement('div');
+    wait.className = 'gates__empty';
+    wait.textContent = '게이트 조사 중…';
+    el.gates.append(wait);
+    return;
+  }
+
+  // The contract's two authoritative surfaces, stated first: a gate verdict
+  // without them has no evidence path, and missing evidence is a FAIL by rule.
+  const auth = document.createElement('div');
+  auth.className = 'gates__authority';
+  for (const [path, present] of Object.entries(scan.authority)) {
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = `auth__row ${present ? 'is-present' : 'is-absent'}`;
+    row.innerHTML = `<span class="auth__mark">${present ? '●' : '○'}</span>`
+      + `<code>${escapeHTML(path)}</code>`
+      + `<span class="auth__note">${present ? '있음' : '없음 — 판정 근거 경로 부재'}</span>`;
+    row.title = present
+      ? `${scan.run}/${path}`
+      : `계약이 게이트 근거의 단일 출처로 규정한 산출물입니다. 클릭해 생성하세요.`;
+    row.addEventListener('click', () => {
+      const target = `${scan.run}/${path}`;
+      if (present) openFile(target);
+      else if (path.endsWith('.md')) createGateEvidence(target);
+      else createDirAt(target);
+    });
+    auth.append(row);
+  }
+  el.gates.append(auth);
+
+  for (const [gid, meta] of Object.entries(GATES)) {
+    const docs = scan.gates[gid] || [];
+    const withVerdict = scan.docs.filter(
+      (d) => d.gates.includes(gid) && Object.keys(d.verdicts).length);
+    const numberless = scan.docs.filter(
+      (d) => d.gates.includes(gid) && !d.hasNumbers);
+
+    const stages = Object.entries(STAGE_GATES)
+      .filter(([, gs]) => gs.includes(gid)).map(([s]) => s.replace('Stage ', 'S'));
+
+    const group = document.createElement('div');
+    group.className = 'gate';
+    group.dataset.gate = gid;
+
+    const head = document.createElement('button');
+    head.type = 'button';
+    head.className = 'gate__head';
+    head.setAttribute('aria-expanded', 'false');
+    head.innerHTML =
+        `<span class="gate__id">${gid}</span>`
+      + `<span class="gate__label">${escapeHTML(meta.label)}</span>`
+      + `<span class="gate__stages">${stages.join(' ')}</span>`
+      + `<span class="gate__count${docs.length ? '' : ' is-zero'}">${docs.length}</span>`;
+    head.title = `${meta.label}\n\n기준: ${meta.threshold}\n측정: ${meta.owner}\n근거: ${meta.evidence}`;
+    group.append(head);
+
+    const body = document.createElement('div');
+    body.className = 'gate__body';
+    body.hidden = true;
+
+    const th = document.createElement('div');
+    th.className = 'gate__threshold';
+    th.textContent = meta.threshold;
+    body.append(th);
+
+    const measured = document.createElement('div');
+    measured.className = 'gate__meta';
+    measured.innerHTML = `측정 <b>${escapeHTML(meta.owner)}</b>`
+      + ` · 인용 문서 <b>${docs.length}</b>`
+      + ` · 판정 토큰 있음 <b>${withVerdict.length}</b>`
+      + (numberless.length ? ` · <span class="gate__warn">수치 없이 인용 ${numberless.length}</span>` : '');
+    body.append(measured);
+
+    if (!docs.length) {
+      const none = document.createElement('div');
+      none.className = 'gate__none';
+      none.textContent = '이 런의 어떤 문서도 이 게이트를 인용하지 않습니다';
+      body.append(none);
+    }
+    for (const path of docs) {
+      const doc = scan.docs.find((d) => d.path === path);
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'gate__doc';
+      const vs = doc ? Object.entries(doc.verdicts)
+        .map(([v, n]) => `<span class="gate__v gate__v--${v.toLowerCase()}">${v}${n > 1 ? `·${n}` : ''}</span>`)
+        .join('') : '';
+      row.innerHTML = `<span class="gate__docpath">${escapeHTML(path.replace(`${scan.run}/`, ''))}</span>${vs}`
+        + (doc && !doc.hasNumbers ? '<span class="gate__v gate__v--nonum">수치 없음</span>' : '');
+      row.addEventListener('click', () => openFile(path));
+      body.append(row);
+    }
+
+    head.addEventListener('click', () => {
+      const open = body.hidden;
+      body.hidden = !open;
+      head.setAttribute('aria-expanded', String(open));
+      group.classList.toggle('is-open', open);
+    });
+
+    group.append(body);
+    el.gates.append(group);
+  }
+
+  const cited = new Set(scan.docs.flatMap((d) => d.gates));
+  el.treeStat.textContent = `게이트 인용 문서 ${scan.docs.length} · 인용된 게이트 ${cited.size}/8`;
+  el.treeStat.title = `${scan.run} 기준\n`
+    + `펜스 안 코드 예시는 인용으로 세지 않습니다.\n`
+    + `이 뷰는 근거 위치만 보여줍니다 — 판정은 director, 측정은 QA가 소유합니다.`;
+}
+
+/** Create `qa/gate-measurements.md` with one section per gate. */
+async function createGateEvidence(path) {
+  const body = [
+    '# Gate Measurements',
+    '',
+    `run-id: ${state.runId ? `\`${state.runId}\`` : '<!-- 미확인 -->'}`,
+    'owner: game-qa',
+    '',
+    '계약: 게이트 수치의 단일 출처. 모든 판정은 이 문서의 섹션을 인용한다.',
+    '측정값·측정 방법·증거 경로 셋 중 하나라도 없으면 FAIL이다.',
+    '',
+    '---',
+    '',
+  ];
+  for (const [gid, meta] of Object.entries(GATES)) {
+    body.push(`## ${gid.toLowerCase()} — ${meta.label}`, '',
+      `기준: ${meta.threshold}`, '',
+      '| 측정값 | 측정 방법 | 명령·세션 | 시각 |',
+      '|---|---|---|---|',
+      '|  |  |  |  |', '');
+  }
+  try {
+    await api('/api/file', jsonInit('POST', { path, content: body.join('\n') }));
+    toast('gate-measurements.md 생성', 'ok');
+    await loadTree();
+    await loadGates();
+    await openFile(path);
+  } catch (err) {
+    toast(`생성 실패: ${err.message}`, 'err');
+  }
+}
+
+async function createDirAt(path) {
+  try {
+    await api('/api/dir', jsonInit('POST', { path }));
+    toast(`${path.split('/').pop()}/ 생성`, 'ok');
+    await loadTree();
+    await loadGates();
+  } catch (err) {
+    toast(`생성 실패: ${err.message}`, 'err');
+  }
+}
+
+function setSideMode(mode) {
+  state.sideMode = mode;
+  el.sidebar.dataset.mode = mode;
+  for (const btn of document.querySelectorAll('.sidemode__btn')) {
+    btn.classList.toggle('is-active', btn.dataset.mode === mode);
+  }
+  el.assetFilter.hidden = mode !== 'asset';
+  if (mode === 'gate') {
+    renderGates();
+    if (!state.gateScan) loadGates();
+  } else if (mode === 'asset') {
+    renderAssets();
+    if (!state.assetScan) loadAssets();
+  } else {
+    renderTree();
+    // Leaving the asset lane closes the inspector so the document comes back.
+    if (!el.inspect.hidden) {
+      el.inspect.hidden = true;
+      el.preview.hidden = false;
+      state.asset = null;
+    }
+  }
+  savePrefs();
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Asset lane
+
+   Documents are studio memory; assets are what the game loads. The question
+   this answers is not "does the file exist" but "does the runtime see it",
+   because dropping bytes into `assets/` does NOT put them in the game:
+
+     audio  -> needs a cue in assets/audio/elevenlabs/index.json
+     image  -> needs a [data-ui-icon] rule in styles.css (or another consumer)
+     mesh   -> hardcoded in battle-realtime-three.js MOTION_MODELS/VFX_MODELS
+
+   Overwriting an already-referenced path reflects immediately. A new path does
+   not until something names it, and the inspector says so rather than
+   implying otherwise.
+   ══════════════════════════════════════════════════════════════════════ */
+
+const ASSET_KIND_LABEL = {
+  audio: '음성', image: '이미지', mesh: '메시·모션',
+  video: '영상', text: '텍스트', other: '기타',
+};
+
+/** Which runtime surface a new asset of this kind must be registered with. */
+const REGISTER_HINT = {
+  audio: 'assets/audio/elevenlabs/index.json 의 cues/loops 에 등록해야 재생됩니다',
+  image: 'styles.css 의 [data-ui-icon] 규칙이나 다른 소비자가 이 경로를 지명해야 표시됩니다',
+  mesh:  'battle-realtime-three.js 의 MOTION_MODELS / VFX_MODELS 는 하드코딩입니다 — 소스 편집이 필요합니다',
+  video: '이 경로를 지명하는 런타임 소스가 있어야 재생됩니다',
+  text:  '이 경로를 읽는 런타임 소스가 있어야 반영됩니다',
+  other: '이 경로를 읽는 런타임 소스가 있어야 반영됩니다',
+};
+
+const fmtBytes = (n) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB`
+  : n >= 1024 ? `${(n / 1024).toFixed(1)} KB` : `${n} B`);
+
+async function loadAssets() {
+  const q = new URLSearchParams();
+  if (state.assetKind) q.set('kind', state.assetKind);
+  if (state.assetRefs) q.set('refs', state.assetRefs);
+  try {
+    state.assetScan = await api(`/api/assets?${q}`);
+  } catch (err) {
+    state.assetScan = null;
+    toast(`에셋 조사 실패: ${err.message}`, 'err');
+  }
+  if (state.sideMode === 'asset') renderAssets();
+}
+
+function renderAssets() {
+  el.assets.innerHTML = '';
+  const scan = state.assetScan;
+  if (!scan) {
+    const wait = document.createElement('div');
+    wait.className = 'assets__empty';
+    wait.textContent = '에셋 조사 중…';
+    el.assets.append(wait);
+    return;
+  }
+
+  // Broken references first: the runtime names these and they are not there,
+  // so the game 404s at load. Strictly worse than an orphan.
+  if (scan.broken.length) {
+    const box = document.createElement('div');
+    box.className = 'assets__broken';
+    const h = document.createElement('div');
+    h.className = 'broken__head';
+    h.textContent = `참조되지만 없는 에셋 ${scan.broken.length} — 런타임이 404를 맞습니다`;
+    box.append(h);
+    for (const b of scan.broken) {
+      const row = document.createElement('div');
+      row.className = 'broken__row';
+      row.innerHTML = `<code>${escapeHTML(b.path.replace('assets/', ''))}</code>`
+        + `<span>${b.referencedBy.map((r) => escapeHTML(`${r.source}:${r.line}`)).join(', ')}</span>`;
+      box.append(row);
+    }
+    el.assets.append(box);
+  }
+
+  const t = scan.totals;
+  const bar = document.createElement('div');
+  bar.className = 'assets__summary';
+  bar.innerHTML = `<b>${t.referenced}</b> 인게임 참조 · <b>${t.orphan}</b> 참조 없음`
+    + (t.stale ? ` · <span class="assets__stale">매니페스트 불일치 ${t.stale}</span>` : '');
+  bar.title = `런타임 소스 ${scan.sources}개를 스캔했습니다.\n`
+    + `"인게임 참조"는 저장소 루트의 런타임 소스나 오디오 샘플맵이 이 경로를 지명한다는 뜻입니다.\n`
+    + `tests/ 는 범위 밖입니다 — 테스트 참조는 인게임 반영이 아닙니다.`;
+  el.assets.append(bar);
+
+  const filtered = state.filter
+    ? scan.rows.filter((r) => r.path.toLowerCase().includes(state.filter))
+    : scan.rows;
+
+  for (const row of filtered) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `asset__row${row.referencedBy.length ? ' is-ref' : ''}`;
+    btn.dataset.path = row.path;
+    if (state.asset && state.asset.path === row.path) btn.classList.add('is-active');
+    btn.innerHTML =
+        `<span class="asset__dot asset__dot--${row.kind}" title="${ASSET_KIND_LABEL[row.kind]}"></span>`
+      + `<span class="asset__name">${escapeHTML(row.path.replace('assets/', ''))}</span>`
+      + (row.referencedBy.length
+          ? `<span class="asset__badge asset__badge--ref" title="${escapeHTML(
+              row.referencedBy.map((r) => `${r.source}:${r.line}`).join('\n'))}">인게임</span>`
+          : '')
+      + (row.stale ? '<span class="asset__badge asset__badge--stale" title="매니페스트와 실측이 불일치">≠</span>' : '')
+      + `<span class="asset__size">${fmtBytes(row.size)}</span>`;
+    btn.addEventListener('click', () => inspectAsset(row));
+    el.assets.append(btn);
+  }
+
+  if (!filtered.length) {
+    const none = document.createElement('div');
+    none.className = 'assets__empty';
+    none.textContent = '조건에 맞는 에셋 없음';
+    el.assets.append(none);
+  }
+
+  el.treeStat.textContent = `에셋 ${t.all} · 인게임 ${t.referenced} · 고아 ${t.orphan}`
+    + (scan.truncated ? ' · 표시 600' : '');
+  el.treeStat.title = bar.title;
+}
+
+/* ── inspector ───────────────────────────────────────────────────────── */
+
+function inspectAsset(row) {
+  state.asset = row;
+  el.preview.hidden = true;
+  el.viewer.hidden = true;
+  el.inspect.hidden = false;
+
+  el.inspectPath.textContent = row.path;
+  el.inspectKind.textContent = ASSET_KIND_LABEL[row.kind] || row.kind;
+
+  const url = `/api/raw?path=${encodeURIComponent(row.path)}`;
+  el.inspectStage.innerHTML = '';
+
+  if (row.kind === 'image') {
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = row.path;
+    img.className = 'inspect__img';
+    el.inspectStage.append(img);
+  } else if (row.kind === 'audio') {
+    const audio = document.createElement('audio');
+    audio.src = url;
+    audio.controls = true;
+    audio.preload = 'metadata';
+    audio.className = 'inspect__audio';
+    el.inspectStage.append(audio);
+  } else if (row.kind === 'video') {
+    const vid = document.createElement('video');
+    vid.src = url;
+    vid.controls = true;
+    vid.preload = 'metadata';
+    vid.className = 'inspect__video';
+    el.inspectStage.append(vid);
+  } else {
+    // Mesh/binary: no in-browser viewer, so report what is verifiable.
+    const box = document.createElement('div');
+    box.className = 'inspect__binary';
+    box.innerHTML = `<b>${escapeHTML(row.name)}</b>`
+      + `<span>${fmtBytes(row.size)} · ${new Date(row.mtime).toLocaleString('ko-KR')}</span>`
+      + `<span>브라우저 내 미리보기 없음 — <a href="${url}" target="_blank" rel="noopener">원본 열기</a></span>`;
+    el.inspectStage.append(box);
+  }
+
+  // The reflection verdict, stated plainly.
+  const inGame = row.referencedBy.length > 0;
+  el.inspectReflect.className = `inspect__reflect ${inGame ? 'is-ingame' : 'is-detached'}`;
+  el.inspectReflect.innerHTML = inGame
+    ? '<b>인게임 반영됨</b> — 런타임이 이 경로를 참조합니다. 덮어쓰면 즉시 반영됩니다.'
+    : `<b>인게임 반영 안 됨</b> — 이 경로를 참조하는 런타임 소스가 없습니다.<br>`
+      + `<span>${escapeHTML(REGISTER_HINT[row.kind] || '')}</span>`;
+
+  el.inspectRefs.innerHTML = '';
+  if (inGame) {
+    for (const r of row.referencedBy) {
+      const line = document.createElement('div');
+      line.className = 'inspect__ref';
+      line.innerHTML = `<code>${escapeHTML(r.source)}</code><span>:${r.line}</span>`;
+      el.inspectRefs.append(line);
+    }
+  }
+  if (row.manifest) {
+    const mf = document.createElement('div');
+    mf.className = `inspect__ref inspect__ref--manifest${row.stale ? ' is-stale' : ''}`;
+    mf.innerHTML = `<code>defense-asset-manifest.json</code>`
+      + `<span>${row.manifest.disposition}`
+      + `${row.stale ? ' · 실측과 불일치 (매니페스트가 낡음)' : ''}</span>`;
+    el.inspectRefs.append(mf);
+  }
+
+  // Cue registration only makes sense for audio, and only via the sample map.
+  el.inspectRegister.hidden = row.kind !== 'audio';
+  el.inspectDelete.disabled = false;
+  el.inspectNote.textContent = inGame
+    ? '참조된 에셋은 기본적으로 삭제가 거부됩니다 — 게임이 깨지기 때문입니다.'
+    : '삭제 전 바이트가 .backups/ 에 보관됩니다. 매니페스트는 파생 파일이니 '
+      + 'scripts/build-defense-asset-manifest.mjs --write 로 재생성하세요.';
+}
+
+async function replaceAsset(file) {
+  if (!state.asset || !file) return;
+  const buf = await file.arrayBuffer();
+  let bin = '';
+  const bytes = new Uint8Array(buf);
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  const base64 = btoa(bin);
+
+  const go = await modal({
+    title: '에셋 교체',
+    desc: `${state.asset.path}\n\n${fmtBytes(state.asset.size)} → ${fmtBytes(file.size)}`
+        + `${state.asset.referencedBy.length ? '\n\n런타임이 이 경로를 참조합니다 — 교체하면 즉시 인게임에 반영됩니다.' : ''}`,
+    value: null, ok: '교체',
+  });
+  if (go !== true) return;
+
+  try {
+    const res = await api('/api/asset', jsonInit('PUT', {
+      path: state.asset.path, base64, force: true,
+    }));
+    toast(res.inGame ? '교체 — 즉시 인게임 반영' : '교체 — 아직 인게임 참조 없음',
+      res.inGame ? 'ok' : 'warn', 4000);
+    await loadAssets();
+    const fresh = state.assetScan?.rows.find((r) => r.path === res.path);
+    if (fresh) inspectAsset(fresh);
+  } catch (err) {
+    toast(`교체 실패: ${err.message}`, 'err', 5000);
+  }
+}
+
+async function deleteAsset() {
+  if (!state.asset) return;
+  const a = state.asset;
+  const referenced = a.referencedBy.length > 0;
+
+  const go = await modal({
+    title: referenced ? '참조된 에셋 삭제' : '에셋 삭제',
+    desc: referenced
+      ? `${a.path}\n\n런타임이 이 경로를 참조합니다:\n`
+        + a.referencedBy.map((r) => `  ${r.source}:${r.line}`).join('\n')
+        + '\n\n삭제하면 게임이 이 에셋을 404로 맞습니다.'
+      : `${a.path}\n\n${fmtBytes(a.size)} · 런타임 참조 없음.\n`
+        + '바이트는 .backups/ 에 보관됩니다.',
+    value: null, ok: referenced ? '그래도 삭제' : '삭제',
+  });
+  if (go !== true) return;
+
+  try {
+    const res = await api('/api/asset/del', jsonInit('POST', {
+      path: a.path, force: referenced,
+    }));
+    toast(`삭제 — ${a.name}${res.backup ? ' (백업됨)' : ''}`, 'ok');
+    state.asset = null;
+    el.inspect.hidden = true;
+    el.preview.hidden = false;
+    await loadAssets();
+  } catch (err) {
+    if (err.status === 409) {
+      toast('참조된 에셋입니다 — 강제 삭제를 다시 확인하세요', 'warn', 5000);
+    } else {
+      toast(`삭제 실패: ${err.message}`, 'err', 5000);
+    }
+  }
+}
+
+/** Register an audio asset as a cue/loop, which is what puts it in the game. */
+async function registerCue() {
+  if (!state.asset || state.asset.kind !== 'audio') return;
+  const key = await modal({
+    title: '샘플맵에 큐 등록',
+    desc: `${state.asset.path}\n\n`
+        + 'DefenseAudio 는 index.json 의 cues/loops 만 읽습니다. '
+        + '큐 키를 입력하세요 (예: stage-start, ambience:cinder-span).',
+    value: state.asset.name.replace(/\.[^.]+$/, ''),
+  });
+  if (!key) return;
+  const kind = key.includes(':') ? 'loops' : 'cues';
+  try {
+    const res = await api('/api/audio/cue', jsonInit('POST', {
+      key, path: state.asset.path, gain: 0.9, kind,
+    }));
+    toast(`${kind} 에 "${res.key}" 등록 — 인게임 반영`, 'ok', 4000);
+    await loadAssets();
+    const fresh = state.assetScan?.rows.find((r) => r.path === state.asset.path);
+    if (fresh) inspectAsset(fresh);
+  } catch (err) {
+    toast(`등록 실패: ${err.message}`, 'err', 5000);
+  }
+}
+
 const matches = (node) => !state.filter
   || node.path.toLowerCase().includes(state.filter)
   || node.name.toLowerCase().includes(state.filter);
@@ -430,7 +980,9 @@ async function loadTree() {
     ? `${active.group === 'archive' ? '아카이브 (읽기 주의)' : '활성 런'}`
       + `${state.runId ? ` · ${state.runId}` : ''}`
     : '';
-  renderTree();
+  if (state.sideMode === 'gate') renderGates();
+  else if (state.sideMode === 'asset') renderAssets();
+  else renderTree();
 }
 
 /**
@@ -532,6 +1084,7 @@ async function openFile(path, { line } = {}) {
   }
 
   el.viewer.hidden = true;
+  el.inspect.hidden = true;      // a document supersedes the asset inspector
   el.preview.hidden = false;
 
   state.baseline = data.content;
@@ -567,6 +1120,7 @@ async function openFile(path, { line } = {}) {
 
 function showViewer(data) {
   el.preview.hidden = true;
+  el.inspect.hidden = true;
   el.viewer.hidden = false;
   el.editor.value = '';
   el.editor.readOnly = true;
@@ -1115,6 +1669,28 @@ el.btnNewFile.addEventListener('click', newFile);
 el.btnNewFolder.addEventListener('click', newFolder);
 el.btnGrep.addEventListener('click', grepAll);
 
+for (const btn of document.querySelectorAll('.sidemode__btn')) {
+  btn.addEventListener('click', () => setSideMode(btn.dataset.mode));
+}
+
+/* ── asset lane wiring ───────────────────────────────────────────────── */
+
+el.assetKind.addEventListener('change', () => {
+  state.assetKind = el.assetKind.value;
+  loadAssets();
+});
+el.assetRefs.addEventListener('change', () => {
+  state.assetRefs = el.assetRefs.value;
+  loadAssets();
+});
+el.inspectFile.addEventListener('change', () => {
+  const f = el.inspectFile.files?.[0];
+  el.inspectFile.value = '';          // let the same file be picked twice
+  if (f) replaceAsset(f);
+});
+el.inspectDelete.addEventListener('click', deleteAsset);
+el.inspectRegister.addEventListener('click', registerCue);
+
 /* Narrow-screen drawer. Below 1100px the sidebar is an overlay, so without a
    toggle the document tree is unreachable. */
 const NARROW = () => window.matchMedia('(max-width: 1100px)').matches;
@@ -1157,19 +1733,21 @@ el.runSelect.addEventListener('change', async () => {
   stashDraft();
   state.run = el.runSelect.value;
   state.open.clear();
+  state.gateScan = null;          // gates are per-run; stale scan would mislead
   state.file = null;
   el.editor.value = '';
   el.preview.innerHTML = '';
   setDirty(false);
   savePrefs();
   await loadTree();
+  await loadGates();
 });
 
 function savePrefs() {
   try {
     localStorage.setItem(PREFS, JSON.stringify({
       run: state.run, view: state.view, sync: state.sync, outline: state.outline,
-      wide: state.wide, showMissing: state.showMissing,
+      wide: state.wide, showMissing: state.showMissing, sideMode: state.sideMode,
       sidebarW: document.documentElement.style.getPropertyValue('--sidebar-w'),
       split: el.main.style.getPropertyValue('--split'),
     }));
@@ -1193,6 +1771,7 @@ function loadPrefs() {
   syncOutlineButton();
   if (p.wide) { state.wide = true; el.preview.classList.add('is-wide'); el.btnWide.classList.add('is-active'); }
   if (p.showMissing === false) { state.showMissing = false; el.toggleMissing.checked = false; }
+  if (p.sideMode === 'gate') setSideMode('gate');
   if (p.sidebarW) document.documentElement.style.setProperty('--sidebar-w', p.sidebarW);
   if (p.split) el.main.style.setProperty('--split', p.split);
 }
@@ -1252,6 +1831,16 @@ window.addEventListener('keydown', (e) => {
   if (k === '2') { e.preventDefault(); setView('split'); return; }
   if (k === '3') { e.preventDefault(); setView('preview'); return; }
   if (k === 'e') { e.preventDefault(); renamePath(); return; }
+  if (k === 'g') {
+    e.preventDefault();
+    setSideMode(state.sideMode === 'gate' ? 'folder' : 'gate');
+    return;
+  }
+  if (k === 'j') {
+    e.preventDefault();
+    setSideMode(state.sideMode === 'asset' ? 'folder' : 'asset');
+    return;
+  }
 });
 
 // F2 is the conventional rename key; ⌘E is the in-editor equivalent.
@@ -1283,6 +1872,7 @@ async function boot() {
   await loadRuns();
   await loadTree();
   setDirty(false);
+  loadGates();          // not awaited: the tree is usable while gates scan
 
   // Land on the run's task manifest — the harness's own entry point.
   const flat = [];

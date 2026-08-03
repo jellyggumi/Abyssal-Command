@@ -43,11 +43,39 @@
 <div class="shell">
 
   <!-- ─────── SIDEBAR ─────── -->
-  <aside class="sidebar" id="sidebar">
+  <aside class="sidebar" id="sidebar" data-mode="folder">
     <div class="sidebar__search">
       <input type="search" id="filter-input" class="search__input"
              placeholder="파일 필터…  (⌘P)" autocomplete="off" spellcheck="false">
       <button type="button" id="btn-grep" class="search__grep" title="문서 전문 검색 (⌘⇧F)">전문</button>
+    </div>
+
+    <!-- Three organising axes: the filesystem, the gates the harness judges
+         the run by, and the runtime assets the game actually loads. -->
+    <div class="sidemode" role="group" aria-label="사이드바 보기">
+      <button type="button" class="sidemode__btn is-active" data-mode="folder"
+              title="폴더 · 역할별 문서 트리">폴더</button>
+      <button type="button" class="sidemode__btn" data-mode="gate"
+              title="게이트 · G1–G8 근거가 어느 문서에 있는지 (⌘G)">게이트</button>
+      <button type="button" class="sidemode__btn" data-mode="asset"
+              title="에셋 · 음성·이미지·메시가 실제로 인게임에 닿는지 (⌘J)">에셋</button>
+    </div>
+
+    <div class="assetfilter" id="assetfilter" hidden>
+      <select id="asset-kind" class="assetfilter__sel" title="종류">
+        <option value="">전체 종류</option>
+        <option value="audio">음성</option>
+        <option value="image">이미지</option>
+        <option value="mesh">메시·모션</option>
+        <option value="video">영상</option>
+        <option value="text">텍스트</option>
+        <option value="other">기타</option>
+      </select>
+      <select id="asset-refs" class="assetfilter__sel" title="런타임 참조 여부">
+        <option value="">전체</option>
+        <option value="referenced">인게임 참조됨</option>
+        <option value="orphan">참조 없음</option>
+      </select>
     </div>
 
     <div class="sidebar__toolbar">
@@ -59,6 +87,8 @@
     <div class="sidebar__legend" id="legend"></div>
 
     <nav class="tree" id="tree" aria-label="워크스페이스 문서 트리"></nav>
+    <nav class="gates" id="gates" aria-label="게이트 근거 지도"></nav>
+    <nav class="assets" id="assets" aria-label="런타임 에셋 목록"></nav>
 
     <div class="sidebar__foot">
       <span id="tree-stat" class="foot__stat"></span>
@@ -116,6 +146,34 @@
         <nav class="outline" id="outline" aria-label="문서 목차"></nav>
         <article class="preview markdown" id="preview" tabindex="0"></article>
         <div class="viewer" id="viewer" hidden></div>
+
+        <!-- Asset inspector: preview the bytes, state plainly whether the
+             runtime can see them, then save or delete. -->
+        <div class="inspect" id="inspect" hidden>
+          <div class="inspect__head">
+            <code class="inspect__path" id="inspect-path"></code>
+            <span class="inspect__kind" id="inspect-kind"></span>
+          </div>
+
+          <div class="inspect__stage" id="inspect-stage"></div>
+
+          <div class="inspect__reflect" id="inspect-reflect"></div>
+
+          <div class="inspect__refs" id="inspect-refs"></div>
+
+          <div class="inspect__actions">
+            <label class="inspect__replace">
+              <input type="file" id="inspect-file" hidden>
+              <span class="btn btn--ghost">파일로 교체…</span>
+            </label>
+            <button type="button" id="inspect-register" class="btn btn--ghost" hidden
+                    title="샘플맵에 큐를 등록해 인게임에 반영">큐 등록…</button>
+            <span class="inspect__spacer"></span>
+            <button type="button" id="inspect-delete" class="btn btn--danger">삭제</button>
+          </div>
+
+          <p class="inspect__note" id="inspect-note"></p>
+        </div>
       </div>
     </section>
   </main>
