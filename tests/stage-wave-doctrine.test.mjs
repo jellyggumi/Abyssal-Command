@@ -161,19 +161,35 @@ test("every stage publishes a long-form doctrine wave plan", () => {
     const gaps = plan.slice(1).map((wave, index) => wave.tick - plan[index].tick);
     assert.equal(new Set(gaps).size, 1, `${id} doctrine cadence must be even`);
     assert.ok(gaps[0] >= 600, `${id} cadence ${gaps[0]} ticks must leave at least 10s of clear-up room`);
+    const declaredOpeningPolicy = doctrine.openingPolicyId;
+    const normalPolicyOverrides = plan
+      .filter((wave) => wave.kind === "normal" && wave.policyId !== undefined)
+      .map(({ slot, policyId }) => ({ slot, policyId }));
+    const allowedNormalPolicyOverrides = declaredOpeningPolicy === undefined
+      ? []
+      : [{ slot: 0, policyId: declaredOpeningPolicy }];
+    assert.deepEqual(
+      normalPolicyOverrides,
+      allowedNormalPolicyOverrides,
+      `${id} normal-wave policy overrides must use its declared opening policy ${String(declaredOpeningPolicy)} at slot 0 only`,
+    );
+
 
     for (const wave of plan) {
       assert.ok(wave.direction, `${id} wave ${wave.slot} must pin an approach lane`);
-      // Only the statement waves pin a wave-level policy. A big wave is the map's pressure
-      // push and a mid wave escorts its mid-boss, so both must name one. A normal wave must
-      // deliberately leave it unpinned: buildWaveSchedule then keeps rolling the seeded
-      // policy pool, which is the only place player-pursuit and low-hp-focus reach play.
-      // Its lead class still carries its own policy, so the wave is never policy-less.
+      // Statement waves pin pressure behavior. Normal waves remain in the seeded pool except for
+      // the doctrine-declared opening policy, which establishes early, readable pressure.
       if (wave.kind === "big" || wave.kind === "mid") {
         assert.ok(wave.policyId, `${id} wave ${wave.slot} (${wave.kind}) must pin an enemy policy`);
       } else {
-        assert.equal(wave.policyId, undefined,
-          `${id} wave ${wave.slot} (${wave.kind}) must leave the policy to the seeded pool`);
+        const usesDeclaredOpeningPolicy = wave.slot === 0 && declaredOpeningPolicy !== undefined;
+        assert.equal(
+          wave.policyId,
+          usesDeclaredOpeningPolicy ? declaredOpeningPolicy : undefined,
+          usesDeclaredOpeningPolicy
+            ? `${id} opening normal wave must pin declared policy ${declaredOpeningPolicy}`
+            : `${id} wave ${wave.slot} (${wave.kind}) must leave the policy to the seeded pool; declared opening policy is ${String(declaredOpeningPolicy)}`,
+        );
         assert.ok(ENEMIES[wave.primary.enemy]?.policyId,
           `${id} wave ${wave.slot} lead class ${wave.primary.enemy} must carry its own policy`);
       }

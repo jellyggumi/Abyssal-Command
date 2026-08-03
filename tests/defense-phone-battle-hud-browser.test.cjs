@@ -604,22 +604,30 @@ test("stable combat control IDs route light, heavy, and dash input through their
       if (expectedVerb) {
         assert.equal(await control.getAttribute("data-combat-verb"), expectedVerb, `${selector} must retain its selected direct verb`);
         assert.equal(await run.surface.getAttribute("data-defense-combat-verb"), expectedVerb, `${selector} must publish its selected direct verb`);
-        assert.equal(await control.getAttribute("data-feedback"), "true", `${selector} must show its own input feedback`);
+        assert.equal(await control.getAttribute("data-combat-state"), "pending", `${selector} must expose a pending direct-combat outcome`);
+        assert.equal(await control.getAttribute("data-feedback"), "pending", `${selector} must not claim a resolved outcome before the simulation tick`);
+        assert.match(await control.getAttribute("data-combat-input-id") ?? "", /\S+/, `${selector} must expose the authoritative pending input id`);
       }
+      return control;
     };
 
     // The opening wave begins out of melee reach. Repeat the native player action only
     // after a full recovery window while the live wave closes naturally; rejected attempts
     // cannot create a damage number, while the first accepted contact ends the loop.
+    let acceptedLightControl = null;
     for (let attempt = 0; attempt < 32; attempt += 1) {
-      await activateAndWaitForInput("#manual-attack", () => run.page.keyboard.press("Enter"), "ATTACK_LIGHT");
+      const control = await activateAndWaitForInput("#manual-attack", () => run.page.keyboard.press("Enter"), "ATTACK_LIGHT");
       for (let frame = 0; frame < 12; frame += 1) {
         await run.page.evaluate(() => window.__pumpDefenseFrame(100));
         await run.page.waitForTimeout(0);
-        if (await run.page.evaluate(() => window.__directControlDamageSamples.length > 0)) break;
+        if (await control.getAttribute("data-feedback") === "true") {
+          acceptedLightControl = control;
+          break;
+        }
       }
-      if (await run.page.evaluate(() => window.__directControlDamageSamples.length > 0)) break;
+      if (acceptedLightControl) break;
     }
+    assert.ok(acceptedLightControl, "one native light input must reach an accepted simulation outcome before its visible impact is asserted");
     const directDamageSamples = await run.page.evaluate(() => window.__directControlDamageSamples);
     assert.equal(
       directDamageSamples.length,
@@ -649,17 +657,24 @@ test("stable combat control IDs route light, heavy, and dash input through their
     );
     const resolvedDamageCount = directDamageSamples.length;
 
-    await activateAndWaitForInput("#manual-heavy", (control) => control.click(), "ATTACK_HEAVY");
+    const heavyControl = await activateAndWaitForInput("#manual-heavy", (control) => control.click(), "ATTACK_HEAVY");
     for (let frame = 0; frame < 12; frame += 1) {
       await run.page.evaluate(() => window.__pumpDefenseFrame(100));
       await run.page.waitForTimeout(0);
-      if (await run.page.evaluate((count) => window.__directControlDamageSamples.length > count, resolvedDamageCount)) break;
+      if (
+        await heavyControl.getAttribute("data-feedback") === "true"
+        && await run.page.evaluate((count) => window.__directControlDamageSamples.length > count, resolvedDamageCount)
+      ) break;
     }
+    assert.equal(await heavyControl.getAttribute("data-feedback"), "true", "a valid direct heavy action must reach an accepted simulation outcome");
     assert.ok(
       await run.page.evaluate((count) => window.__directControlDamageSamples.length > count, resolvedDamageCount),
       "a valid direct heavy action must resolve into additional visible world damage feedback",
     );
-    await activateAndWaitForInput("#manual-dash", (control) => control.click(), "DASH");
+    const dashControl = await activateAndWaitForInput("#manual-dash", (control) => control.click(), "DASH");
+    await run.page.evaluate(() => window.__pumpDefenseFrame(100));
+    await run.page.waitForTimeout(0);
+    assert.equal(await dashControl.getAttribute("data-feedback"), "true", "a valid direct dash action must reach an accepted simulation outcome");
     // KEYPAD RETIRED: `#movement-actions [data-move="E"]` no longer exists, and movement is not a
     // combat CONTROL ID any more — this test is about the stable control ids and their native
     // keyboard activation, so movement simply leaves its scope. The keyboard movement contract is
@@ -1173,6 +1188,158 @@ test("1440 desktop retains the ordered three-panel battle HUD row", async () => 
     assertDesktopContract(report);
     assert.deepEqual(run.browserErrors, [], "the desktop battle emitted browser errors");
     printMeasurement("DESKTOP_HUD_MEASURED", report, { dismissedCutscenes: run.dismissedCutscenes });
+  } finally {
+    await run.context.close();
+  }
+});
+
+test("direct control outcome feedback stays pending until the matching simulation rejection and exposes dash charges", async () => {
+  const run = await launchCinder(PHONE_VIEWPORT, { syntheticFrames: true });
+  try {
+    const pump = async () => {
+      await run.page.evaluate(() => window.__pumpDefenseFrame(100));
+      await run.page.waitForTimeout(0);
+    };
+    const attack = run.page.locator("#manual-attack");
+    const dash = run.page.locator("#manual-dash");
+    const waitForCombatState = async (control, expected, message) => {
+      for (let frame = 0; frame < 8 && await control.getAttribute("data-combat-state") !== expected; frame += 1) {
+        await pump();
+      }
+      assert.equal(await control.getAttribute("data-combat-state"), expected, message);
+    };
+    await waitForCombatState(
+      attack,
+      "ready",
+      "a live direct attack control must become ready before native activation",
+    );
+    await waitForCombatState(
+      dash,
+      "ready",
+      "a live dash control must become ready before its charge metadata is read",
+    );
+    assert.equal(await attack.isDisabled(), false, "a ready direct attack control must remain available");
+    assert.match(
+      await dash.getAttribute("aria-label") ?? "",
+      /대시 · 충전 \d+\/\d+/,
+      "the dash control must publicly expose its current charge metadata",
+    );
+
+    await attack.click();
+    const pendingInputId = await attack.getAttribute("data-combat-input-id");
+    assert.match(pendingInputId ?? "", /:input:\d+$/, "a real direct-control click must publish the queued simulation input id");
+    assert.equal(await attack.getAttribute("data-combat-state"), "pending", "click feedback must remain pending before the simulation processes its input");
+    assert.equal(await attack.getAttribute("data-feedback"), "pending", "a click must not masquerade as accepted or rejected feedback");
+
+    for (let frame = 0; frame < 8 && await attack.getAttribute("data-combat-state") !== "rejected"; frame += 1) {
+      await pump();
+    }
+    assert.equal(await attack.getAttribute("data-combat-state"), "rejected", "the opening direct attack must resolve through simulation rejection");
+    assert.equal(await attack.getAttribute("data-feedback"), "rejected", "only the matching INPUT_REJECTED outcome may resolve direct-control feedback");
+    assert.equal(await attack.getAttribute("data-combat-input-id"), pendingInputId, "resolved feedback must remain correlated to the original simulation input id");
+    assert.match(await attack.getAttribute("aria-label") ?? "", /거부 · (대상 없음|사거리 밖)/, "the simulation rejection reason must be visible on its originating control");
+    await dash.click();
+    const dashInputId = await dash.getAttribute("data-combat-input-id");
+    assert.match(dashInputId ?? "", /:input:\d+$/, "a real dash click must publish its queued simulation input id");
+    assert.equal(await dash.getAttribute("data-combat-state"), "pending", "dash feedback must remain pending before its simulation outcome");
+    for (let frame = 0; frame < 8 && await dash.getAttribute("data-feedback") === "pending"; frame += 1) {
+      await pump();
+    }
+    assert.equal(await dash.getAttribute("data-feedback"), "rejected", "the deterministic blocked dash must resolve only after INPUT_REJECTED");
+    assert.equal(await dash.getAttribute("data-combat-input-id"), dashInputId, "dash outcome feedback must remain correlated to the original simulation input id");
+    assert.deepEqual(run.browserErrors, [], "direct-control outcome feedback emitted browser errors");
+  } finally {
+    await run.context.close();
+  }
+});
+
+test("a real Cinder defeat exposes loss state and same-stage retry restores direct combat", async () => {
+  const run = await launchCinder(PHONE_VIEWPORT, { syntheticFrames: true });
+  try {
+    // No combat input is issued: Cinder's seeded no-action simulation deterministically reaches
+    // commander defeat at tick 7210. Batch synthetic RAF callbacks rather than sleeping so this
+    // stays a real session-driven terminal transition with a finite diagnostic budget.
+    const frameBudget = 1_250;
+    const batchSize = 20;
+    for (let pumped = 0; pumped < frameBudget && await run.surface.getAttribute("data-defense-state") !== "defeat"; pumped += batchSize) {
+      await run.page.evaluate((frames) => {
+        for (let frame = 0; frame < frames; frame += 1) window.__pumpDefenseFrame(100);
+      }, Math.min(batchSize, frameBudget - pumped));
+    }
+    assert.equal(
+      await run.surface.getAttribute("data-defense-state"),
+      "defeat",
+      `a no-action Cinder run must reach real DEFEAT within ${frameBudget} synthetic frames`,
+    );
+
+    const result = run.surface.locator(".defense-result");
+    await result.waitFor({ state: "visible" });
+    const retry = result.locator("#result-action");
+    assert.equal(await retry.isVisible(), true, "defeat must render a visible in-surface retry action");
+    assert.equal(await retry.isDisabled(), false, "the focused defeat retry action must remain available");
+    assert.equal(await retry.evaluate((node) => document.activeElement === node), true, "defeat must focus its in-surface retry action");
+    assert.match(await result.textContent() ?? "", /등불이 꺼졌습니다/, "the terminal loss reason must remain visible in the public result card");
+
+    const terminalIntegrity = await run.page.evaluate(() => {
+      const read = (selector) => {
+        const node = document.querySelector(selector);
+        return {
+          current: node?.dataset.integrityCurrent ?? null,
+          max: node?.dataset.integrityMax ?? null,
+          text: node?.textContent ?? "",
+        };
+      };
+      return { commander: read("#battle-commander-integrity"), gate: read("#battle-integrity") };
+    });
+    assert.ok(
+      [terminalIntegrity.commander, terminalIntegrity.gate].some(({ current, max, text }) =>
+        current === "0" && text.includes(`${current}/${max}`)),
+      "the public integrity readouts must visibly identify the integrity that caused defeat",
+    );
+
+    for (const selector of ["#manual-attack", "#manual-heavy", "#manual-dash"]) {
+      const control = run.page.locator(selector);
+      assert.equal(await control.isDisabled(), true, `${selector} must be disabled after terminal defeat`);
+      assert.equal(await control.getAttribute("aria-disabled"), "true", `${selector} must expose its disabled terminal state to assistive technology`);
+      assert.equal(await control.getAttribute("data-combat-state"), "unavailable", `${selector} must expose terminal unavailability`);
+    }
+
+    await retry.click();
+    await result.waitFor({ state: "detached" });
+    await run.page.waitForFunction(() => {
+      const surface = document.querySelector("#defense-battle-surface");
+      const commander = document.querySelector("#battle-commander-integrity");
+      const gate = document.querySelector("#battle-integrity");
+      return surface?.dataset.defenseStarted === "true"
+        && commander?.dataset.integrityCurrent === commander?.dataset.integrityMax
+        && gate?.dataset.integrityCurrent === gate?.dataset.integrityMax;
+    });
+    assert.equal(await run.surface.getAttribute("data-stage-id"), "cinder-span", "defeat retry must rebuild the same stage");
+    assert.equal(await run.surface.locator(".defense-result").count(), 0, "same-stage retry must remove stale terminal UI");
+
+    for (const selector of ["#manual-attack", "#manual-heavy", "#manual-dash"]) {
+      const control = run.page.locator(selector);
+      assert.equal(await control.isDisabled(), false, `${selector} must be available in the fresh retry`);
+      assert.equal(await control.getAttribute("aria-disabled"), "false", `${selector} must expose fresh-run availability to assistive technology`);
+      assert.equal(await control.getAttribute("data-combat-state"), "ready", `${selector} must restore its ready direct-combat state`);
+    }
+    const retryCutscene = run.page.locator("#defense-cutscene-overlay");
+    await retryCutscene.waitFor({ state: "visible" });
+    await retryCutscene.locator("[data-cutscene-dismiss]").click();
+    await retryCutscene.waitFor({ state: "detached" });
+
+    const restoredAttack = run.page.locator("#manual-attack");
+    await restoredAttack.click();
+    const restoredInputId = await restoredAttack.getAttribute("data-combat-input-id");
+    assert.match(restoredInputId ?? "", /:input:\d+$/, "the restored public attack control must publish its queued simulation input id");
+    assert.equal(await restoredAttack.getAttribute("data-combat-state"), "pending", "the restored direct attack must wait for simulation resolution");
+    for (let frame = 0; frame < 8 && await restoredAttack.getAttribute("data-combat-state") === "pending"; frame += 1) {
+      await run.page.evaluate(() => window.__pumpDefenseFrame(100));
+    }
+    assert.equal(await restoredAttack.getAttribute("data-combat-state"), "rejected", "the fresh no-target attack must resolve through matching simulation rejection");
+    assert.equal(await restoredAttack.getAttribute("data-feedback"), "rejected", "only INPUT_REJECTED may resolve restored direct-control feedback");
+    assert.equal(await restoredAttack.getAttribute("data-combat-input-id"), restoredInputId, "the restored control outcome must remain correlated to its own simulation input id");
+    assert.deepEqual(run.browserErrors, [], "the defeat and same-stage retry lifecycle emitted browser errors");
   } finally {
     await run.context.close();
   }

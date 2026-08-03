@@ -7,197 +7,744 @@
     <meta name="color-scheme" content="dark" />
     <meta
       name="description"
-      content="Abyssal Lantern의 기존 세 가지 모드로 이동하는 정적 입구 페이지입니다."
+      content="Abyssal Lantern 메인 캠페인의 첫 전장 Cinder Span으로 이어지는 시네마틱 입구입니다."
     />
-    <title>Abyssal Lantern — 심연으로 향하는 세 개의 등불</title>
+    <title>Abyssal Lantern — 마지막 등불을 지켜라</title>
     <link rel="stylesheet" href="styles.css" />
     <style>
-      .oneline-hub {
+      .campaign-entry {
         min-width: 320px;
         min-height: 100dvh;
+        margin: 0;
         overflow-x: hidden;
-        background:
-          radial-gradient(circle at 50% 0%, rgb(54 136 178 / 0.24), transparent 30rem),
-          linear-gradient(145deg, #050812 0%, #07101d 52%, #100a1b 100%);
-        color: #eef5ff;
+        background: #040711;
+        color: #f3f7ff;
+        font-family: inherit;
       }
 
-      .oneline-hub * {
+      .campaign-entry *,
+      .campaign-entry *::before,
+      .campaign-entry *::after {
         box-sizing: border-box;
       }
 
-      .oneline-hub__main {
+      .campaign-entry__main {
+        position: relative;
+        isolation: isolate;
+        overflow: hidden;
+      }
+
+      .campaign-entry__hero {
+        position: relative;
         display: grid;
-        place-items: center;
-        min-height: 100dvh;
-        padding: clamp(1.5rem, 6vw, 5rem) 1rem;
+        align-items: end;
+        min-height: min(100dvh, 58rem);
+        padding: clamp(1rem, 3vw, 3rem);
+        overflow: hidden;
+        border-bottom: 1px solid rgb(139 215 255 / 0.25);
+        background:
+          radial-gradient(circle at 18% 7%, rgb(43 143 207 / 0.3), transparent 24rem),
+          radial-gradient(circle at 79% 20%, rgb(177 53 30 / 0.2), transparent 25rem),
+          linear-gradient(180deg, #040710 0%, #071121 72%, #040711 100%);
       }
 
-      .oneline-hub__panel {
-        width: min(100%, 68rem);
-        padding: clamp(1.5rem, 5vw, 4.5rem);
-        border: 1px solid rgb(142 212 255 / 0.3);
-        border-radius: 1.5rem;
-        background: rgb(6 14 27 / 0.82);
-        box-shadow: 0 1.5rem 5rem rgb(0 0 0 / 0.38), inset 0 1px 0 rgb(255 255 255 / 0.07);
+      .campaign-entry__art {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
       }
 
-      .oneline-hub__eyebrow {
-        margin: 0 0 1rem;
-        color: #9cdefe;
-        font-size: 0.78rem;
-        font-weight: 800;
-        letter-spacing: 0.16em;
+      .campaign-entry__art::after {
+        position: absolute;
+        inset: 0;
+        content: "";
+        background:
+          linear-gradient(90deg, rgb(4 7 17 / 0.94) 0%, rgb(4 7 17 / 0.48) 48%, rgb(4 7 17 / 0.87) 100%),
+          linear-gradient(0deg, #040711 0%, transparent 42%, rgb(3 7 15 / 0.28) 100%);
+      }
+
+      .campaign-entry__art img {
+        position: absolute;
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: saturate(0.84) contrast(1.08) brightness(0.78);
+        transform-origin: center;
+      }
+
+      .campaign-entry__art--cinder {
+        inset: -4% -3%;
+        opacity: 0.92;
+        animation: campaign-drift 18s ease-in-out infinite alternate;
+      }
+
+
+      .campaign-entry__noise {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        background:
+          linear-gradient(112deg, transparent 0 48%, rgb(154 225 255 / 0.08) 49%, transparent 50%),
+          repeating-linear-gradient(0deg, rgb(255 255 255 / 0.022) 0 1px, transparent 1px 4px);
+        mix-blend-mode: screen;
+        opacity: 0.3;
+      }
+
+      .campaign-entry__frame {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: minmax(0, 44rem) minmax(15rem, 23rem);
+        gap: clamp(1.5rem, 6vw, 7rem);
+        width: min(100%, 88rem);
+        margin: 0 auto;
+      }
+
+      .campaign-entry__copy {
+        display: grid;
+        align-content: end;
+        gap: clamp(1rem, 2vw, 1.45rem);
+        padding: clamp(2rem, 5vw, 5rem) 0 clamp(1rem, 3vw, 2.5rem);
+      }
+
+      .campaign-entry__kicker,
+      .campaign-entry__act-label,
+      .campaign-entry__mode-label {
+        margin: 0;
+        color: #9fe4ff;
+        font-size: 0.72rem;
+        font-weight: 900;
+        letter-spacing: 0.19em;
         text-transform: uppercase;
       }
 
-      .oneline-hub h1 {
-        max-width: 13ch;
+      .campaign-entry h1 {
+        max-width: 10ch;
         margin: 0;
-        font-size: clamp(2.25rem, 9vw, 5.5rem);
-        line-height: 0.98;
-        letter-spacing: -0.055em;
+        color: #f7faff;
+        font-size: clamp(3.2rem, 8.5vw, 7.35rem);
+        font-weight: 900;
+        letter-spacing: -0.065em;
+        line-height: 0.87;
+        text-wrap: balance;
+        text-shadow: 0 0.25rem 2.5rem rgb(0 0 0 / 0.72);
       }
 
-      .oneline-hub__intro {
-        max-width: 42rem;
-        margin: 1.5rem 0 0;
-        color: #c4d8eb;
-        font-size: clamp(1rem, 2.3vw, 1.2rem);
-        line-height: 1.7;
+      .campaign-entry__lede {
+        max-width: 37rem;
+        margin: 0;
+        color: #d2dfed;
+        font-size: clamp(1rem, 2vw, 1.2rem);
+        line-height: 1.65;
       }
 
-      .oneline-hub__nav {
-        margin-top: clamp(2rem, 6vw, 4rem);
-      }
-
-      .oneline-hub__nav h2 {
-        margin: 0 0 1rem;
-        color: #d9edff;
-        font-size: 1rem;
-        letter-spacing: 0.08em;
-      }
-
-      .oneline-hub__list {
+      .campaign-entry__mission {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 0.85rem;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 0.75rem;
+        max-width: 34rem;
+        padding: 0.85rem 1rem;
+        border: 1px solid rgb(145 223 255 / 0.35);
+        border-left: 0.28rem solid #f46a41;
+        background: linear-gradient(105deg, rgb(12 24 42 / 0.88), rgb(18 12 28 / 0.76));
+        box-shadow: 0 1.2rem 3rem rgb(0 0 0 / 0.28), inset 0 1px rgb(255 255 255 / 0.08);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+
+      .campaign-entry__mission-index {
+        display: grid;
+        place-items: center;
+        width: 2.2rem;
+        height: 2.2rem;
+        border: 1px solid rgb(255 150 103 / 0.76);
+        border-radius: 50%;
+        color: #ffd7c7;
+        font-size: 0.76rem;
+        font-weight: 900;
+      }
+
+      .campaign-entry__mission strong,
+      .campaign-entry__mission > div > span {
+        display: block;
+      }
+
+      .campaign-entry__mission strong {
+        color: #fff5ee;
+        font-size: 0.95rem;
+      }
+
+      .campaign-entry__mission > div > span {
+        margin-top: 0.2rem;
+        color: #c4d2df;
+        font-size: 0.8rem;
+        line-height: 1.45;
+      }
+
+      .campaign-entry__actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.9rem;
+      }
+
+      .campaign-entry__launch {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.8rem;
+        min-height: 3.5rem;
+        padding: 0.85rem 1.1rem 0.85rem 1.35rem;
+        border: 1px solid #ffb28f;
+        border-radius: 0.45rem;
+        background: linear-gradient(105deg, #ef643a, #9e280f);
+        box-shadow: 0 0.85rem 2.2rem rgb(0 0 0 / 0.35), 0 0 1.7rem rgb(243 89 44 / 0.32);
+        color: #fffaf6;
+        font-size: 1rem;
+        font-weight: 900;
+        text-decoration: none;
+        transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+      }
+
+      .campaign-entry__launch:hover {
+        background: linear-gradient(105deg, #ff7747, #b33414);
+        box-shadow: 0 1rem 2.7rem rgb(0 0 0 / 0.42), 0 0 2.2rem rgb(255 113 71 / 0.48);
+        transform: translateY(-0.16rem);
+      }
+
+      .campaign-entry__launch:focus-visible,
+      .campaign-entry__mode:focus-visible {
+        outline: 3px solid #c0efff;
+        outline-offset: 4px;
+      }
+
+      .campaign-entry__launch-arrow {
+        font-size: 1.3rem;
+        line-height: 1;
+      }
+
+      .campaign-entry__launch-note {
+        max-width: 18rem;
+        margin: 0;
+        color: #b8cce0;
+        font-size: 0.78rem;
+        line-height: 1.45;
+      }
+
+      .campaign-entry__route {
+        align-self: end;
+        display: grid;
+        gap: 0.7rem;
+        padding: clamp(1rem, 2vw, 1.35rem);
+        border: 1px solid rgb(155 223 255 / 0.26);
+        border-radius: 1rem;
+        background: linear-gradient(145deg, rgb(8 17 32 / 0.84), rgb(15 10 25 / 0.76));
+        box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 0.35), inset 0 1px rgb(255 255 255 / 0.08);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+
+      .campaign-entry__route > h2 {
+        margin: 0;
+        color: #ecf6ff;
+        font-size: 1rem;
+      }
+
+      .campaign-entry__route > p {
+        margin: 0;
+        color: #abc1d5;
+        font-size: 0.78rem;
+        line-height: 1.5;
+      }
+
+      .campaign-entry__acts {
+        display: grid;
+        gap: 0.55rem;
         margin: 0;
         padding: 0;
         list-style: none;
       }
 
-      .oneline-hub__link {
-        display: flex;
-        min-height: 12rem;
-        flex-direction: column;
-        justify-content: space-between;
-        gap: 1.5rem;
-        padding: 1.25rem;
-        border: 1px solid rgb(126 194 237 / 0.32);
-        border-radius: 1rem;
-        background: linear-gradient(150deg, rgb(27 65 99 / 0.54), rgb(17 16 39 / 0.8));
+      .campaign-entry__act {
+        display: grid;
+        grid-template-columns: 1.8rem minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.6rem;
+        min-height: 3.5rem;
+        padding: 0.55rem 0.6rem;
+        border: 1px solid rgb(145 201 234 / 0.18);
+        background: rgb(5 11 22 / 0.48);
+      }
+
+      .campaign-entry__act--active {
+        border-color: rgb(255 146 101 / 0.54);
+        background: linear-gradient(105deg, rgb(100 32 24 / 0.66), rgb(17 15 32 / 0.62));
+      }
+
+      .campaign-entry__act-index {
+        color: #8ea7bd;
+        font-size: 0.71rem;
+        font-weight: 900;
+      }
+
+      .campaign-entry__act--active .campaign-entry__act-index,
+      .campaign-entry__act--active .campaign-entry__act-label {
+        color: #ffc4a8;
+      }
+
+      .campaign-entry__act strong,
+      .campaign-entry__act small {
+        display: block;
+      }
+
+      .campaign-entry__act strong {
+        color: #f2f7ff;
+        font-size: 0.87rem;
+      }
+
+      .campaign-entry__act small {
+        margin-top: 0.12rem;
+        color: #9eb3c6;
+        font-size: 0.68rem;
+      }
+
+      .campaign-entry__act-state {
+        padding: 0.2rem 0.35rem;
+        border: 1px solid rgb(142 211 248 / 0.28);
+        color: #b8d8eb;
+        font-size: 0.58rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+
+      .campaign-entry__act--active .campaign-entry__act-state {
+        border-color: rgb(255 163 120 / 0.62);
+        color: #ffcfb8;
+      }
+
+      .campaign-entry__campaign {
+        width: min(100%, 88rem);
+        margin: 0 auto;
+        padding: clamp(4rem, 9vw, 8rem) clamp(1rem, 3vw, 3rem) clamp(4.5rem, 8vw, 7rem);
+      }
+
+      .campaign-entry__section-head {
+        display: grid;
+        gap: 0.75rem;
+        max-width: 42rem;
+      }
+
+      .campaign-entry__section-head h2 {
+        margin: 0;
+        color: #f0f5ff;
+        font-size: clamp(2rem, 4vw, 3.5rem);
+        letter-spacing: -0.045em;
+        line-height: 1;
+      }
+
+      .campaign-entry__section-head p:last-child {
+        margin: 0;
+        color: #a9bed0;
+        font-size: 1rem;
+        line-height: 1.6;
+      }
+
+      .campaign-entry__reels {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+        margin: clamp(2rem, 4vw, 3.5rem) 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .campaign-entry__reel {
+        position: relative;
+        min-height: 24rem;
+        overflow: hidden;
+        border: 1px solid rgb(142 212 255 / 0.24);
+        background: #0c1726;
+        box-shadow: 0 1rem 2.5rem rgb(0 0 0 / 0.25);
+      }
+
+      .campaign-entry__reel::before {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        content: "";
+        opacity: 0.9;
+        transition: transform 320ms ease, filter 320ms ease;
+      }
+
+      .campaign-entry__reel img {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: saturate(0.78) contrast(1.06) brightness(0.67);
+        transition: transform 320ms ease, filter 320ms ease;
+      }
+
+      .campaign-entry__reel--cinder::before {
+        background:
+          radial-gradient(circle at 77% 21%, rgb(255 137 64 / 0.92), transparent 8rem),
+          radial-gradient(circle at 14% 84%, rgb(206 56 28 / 0.68), transparent 14rem),
+          linear-gradient(142deg, #1a2d42 0%, #5b2118 46%, #0a111d 100%);
+      }
+
+      .campaign-entry__reel--locked::before {
+        background:
+          radial-gradient(circle at 50% 22%, rgb(150 201 220 / 0.2), transparent 8rem),
+          repeating-linear-gradient(135deg, transparent 0 1.4rem, rgb(150 201 220 / 0.06) 1.45rem 1.52rem),
+          linear-gradient(142deg, #081421 0%, #102639 52%, #080e18 100%);
+      }
+
+
+      .campaign-entry__reel:hover::before,
+      .campaign-entry__reel:hover img {
+        filter: brightness(1.15) saturate(1.1);
+        transform: scale(1.045);
+      }
+
+      .campaign-entry__reel::after {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        content: "";
+        background: linear-gradient(180deg, rgb(3 7 15 / 0.03), rgb(3 7 15 / 0.28) 42%, rgb(3 7 15 / 0.96) 100%);
+      }
+
+      .campaign-entry__reel-copy {
+        position: relative;
+        z-index: 3;
+        display: grid;
+        align-content: end;
+        min-height: 24rem;
+        padding: 1.2rem;
+      }
+
+      .campaign-entry__reel .campaign-entry__act-label {
+        color: #ffd0bb;
+      }
+
+      .campaign-entry__reel h3 {
+        margin: 0.35rem 0 0;
+        color: #fff;
+        font-size: clamp(1.5rem, 2.4vw, 2rem);
+        line-height: 1;
+      }
+
+      .campaign-entry__reel p:last-child {
+        margin: 0.55rem 0 0;
+        color: #c7d2df;
+        font-size: 0.88rem;
+        line-height: 1.55;
+      }
+
+      .campaign-entry__reel--locked {
+        border-color: rgb(142 212 255 / 0.16);
+      }
+
+      .campaign-entry__reel--locked .campaign-entry__reel-copy {
+        opacity: 0.78;
+      }
+
+      .campaign-entry__alternate {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(18rem, 34rem);
+        gap: 2rem;
+        align-items: end;
+        padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 3vw, 3rem) clamp(3rem, 6vw, 5rem);
+        border-top: 1px solid rgb(148 217 255 / 0.16);
+        background:
+          radial-gradient(circle at 14% 100%, rgb(47 136 187 / 0.17), transparent 32rem),
+          #070d19;
+      }
+
+      .campaign-entry__alternate-copy {
+        max-width: 32rem;
+      }
+
+      .campaign-entry__alternate-copy h2 {
+        margin: 0.7rem 0 0;
+        color: #eaf4ff;
+        font-size: clamp(1.55rem, 3vw, 2.2rem);
+        letter-spacing: -0.035em;
+      }
+
+      .campaign-entry__alternate-copy p:last-child {
+        margin: 0.7rem 0 0;
+        color: #9fb5c8;
+        line-height: 1.6;
+      }
+
+      .campaign-entry__modes {
+        display: grid;
+        gap: 0.65rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .campaign-entry__mode {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 1rem;
+        align-items: center;
+        padding: 1rem;
+        border: 1px solid rgb(144 210 246 / 0.28);
+        background: linear-gradient(125deg, rgb(16 38 59 / 0.66), rgb(15 13 33 / 0.85));
         color: inherit;
         text-decoration: none;
         transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
       }
 
-      .oneline-hub__link:hover {
-        border-color: #9de2ff;
-        background: linear-gradient(150deg, rgb(33 101 139 / 0.72), rgb(35 22 58 / 0.9));
-        transform: translateY(-0.2rem);
+      .campaign-entry__mode:hover {
+        border-color: #a2e8ff;
+        background: linear-gradient(125deg, rgb(24 65 94 / 0.78), rgb(32 19 53 / 0.92));
+        transform: translateX(0.2rem);
       }
 
-      .oneline-hub__link:focus-visible {
-        outline: 3px solid #b9edff;
-        outline-offset: 4px;
+      .campaign-entry__mode > span:first-child > strong,
+      .campaign-entry__mode > span:first-child > span {
+        display: block;
       }
 
-      .oneline-hub__mode {
-        color: #fff;
+      .campaign-entry__mode strong {
+        color: #f6f9ff;
+        font-size: 1rem;
+      }
+
+      .campaign-entry__mode > span:first-child > span {
+        margin-top: 0.25rem;
+        color: #b7cde0;
+        font-size: 0.78rem;
+        line-height: 1.45;
+      }
+
+      .campaign-entry__mode-arrow {
+        color: #a5e6ff;
         font-size: 1.35rem;
-        font-weight: 800;
-        line-height: 1.15;
+        font-weight: 900;
       }
 
-      .oneline-hub__detail {
-        color: #b9d5e9;
-        font-size: 0.94rem;
-        line-height: 1.55;
+      @keyframes campaign-drift {
+        from { transform: scale(1.03) translate3d(-0.6%, -0.35%, 0); }
+        to { transform: scale(1.09) translate3d(0.75%, 0.6%, 0); }
       }
 
-      .oneline-hub__arrow {
-        color: #95ddff;
-        font-size: 1.25rem;
-        font-weight: 800;
-      }
 
-      .oneline-hub__note {
-        margin: 1.5rem 0 0;
-        color: #8eacc4;
-        font-size: 0.88rem;
-        line-height: 1.55;
-      }
+      @media (max-width: 760px) {
+        .campaign-entry__hero {
+          min-height: auto;
+          padding: 1rem 1rem 2.5rem;
+        }
 
-      @media (max-width: 48rem) {
-        .oneline-hub__list {
+        .campaign-entry__frame,
+        .campaign-entry__alternate {
           grid-template-columns: 1fr;
         }
 
-        .oneline-hub__link {
-          min-height: 0;
+        .campaign-entry__copy {
+          padding-top: clamp(10rem, 38vw, 17rem);
+        }
+
+        .campaign-entry__route {
+          align-self: auto;
+        }
+
+        .campaign-entry__reels {
+          grid-template-columns: 1fr;
+        }
+
+        .campaign-entry__reel,
+        .campaign-entry__reel-copy {
+          min-height: 18rem;
+        }
+
+      }
+
+      @media (max-width: 430px) {
+        .campaign-entry h1 {
+          font-size: clamp(2.8rem, 15vw, 4rem);
+        }
+
+        .campaign-entry__actions {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .campaign-entry__launch {
+          width: 100%;
+        }
+
+        .campaign-entry__launch-note {
+          max-width: none;
+        }
+
+        .campaign-entry__act {
+          grid-template-columns: 1.5rem minmax(0, 1fr);
+        }
+
+        .campaign-entry__act-state {
+          grid-column: 2;
+          justify-self: start;
         }
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .oneline-hub__link {
+        .campaign-entry__art--cinder {
+          animation: none;
+          transform: none;
+        }
+
+        .campaign-entry__launch,
+        .campaign-entry__mode,
+        .campaign-entry__reel::before,
+        .campaign-entry__reel img {
           transition: none;
         }
 
-        .oneline-hub__link:hover {
+        .campaign-entry__launch:hover,
+        .campaign-entry__mode:hover,
+        .campaign-entry__reel:hover::before,
+        .campaign-entry__reel:hover img {
           transform: none;
         }
       }
     </style>
   </head>
-  <body class="oneline-hub">
-    <main class="oneline-hub__main" aria-labelledby="oneline-title">
-      <section class="oneline-hub__panel">
-        <p class="oneline-hub__eyebrow">Abyssal Lantern</p>
-        <h1 id="oneline-title">심연으로 향하는 세 개의 등불</h1>
-        <p class="oneline-hub__intro">
-          이 페이지는 새로운 게임 시스템이 아니라, 현재 공개된 Abyssal Lantern의 세 가지 모드로 이어지는 정적 입구입니다.
-        </p>
+  <body class="campaign-entry">
+    <main class="campaign-entry__main" aria-labelledby="campaign-title">
+      <section class="campaign-entry__hero">
+        <div class="campaign-entry__art" aria-hidden="true">
+          <img class="campaign-entry__art--cinder" src="assets/images/battle/ui/stages/cinder-span.png" alt="" fetchpriority="high" decoding="async" />
+        </div>
+        <div class="campaign-entry__noise" aria-hidden="true"></div>
+        <div class="campaign-entry__frame">
+          <div class="campaign-entry__copy">
+            <p class="campaign-entry__kicker">Abyssal Lantern · Campaign 01</p>
+            <h1 id="campaign-title">마지막 등불을 지켜라</h1>
+            <p class="campaign-entry__lede">
+              불타는 다리를 건너 심연의 봉쇄선을 다시 밝히십시오. 눈앞의 등불을 지키고, 봉인된 기록이 드러날 길을 여십시오.
+            </p>
+            <div class="campaign-entry__mission">
+              <span class="campaign-entry__mission-index" aria-hidden="true">01</span>
+              <div>
+                <strong>Cinder Span · 불씨의 교량</strong>
+                <span>첫 작전: 성문을 지키는 Cinder Warden을 저지하고 등불의 길을 여십시오.</span>
+              </div>
+            </div>
+            <div class="campaign-entry__actions">
+              <a class="campaign-entry__launch" href="index.html">
+                현재 전선 작전 로비 열기
+                <span class="campaign-entry__launch-arrow" aria-hidden="true">→</span>
+              </a>
+              <p class="campaign-entry__launch-note">새 기록은 Cinder Span에서 시작합니다. 저장된 캠페인은 현재 해금된 전선의 로비로 이어집니다.</p>
+            </div>
+          </div>
 
-        <nav class="oneline-hub__nav" aria-labelledby="mode-navigation-title">
-          <h2 id="mode-navigation-title">모드 선택</h2>
-          <ul class="oneline-hub__list">
-            <li>
-              <a class="oneline-hub__link" href="index.html">
-                <span class="oneline-hub__mode">메인 캠페인</span>
-                <span class="oneline-hub__detail">마지막 등불과 함께 심연의 세 구역을 내려갑니다.</span>
-                <span class="oneline-hub__arrow" aria-hidden="true">→</span>
-              </a>
-            </li>
-            <li>
-              <a class="oneline-hub__link" href="sprite-2-5d.html">
-                <span class="oneline-hub__mode">Cinder Court</span>
-                <span class="oneline-hub__detail">불씨의 궁정을 지키는 독립 전장으로 이동합니다.</span>
-                <span class="oneline-hub__arrow" aria-hidden="true">→</span>
-              </a>
-            </li>
-            <li>
-              <a class="oneline-hub__link" href="sealbound.html">
-                <span class="oneline-hub__mode">Sealbound</span>
-                <span class="oneline-hub__detail">세 개의 심연 전선을 봉인하는 전장으로 이동합니다.</span>
-                <span class="oneline-hub__arrow" aria-hidden="true">→</span>
-              </a>
-            </li>
-          </ul>
-        </nav>
-
-        <p class="oneline-hub__note">원하는 모드를 선택하면 해당 기존 게임 페이지가 열립니다.</p>
+          <aside class="campaign-entry__route" aria-labelledby="campaign-route-title">
+            <p class="campaign-entry__kicker">Cinematic relay</p>
+            <h2 id="campaign-route-title">새 캠페인의 등불 항로</h2>
+            <ol class="campaign-entry__acts">
+              <li class="campaign-entry__act campaign-entry__act--active">
+                <span class="campaign-entry__act-index">01</span>
+                <div>
+                  <p class="campaign-entry__act-label">First light</p>
+                  <strong>Cinder Span</strong>
+                  <small>불씨의 교량</small>
+                </div>
+                <span class="campaign-entry__act-state">출전 가능</span>
+              </li>
+              <li class="campaign-entry__act">
+                <span class="campaign-entry__act-index">02</span>
+                <div>
+                  <p class="campaign-entry__act-label">Sealed record</p>
+                  <strong>봉인된 전선</strong>
+                  <small>선행 전선 완료 후 공개</small>
+                </div>
+                <span class="campaign-entry__act-state">봉인</span>
+              </li>
+              <li class="campaign-entry__act">
+                <span class="campaign-entry__act-index">03</span>
+                <div>
+                  <p class="campaign-entry__act-label">Sealed record</p>
+                  <strong>봉인된 전선</strong>
+                  <small>선행 전선 완료 후 공개</small>
+                </div>
+                <span class="campaign-entry__act-state">봉인</span>
+              </li>
+            </ol>
+            <p>첫 등불을 점화하면 다음 전선이 드러납니다. 모든 준비와 출전은 메인 캠페인 안에서 이어집니다.</p>
+          </aside>
+        </div>
       </section>
+
+      <section class="campaign-entry__campaign" aria-labelledby="campaign-reel-title">
+        <div class="campaign-entry__section-head">
+          <p class="campaign-entry__kicker">The descent</p>
+          <h2 id="campaign-reel-title">전선은 광고가 아니라, 당신이 통과할 장면입니다.</h2>
+          <p>정적인 목록 대신 새로운 캠페인의 첫 전선을 한 편의 장면처럼 배치했습니다. 새 기록의 시작은 하나입니다. 첫 등불을 밝히면 Cinder Span의 실시간 전장으로 이어집니다.</p>
+        </div>
+        <ol class="campaign-entry__reels">
+          <li class="campaign-entry__reel campaign-entry__reel--cinder">
+            <img src="assets/images/battle/ui/stages/cinder-span.png" alt="" loading="lazy" decoding="async" />
+            <div class="campaign-entry__reel-copy">
+              <p class="campaign-entry__act-label">Act I · The ember bridge</p>
+              <h3>Cinder Span</h3>
+              <p>화염이 끓는 절벽 위에서 첫 봉쇄선을 사수합니다. 등불은 여기서 다시 켜집니다.</p>
+            </div>
+          </li>
+          <li class="campaign-entry__reel campaign-entry__reel--locked">
+            <div class="campaign-entry__reel-copy">
+              <p class="campaign-entry__act-label">Sealed record</p>
+              <h3>봉인된 전선</h3>
+              <p>선행 전선을 통과하면 다음 기록이 공개됩니다.</p>
+            </div>
+          </li>
+          <li class="campaign-entry__reel campaign-entry__reel--locked">
+            <div class="campaign-entry__reel-copy">
+              <p class="campaign-entry__act-label">Sealed record</p>
+              <h3>봉인된 전선</h3>
+              <p>더 깊은 기록은 선행 전선을 통과한 뒤에만 공개됩니다.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <nav class="campaign-entry__alternate" aria-labelledby="alternate-mode-title">
+        <div class="campaign-entry__alternate-copy">
+          <p class="campaign-entry__mode-label">Other deployments</p>
+          <h2 id="alternate-mode-title">독립 전장으로 바로 이동</h2>
+          <p>메인 캠페인과 별도로 준비된 두 전장도 열려 있습니다. 처음이라면 위의 메인 캠페인부터 시작하는 편이 자연스럽습니다.</p>
+        </div>
+        <ul class="campaign-entry__modes">
+          <li>
+            <a class="campaign-entry__mode" href="sprite-2-5d.html">
+              <span>
+                <strong>Cinder Court</strong>
+                <span>불씨의 궁정을 지키는 독립 2.5D 전장으로 이동합니다.</span>
+              </span>
+              <span class="campaign-entry__mode-arrow" aria-hidden="true">→</span>
+            </a>
+          </li>
+          <li>
+            <a class="campaign-entry__mode" href="sealbound.html">
+              <span>
+                <strong>Sealbound</strong>
+                <span>세 개의 심연 전선을 봉인하는 독립 전장으로 이동합니다.</span>
+              </span>
+              <span class="campaign-entry__mode-arrow" aria-hidden="true">→</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
     </main>
   </body>
 </html>

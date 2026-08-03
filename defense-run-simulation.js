@@ -36,6 +36,11 @@ const freeze = (value) => {
 };
 const clamp = (value, low, high) => value < low ? low : value > high ? high : value;
 const distanceSquared = (a, b) => { const x = a.x - b.x; const y = a.y - b.y; return x * x + y * y; };
+// Separation leaves a one-unit integer backoff beyond visual body contact. Let contact attacks
+// bridge that numerical gap without allowing physical overlap or a visible reach discrepancy.
+const MELEE_CONTACT_TOLERANCE = 8;
+const contactRangeFor = (enemy, target) =>
+  enemy.radius + (target.radius || 0) + MELEE_CONTACT_TOLERANCE;
 const scaled = (value, scale) => Math.trunc(value * scale / 100);
 // Abyss Depth (wiki reports 2026-07-30 GAP-A/C): run-scoped clear-to-unlock difficulty ladder.
 // depth 0 is a pure identity (same seed stream, same scale, same snapshot keys) so every existing
@@ -350,6 +355,8 @@ function separateBodies(run) {
   ].filter(Boolean));
   if (movable.length === 0) return;
   const anchors = run.gate ? [run.gate] : [];
+  const commanderInsideGate = run.gate
+    && distanceSquared(run.commander, run.gate) <= (run.gate.radius + run.commander.radius) ** 2;
   const isPlayerSide = (entity) => entity.id === "commander" || entity.kind === "companion";
 
   for (let pass = 0; pass < COLLISION.separationPasses; pass += 1) {
@@ -357,8 +364,14 @@ function separateBodies(run) {
     for (let index = 0; index < movable.length; index += 1) {
       const body = movable[index];
       /* The gate is a hostile collision anchor, not a party formation blocker: authored companion
-       * anchors intentionally sit inside its display footprint, and must remain reachable. */
-      if (!isPlayerSide(body)) {
+       * anchors intentionally sit inside its display footprint, and must remain reachable. The
+       * commander is inside the gate envelope, so retaining gate clearance makes post-route player
+       * contact impossible. */
+      const hasCompletedPlayerPursuitRoute = commanderInsideGate
+        && body.hp > 0
+        && body.policyId === "player-pursuit"
+        && body.waypointIndex >= body.route.length;
+      if (!isPlayerSide(body) && !hasCompletedPlayerPursuitRoute) {
         for (const anchor of anchors) {
           if (resolveOverlap(run, body, anchor, true)) displaced = true;
         }
@@ -901,13 +914,12 @@ function nearestActor(origin, candidates) {
   })[0];
 }
 /**
- * Enemies that would otherwise pick the commander now pick from {commander, living FRONT companions}.
- * Companions are offset from the commander every tick per the active formation stance
- * (STANCE_CONFIG, applied in tick()'s companion position-sync), so distance is no longer always tied
- * the way it was under the old raw-snap model — ties (and near-ties) still resolve in favor of the
- * nearest FRONT companion (vanguard-screen intent: front row is engaged before the commander) rather
- * than `nearestActor`'s generic id-lexical tiebreak, which would otherwise always pick "commander"
- * over "companion-N" and leave FRONT targeting permanently inert.
+ * Policies that seek the player side, rather than the commander-only `player-pursuit` policy,
+ * target from {commander, living FRONT companions}. Companions are offset from the commander every
+ * tick per the active formation stance (STANCE_CONFIG, applied in tick()'s companion position-sync),
+ * so distance is no longer always tied under the old raw-snap model. Ties (and near-ties) resolve
+ * in favor of the nearest FRONT companion to preserve vanguard-screen intent, rather than
+ * `nearestActor`'s generic id-lexical tiebreak, which would otherwise always choose "commander".
  */
 function playerSideTarget(run, enemy) {
   const fronts = livingFrontCompanions(run);
@@ -3277,12 +3289,22 @@ function resolveDash(run) {
   const direction = dashDirection(commander);
   if (!direction) return { accepted: false, reason: "DASH_INVALID_DIRECTION" };
   if (commander.dashCharges <= 0) return { accepted: false, reason: "DASH_NO_CHARGES" };
+  const from = { x: commander.x, y: commander.y };
+  // Terrain resolution is previewed against a detached commander shape before a dash may
+  // cancel a recovering verb or reset a combo. A blocked probe is a pure rejection.
+  const dashProbe = { ...commander };
+  moveOnTerrain(run, dashProbe, {
+    x: from.x + Math.trunc(direction.x * DIRECT_COMBAT.dash.distance / AIM_VECTOR_SCALE),
+    y: from.y + Math.trunc(direction.y * DIRECT_COMBAT.dash.distance / AIM_VECTOR_SCALE),
+  });
+  if (dashProbe.x === from.x && dashProbe.y === from.y) return { accepted: false, reason: "DASH_BLOCKED" };
   if (commander.verbState !== "IDLE") {
     emit(run, "VERB_CANCELLED", {
       entityId: commander.id,
       actionId: commander.actionId,
       verb: commander.verbState,
       reason: "DASH_CANCEL",
+      recoveryUntilTick: commander.verbRecoveryUntil,
     });
     commander.verbState = "IDLE";
     commander.verbTick = 0;
@@ -3290,16 +3312,13 @@ function resolveDash(run) {
   }
   resetCombo(run, "DASH_STARTED");
   const actionId = beginDirectVerb(run, "DASH", DIRECT_COMBAT.dash.recoveryTicks);
-  const from = { x: commander.x, y: commander.y };
-  moveOnTerrain(run, commander, {
-    x: commander.x + Math.trunc(direction.x * DIRECT_COMBAT.dash.distance / AIM_VECTOR_SCALE),
-    y: commander.y + Math.trunc(direction.y * DIRECT_COMBAT.dash.distance / AIM_VECTOR_SCALE),
-  });
-  if (commander.x === from.x && commander.y === from.y) {
-    commander.verbState = "IDLE";
-    commander.verbTick = 0;
-    return { accepted: false, reason: "DASH_BLOCKED" };
-  }
+  commander.x = dashProbe.x;
+  commander.y = dashProbe.y;
+  commander.elevation = dashProbe.elevation;
+  commander.facingX = dashProbe.facingX;
+  commander.facingY = dashProbe.facingY;
+  if (dashProbe.supportMeshId) commander.supportMeshId = dashProbe.supportMeshId;
+  else delete commander.supportMeshId;
   commander.dashCharges -= 1;
   if (!commander.dashRechargeTick) commander.dashRechargeTick = run.tick + DIRECT_COMBAT.dash.rechargeTicks;
   commander.dashIFrameUntil = run.tick + DIRECT_COMBAT.dash.iFrameTicks;
@@ -3316,6 +3335,7 @@ function resolveDash(run) {
     from,
     to: { x: commander.x, y: commander.y },
     charges: commander.dashCharges,
+    dashRechargeTick: commander.dashRechargeTick,
   });
   return { accepted: true, actionId };
 }
@@ -4126,7 +4146,7 @@ function getTargetPosition(run, enemy) {
     enemy.waypointIndex += 1;
   }
 
-  if (enemy.policyId === "player-pursuit") return playerSideTarget(run, enemy);
+  if (enemy.policyId === "player-pursuit") return run.commander;
   if (enemy.policyId === "resource-denial") {
     const echoes = run.pickups.filter((pickup) => pickup.kind === "echo").sort((a, b) => {
       const delta = distanceSquared(enemy, a) - distanceSquared(enemy, b);
@@ -4163,7 +4183,8 @@ function getTargetPosition(run, enemy) {
 }
 
 function pressureTarget(run, enemy) {
-  if (enemy.policyId === "player-pursuit" || enemy.policyId === "resource-denial") return playerSideTarget(run, enemy);
+  if (enemy.policyId === "player-pursuit") return run.commander;
+  if (enemy.policyId === "resource-denial") return playerSideTarget(run, enemy);
   if (enemy.policyId === "low-hp-focus" || enemy.policyId === "flank") {
     return distanceSquared(enemy, run.commander) < distanceSquared(enemy, run.gate) ? playerSideTarget(run, enemy) : run.gate;
   }
@@ -4179,7 +4200,7 @@ function refreshAttackerCommitment(run) {
       const target = pressureTarget(run, enemy);
       const attackRange = enemy.projectileRange > 0
         ? enemy.projectileRange
-        : enemy.radius + (target.radius || 0);
+        : contactRangeFor(enemy, target);
       const approachStep = Math.max(1, Math.trunc(enemy.speed / TICK_RATE));
       return distanceSquared(enemy, target) <= (attackRange + approachStep) ** 2;
     })
@@ -4250,7 +4271,7 @@ function moveEnemies(run) {
     const commitmentTarget = pressureTarget(run, enemy);
     const commitmentRange = enemy.projectileRange > 0
       ? enemy.projectileRange
-      : enemy.radius + (commitmentTarget.radius || 0);
+      : contactRangeFor(enemy, commitmentTarget);
     const approachStep = Math.max(1, Math.trunc(enemy.speed / TICK_RATE));
     const waitingForCommitment = !committedIds.has(enemy.id)
       && distanceSquared(enemy, commitmentTarget) <= (commitmentRange + approachStep) ** 2;
@@ -4308,34 +4329,8 @@ function moveEnemies(run) {
     const targetDistance = Math.sqrt(distanceSquared(enemy, target));
     const attackRange = enemy.projectileRange > 0
       ? enemy.projectileRange
-      : enemy.radius + (target.radius || 0);
+      : contactRangeFor(enemy, target);
     if (targetDistance <= attackRange && !committedIds.has(enemy.id)) return;
-    const pressureReleaseTick = run.objectives.phase === "echo-recovery"
-      ? run.objectives.gateDefense.completedAt + ECHO_RECOVERY_PRESSURE_GRACE_TICKS
-      : run.stage.gateTicks - (GATE_PRESSURE_RELEASE_LEAD[enemy.policyId] || 0);
-    const commanderPressureDelayed = run.commander.engaged
-      && target.id === "commander"
-      && (run.objectives.phase === "gate-defense" || run.objectives.phase === "echo-recovery")
-      && run.tick < pressureReleaseTick;
-    if (commanderPressureDelayed) {
-      const rangedReady = enemy.projectileRange > 0
-        && targetDistance <= enemy.projectileRange
-        && enemy.rangedCooldown <= 0;
-      const contactReady = targetDistance <= enemy.radius + (target.radius || 0)
-        && enemy.attackCooldown <= 0;
-      if (rangedReady || contactReady) {
-        if (rangedReady) enemy.rangedCooldown = enemy.projectileTicks;
-        else enemy.attackCooldown = enemy.attackTicks;
-        emit(run, "ENEMY_PRESSURE_DELAYED", {
-          entityId: enemy.id,
-          targetId: target.id,
-          policyId: enemy.policyId,
-          objectiveId: run.objectives.phase,
-          releaseTick: pressureReleaseTick,
-        });
-      }
-      return;
-    }
     if (enemy.class === "boss" && run.tick < run.bossSpawnedAt + BOSS_PRESSURE_GRACE_TICKS) return;
     if (enemy.projectileRange > 0 && targetDistance <= enemy.projectileRange && enemy.rangedCooldown <= 0) {
       const damage = target.id === "gate" ? Math.max(1, enemy.damage - Math.trunc(run.gateDamageReduction / 2)) : (target.id === "commander" ? applyIncomingDamage(run, enemy.damage) : enemy.damage);
@@ -4350,7 +4345,7 @@ function moveEnemies(run) {
     // three-phase shape, so a wide swing is announced before it lands and the AI response
     // patterns have something to answer. A body with no authored telegraph (telegraphTicks 0)
     // keeps the original immediate-contact cadence.
-    const contactRange = enemy.radius + (target.radius || 0);
+    const contactRange = contactRangeFor(enemy, target);
     const bossBody = enemy.class === "boss";
     if (enemy.attackWindup) {
       if (enemy.attackCooldown > 0) return;
@@ -4530,7 +4525,9 @@ function moveEnemies(run) {
     const target = pressureTarget(run, enemy);
     enemy.state = monsterState(run, enemy, {
       moved: enemy.movedThisTick === true,
-      contactRange: enemy.radius + (target.radius || 0),
+      contactRange: enemy.projectileRange > 0
+        ? enemy.projectileRange
+        : contactRangeFor(enemy, target),
       targetDistance: Math.sqrt(distanceSquared(enemy, target)),
     });
   }

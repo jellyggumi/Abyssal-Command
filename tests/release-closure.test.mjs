@@ -379,7 +379,7 @@ test("version scripts enforce the exact defense rules version", async () => {
       file === "app.js"
         ? 'import "./bootstrap.js";\n'
         : file === "abyssal-oneline.html"
-          ? '<!doctype html><html lang="ko"><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="styles.css"></head><body><nav aria-labelledby="mode-navigation-title"><h2 id="mode-navigation-title">모드 탐색</h2><a href="index.html">홈</a><a href="sprite-2-5d.html">스프라이트</a><a href="sealbound.html">실바운드</a></nav><main><h1>어비스 원라인</h1></main></body></html>'
+          ? '<!doctype html><html lang="ko"><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="styles.css"><style>.campaign-entry__reel--locked::before { background: #121722; }</style></head><body><nav aria-labelledby="mode-navigation-title"><h2 id="mode-navigation-title">모드 탐색</h2><a href="index.html">현재 전선 작전 로비 열기</a><a href="sprite-2-5d.html">스프라이트</a><a href="sealbound.html">실바운드</a></nav><main><h1>어비스 원라인</h1><section aria-labelledby="campaign-entry-title"><h2 id="campaign-entry-title">현재 전선</h2><p>Cinder Span</p><ul><li class="campaign-entry__reel--locked">잠긴 작전 기록</li><li class="campaign-entry__reel--locked">잠긴 작전 기록</li></ul></section></main></body></html>'
         : file === "abbysal-oneline.html"
           ? '<!doctype html><html lang="ko"><head><meta http-equiv="refresh" content="0; url=abyssal-oneline.html"><link rel="canonical" href="abyssal-oneline.html"></head><body><a href="abyssal-oneline.html">어비스 원라인으로 이동</a></body></html>'
           : "",

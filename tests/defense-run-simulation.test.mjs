@@ -39,6 +39,7 @@ import {
   STAGES,
   STAGE_BY_ID,
   STAGE_WAVE_DOCTRINE,
+  STAGE_FLOOR_BOUNDS,
   XP_GROWTH,
 } from "../defense-catalog.js";
 import { COMPANION_ROLES } from "../rpg-catalog.js";
@@ -244,6 +245,457 @@ test("enemy XP reward scales with stage difficulty so late-stage level-up cadenc
     lastEnemy.xp / ENEMIES[lastEnemy.class].xp > firstEnemy.xp / ENEMIES[firstEnemy.class].xp,
     `${lastStage.id} must apply a larger XP multiplier than ${firstStage.id}`,
   );
+});
+
+test("a low-hp-focus enemy telegraphs and damages the engaged commander at legal pressure range", () => {
+  const stageId = "echo-throne";
+  const seed = 17;
+  let run = advanceDefenseRun(createDefenseRun({ stageId, seed }), 1);
+  const spawned = getRunSnapshot(run);
+  const focusEnemy = spawned.enemies.find((enemy) => enemy.policyId === "low-hp-focus");
+  assert.ok(focusEnemy, "the deterministic opening must publish a non-pursuit low-hp-focus enemy");
+
+  run = thawRun(run);
+  run.enemies = run.enemies.filter((enemy) => enemy.id === focusEnemy.id);
+  run.commander.integrity = Math.trunc(run.commander.maxIntegrity / 2);
+  run.commander.x = run.gate.x - 10000;
+  run.commander.y = run.gate.y;
+  const positionedEnemy = run.enemies[0];
+  const contactRange = positionedEnemy.radius + run.commander.radius + 8;
+  positionedEnemy.x = run.commander.x - contactRange;
+  positionedEnemy.y = run.commander.y;
+  positionedEnemy.speed = 0;
+  positionedEnemy.waypointIndex = positionedEnemy.route.length;
+  positionedEnemy.attackCooldown = 0;
+  positionedEnemy.attackWindup = false;
+
+  run = advanceDefenseRun(queueInput(run, "MOVE", { octant: "IDLE" }), 1);
+  const engaged = getRunSnapshot(run);
+  const engagedEnemy = engaged.enemies.find((enemy) => enemy.id === focusEnemy.id);
+  assert.equal(engaged.commander.engaged, true, "the public player-input marker must keep commander pressure eligible");
+  assert.equal(engagedEnemy?.policyId, "low-hp-focus");
+  assert.ok(
+    engaged.commander.integrity / engaged.commander.maxIntegrity
+      < engaged.gate.integrity / engaged.gate.maxIntegrity,
+    "the lower-health commander must be the low-hp-focus policy's eligible target",
+  );
+  assert.ok(
+    squaredDistance(engagedEnemy, engaged.commander) <= contactRange ** 2
+      && squaredDistance(engagedEnemy, engaged.commander) < squaredDistance(engagedEnemy, engaged.gate),
+    "the isolated enemy must be in legal commander range and outside gate redirection pressure",
+  );
+  assert.ok(
+    squaredDistance(engaged.commander, engaged.gate)
+      > (engaged.gate.radius + COMMANDER.basicRange) ** 2,
+    "the commander must be outside the gate-guard interception envelope",
+  );
+
+  const integrityBeforeAttack = engaged.commander.integrity;
+  const events = [...engaged.events];
+  for (let step = 0; step < 240 && !isTerminalRun(run); step += 1) {
+    run = advanceDefenseRun(run, 1);
+    events.push(...getRunSnapshot(run).events);
+    if (events.some((event) => event.type === "COMMANDER_DAMAGED" && event.enemyId === focusEnemy.id)) break;
+  }
+
+  const delayedIndex = events.findIndex((event) =>
+    event.type === "ENEMY_PRESSURE_DELAYED" && event.entityId === focusEnemy.id);
+  const telegraphIndex = events.findIndex((event) =>
+    event.type === "ENEMY_ATTACK_TELEGRAPHED" && event.entityId === focusEnemy.id);
+  const attackIndex = events.findIndex((event) =>
+    event.type === "ENEMY_ATTACK" && event.entityId === focusEnemy.id);
+  const cancelIndex = events.findIndex((event) =>
+    event.type === "ENEMY_ATTACK_CANCELLED" && event.entityId === focusEnemy.id);
+  const damageIndex = events.findIndex((event) =>
+    event.type === "COMMANDER_DAMAGED" && event.enemyId === focusEnemy.id);
+  const telegraph = events[telegraphIndex];
+  const attack = events[attackIndex];
+  const pressured = getRunSnapshot(run);
+
+  assert.equal(delayedIndex, -1, "engaged commander pressure must not consume the eligible attack as a delay");
+  assert.ok(telegraph, "the eligible low-hp-focus attack must announce its telegraph");
+  assert.equal(telegraph.targetId, "commander");
+  assert.equal(telegraph.policyId, "low-hp-focus");
+  assert.ok(attackIndex > telegraphIndex, "the announced attack must follow its telegraph");
+  assert.equal(attack.targetId, "commander");
+  assert.equal(cancelIndex, -1, "the stationary in-range target must not cancel its announced attack");
+  assert.ok(damageIndex > attackIndex, "the active commander-targeted attack must resolve to commander damage");
+  assert.ok(pressured.commander.integrity < integrityBeforeAttack,
+    "the authoritative commander integrity must decrease after the announced strike");
+});
+
+test("a queued dash evades an engaged low-hp-focus strike while identical pressure damages without it", () => {
+  const seed = 17;
+  let run = advanceDefenseRun(createDefenseRun({ stageId: "echo-throne", seed }), 1);
+  const spawned = getRunSnapshot(run);
+  const focusEnemy = spawned.enemies.find((enemy) => enemy.policyId === "low-hp-focus");
+  assert.ok(focusEnemy, "the deterministic opening must publish a non-pursuit low-hp-focus enemy");
+
+  run = thawRun(run);
+  run.enemies = run.enemies.filter((enemy) => enemy.id === focusEnemy.id);
+  run.companions = [];
+  run.projectiles = [];
+  run.commander.integrity = Math.trunc(run.commander.maxIntegrity / 2);
+  run.commander.x = 1800;
+  run.commander.y = 6000;
+  const positionedEnemy = run.enemies[0];
+  const contactRange = positionedEnemy.radius + run.commander.radius + 8;
+  positionedEnemy.x = run.commander.x - contactRange;
+  positionedEnemy.y = run.commander.y;
+  positionedEnemy.speed = 0;
+  positionedEnemy.waypointIndex = positionedEnemy.route.length;
+  positionedEnemy.attackCooldown = 0;
+  positionedEnemy.attackWindup = false;
+
+  run = advanceDefenseRun(queueInput(run, "MOVE", { octant: "W" }), 1);
+  const telegraphed = getRunSnapshot(run);
+  const telegraph = telegraphed.events.find((event) =>
+    event.type === "ENEMY_ATTACK_TELEGRAPHED" && event.entityId === focusEnemy.id);
+  assert.equal(telegraphed.commander.engaged, true);
+  assert.equal(telegraph?.targetId, "commander");
+  assert.equal(telegraph?.policyId, "low-hp-focus");
+  assert.ok(
+    squaredDistance(telegraphed.commander, telegraphed.gate)
+      > (telegraphed.gate.radius + COMMANDER.basicRange) ** 2,
+    "the isolated pressure fixture must remain outside gate interception",
+  );
+
+  run = advanceDefenseRun(queueInput(run, "MOVE", { octant: "IDLE" }), 1);
+  while (getRunSnapshot(run).enemies[0].attackCooldown > 1) run = advanceDefenseRun(run, 1);
+  const strikeReady = getRunSnapshot(run);
+  const strikeReadyEnemy = strikeReady.enemies[0];
+  assert.equal(strikeReadyEnemy.attackWindup, true);
+  assert.equal(strikeReadyEnemy.attackCooldown, 1,
+    "both branches must begin one simulation tick before the announced strike resolves");
+
+  const control = getRunSnapshot(advanceDefenseRun(thawRun(run), 1));
+  const dodged = getRunSnapshot(advanceDefenseRun(queueInput(thawRun(run), "DASH"), 1));
+  const controlAttack = control.events.find((event) =>
+    event.type === "ENEMY_ATTACK" && event.entityId === focusEnemy.id);
+  const controlDamage = control.events.find((event) =>
+    event.type === "COMMANDER_DAMAGED" && event.enemyId === focusEnemy.id);
+  const dashStart = dodged.events.find((event) =>
+    event.type === "VERB_STARTED" && event.entityId === "commander" && event.verb === "DASH");
+  const iframe = dodged.events.find((event) => event.type === "DASH_IFRAME_START");
+  const dodgedAttack = dodged.events.find((event) =>
+    event.type === "ENEMY_ATTACK" && event.entityId === focusEnemy.id);
+  const evaded = dodged.events.find((event) =>
+    event.type === "DASH_EVADED" && event.sourceId === focusEnemy.id);
+
+  assert.equal(controlAttack?.targetId, "commander");
+  assert.ok(controlDamage, "the no-dodge control must take the same announced strike");
+  assert.ok(control.commander.integrity < strikeReady.commander.integrity);
+  assert.equal(dodgedAttack?.targetId, "commander",
+    "the dash must not escape by cancelling the enemy's active commander strike");
+  assert.equal(dodged.events.some((event) =>
+    event.type === "COMMANDER_DAMAGED" && event.enemyId === focusEnemy.id), false);
+  assert.equal(dodged.commander.integrity, strikeReady.commander.integrity,
+    "the queued dash's active i-frame must preserve authoritative commander integrity");
+  assert.ok(dashStart, "the dodge must enter the real direct dash verb");
+  assert.equal(iframe?.actionId, dashStart.actionId);
+  assert.equal(evaded?.actionId, dashStart.actionId);
+  assert.equal(evaded?.sourceType, "enemy");
+  assert.ok(dodged.commander.dashIFrameUntil >= dodged.tick,
+    "the public commander state must show the active i-frame on the evaded-strike tick");
+  assert.equal(dodged.commander.dashCharges, strikeReady.commander.dashCharges - 1);
+});
+
+test("a seeded Cinder opening pursuit telegraphs then damages the engaged commander before gate release", () => {
+  const seed = 17;
+  const spawned = advanceDefenseRun(createDefenseRun({ stageId: "cinder-span", seed }), 1);
+  const spawnedSnapshot = getRunSnapshot(spawned);
+  const openingEnemy = spawnedSnapshot.enemies.find(
+    (enemy) => enemy.waveIndex === 0 && enemy.policyId === "player-pursuit",
+  );
+  assert.ok(openingEnemy, "the seeded opening wave must publish a commander-pursuit enemy");
+  assert.equal(spawnedSnapshot.objectives.phase, "gate-defense");
+
+  let run = structuredClone(spawned);
+  run.commander.integrity = run.commander.maxIntegrity;
+  run.commander.x = run.gate.x + 2000;
+  run.commander.y = run.gate.y;
+  const positionedEnemy = run.enemies.find((enemy) => enemy.id === openingEnemy.id);
+  positionedEnemy.x = run.commander.x - positionedEnemy.radius - run.commander.radius + 1;
+  positionedEnemy.y = run.commander.y;
+  positionedEnemy.waypointIndex = positionedEnemy.route.length;
+  positionedEnemy.attackCooldown = 0;
+
+  run = advanceDefenseRun(queueInput(run, "MOVE", { octant: "IDLE" }), 1);
+  assert.equal(getRunSnapshot(run).commander.engaged, true,
+    "the player-input marker must be set so engagement cannot suppress opening pursuit pressure");
+  const integrityBeforeAttack = getRunSnapshot(run).commander.integrity;
+  const events = [...getRunSnapshot(run).events];
+  for (let step = 0; step < 240 && !isTerminalRun(run); step += 1) {
+    run = advanceDefenseRun(run, 1);
+    events.push(...getRunSnapshot(run).events);
+    if (events.some((event) => event.type === "COMMANDER_DAMAGED" && event.enemyId === openingEnemy.id)) break;
+  }
+
+  const telegraphIndex = events.findIndex((event) =>
+    event.type === "ENEMY_ATTACK_TELEGRAPHED" && event.entityId === openingEnemy.id);
+  const damageIndex = events.findIndex((event) =>
+    event.type === "COMMANDER_DAMAGED" && event.enemyId === openingEnemy.id);
+  const telegraph = events[telegraphIndex];
+  const damage = events[damageIndex];
+  const pressured = getRunSnapshot(run);
+
+  assert.ok(telegraph, "the opening commander-pursuit attack must be announced");
+  assert.equal(telegraph.targetId, "commander");
+  assert.equal(telegraph.policyId, "player-pursuit");
+  assert.equal(telegraph.phase, "telegraph");
+  assert.ok(telegraph.windupTicks > 0, "the opening tell must retain an authored windup");
+  assert.ok(telegraph.tick < STAGE_BY_ID["cinder-span"].gateTicks,
+    "the opening tell must not wait for the gate-defense late-release window");
+  assert.ok(damage, "the telegraphed opening attack must resolve against the commander");
+  assert.ok(damageIndex > telegraphIndex, "the commander damage must follow its telegraph in the event stream");
+  assert.ok(damage.damage > 0);
+  assert.ok(pressured.commander.integrity < integrityBeforeAttack,
+    "the authoritative commander integrity must decrease after the announced strike");
+});
+
+test("a separated Cinder pursuer resolves contact-backoff attacks but not an outside body", () => {
+  const acceptedBackoff = 8;
+  let run = advanceDefenseRun(createDefenseRun({ stageId: "cinder-span", seed: 17 }), 1);
+  const spawned = getRunSnapshot(run);
+  const openingEnemy = spawned.enemies.find(
+    (enemy) => enemy.waveIndex === 0 && enemy.policyId === "player-pursuit",
+  );
+  assert.ok(openingEnemy, "the seeded opening wave must publish a commander-pursuit enemy");
+
+  run = thawRun(run);
+  run.enemies = run.enemies.filter((enemy) => enemy.id === openingEnemy.id);
+  run.commander.integrity = run.commander.maxIntegrity;
+  run.commander.x = run.gate.x - 2000;
+  run.commander.y = run.gate.y;
+  const pursuer = run.enemies[0];
+  const bodyContact = pursuer.radius + run.commander.radius;
+  pursuer.x = run.commander.x - bodyContact + 1;
+  pursuer.y = run.commander.y;
+  pursuer.speed = 0;
+  pursuer.waypointIndex = pursuer.route.length;
+  pursuer.attackCooldown = 999;
+
+  run = advanceDefenseRun(queueInput(run, "MOVE", { octant: "IDLE" }), 1);
+  const separated = getRunSnapshot(run);
+  const separatedPursuer = separated.enemies.find((enemy) => enemy.id === openingEnemy.id);
+  assert.ok(separatedPursuer, "the separated pursuer must remain observable");
+  assert.ok(
+    squaredDistance(separatedPursuer, separated.commander) > bodyContact ** 2,
+    "body separation must leave the pursuer visibly outside the commander's physical footprint",
+  );
+
+  const positionedRun = (backoff) => {
+    const configured = thawRun(run);
+    const enemy = configured.enemies.find((entry) => entry.id === openingEnemy.id);
+    enemy.x = configured.commander.x - bodyContact - backoff;
+    enemy.y = configured.commander.y;
+    enemy.speed = 0;
+    enemy.attackCooldown = 0;
+    enemy.attackWindup = false;
+    return configured;
+  };
+
+  let within = positionedRun(acceptedBackoff);
+  const withinBefore = getRunSnapshot(within);
+  const withinPursuer = withinBefore.enemies.find((enemy) => enemy.id === openingEnemy.id);
+  assert.ok(
+    squaredDistance(withinPursuer, withinBefore.commander) > bodyContact ** 2,
+    "the backoff fixture must remain physically non-overlapping",
+  );
+  const withinEvents = [];
+  for (let step = 0; step < 240 && !isTerminalRun(within); step += 1) {
+    within = advanceDefenseRun(within, 1);
+    withinEvents.push(...getRunSnapshot(within).events);
+    if (withinEvents.some((event) => event.type === "COMMANDER_DAMAGED" && event.enemyId === openingEnemy.id)) break;
+  }
+  const telegraphIndex = withinEvents.findIndex((event) =>
+    event.type === "ENEMY_ATTACK_TELEGRAPHED" && event.entityId === openingEnemy.id);
+  const hitIndex = withinEvents.findIndex((event) =>
+    event.type === "COMMANDER_DAMAGED" && event.enemyId === openingEnemy.id);
+  assert.ok(telegraphIndex >= 0, "a separated pursuer inside the contact backoff must telegraph");
+  assert.ok(hitIndex > telegraphIndex, "the announced backoff attack must resolve against the commander");
+  assert.equal(
+    withinEvents.filter((event) => event.type === "COMMANDER_DAMAGED" && event.enemyId === openingEnemy.id).length,
+    1,
+    "the fixture must observe one resolved enemy hit",
+  );
+
+  let outside = positionedRun(acceptedBackoff + 1);
+  const outsideBefore = getRunSnapshot(outside);
+  const outsidePursuer = outsideBefore.enemies.find((enemy) => enemy.id === openingEnemy.id);
+  assert.ok(
+    squaredDistance(outsidePursuer, outsideBefore.commander) > (bodyContact + acceptedBackoff) ** 2,
+    "the outside fixture must sit beyond the accepted contact backoff",
+  );
+  const outsideIntegrity = outsideBefore.commander.integrity;
+  const outsideEvents = [];
+  for (let step = 0; step < 240 && !isTerminalRun(outside); step += 1) {
+    outside = advanceDefenseRun(outside, 1);
+    outsideEvents.push(...getRunSnapshot(outside).events);
+  }
+  assert.equal(
+    outsideEvents.some((event) => event.type === "ENEMY_ATTACK_TELEGRAPHED" && event.entityId === openingEnemy.id),
+    false,
+    "a pursuer outside the contact backoff must not announce an attack",
+  );
+  assert.equal(
+    outsideEvents.some((event) => event.type === "COMMANDER_DAMAGED" && event.enemyId === openingEnemy.id),
+    false,
+    "a pursuer outside the contact backoff must not resolve a hit",
+  );
+  assert.equal(getRunSnapshot(outside).commander.integrity, outsideIntegrity);
+});
+
+test("a seeded Cinder wave-0 player pursuit completes its route and recovers gate-anchor-blocked commander pressure", () => {
+  const stageId = "cinder-span";
+  const seed = 1;
+  const bounds = STAGE_FLOOR_BOUNDS[stageId];
+  const pressureDeadlineTick = 720;
+  let run = advanceDefenseRun(createDefenseRun({ stageId, seed }), 1);
+  const spawned = getRunSnapshot(run);
+  const openingEnemy = spawned.enemies.find(
+    (enemy) => enemy.waveIndex === 0 && enemy.policyId === "player-pursuit",
+  );
+
+  assert.ok(openingEnemy, "the seeded opening wave must publish a commander-pursuit enemy");
+  assert.equal(openingEnemy.policyTarget, "commander");
+  assert.ok(openingEnemy.route.length > 0, "the natural wave-0 pursuer must retain its authored route");
+
+  run = thawRun(run);
+  run.commander.x = 21524;
+  run.commander.y = 5886;
+  run = advanceDefenseRun(queueInput(run, "MOVE", { octant: "IDLE" }), 1);
+  const anchored = getRunSnapshot(run);
+  assert.ok(
+    squaredDistance(anchored.commander, anchored.gate) <= anchored.gate.radius ** 2,
+    "the commander fixture must sit within the fixed gate anchor's collision radius",
+  );
+  assert.equal(anchored.commander.engaged, true,
+    "the public player-input marker must keep commander pursuit eligible");
+
+  const routeCompleteById = new Map();
+  const telegraphById = new Map();
+  let recovery = null;
+  for (let step = 0; getRunSnapshot(run).tick < pressureDeadlineTick && !isTerminalRun(run); step += 1) {
+    run = advanceDefenseRun(run, 1);
+    const snapshot = getRunSnapshot(run);
+    const pursuers = snapshot.enemies.filter(
+      (enemy) => enemy.waveIndex === 0 && enemy.policyId === "player-pursuit",
+    );
+    pursuers.forEach((enemy) => {
+      assert.equal(enemy.policyTarget, "commander", "each opening pursuer must retain commander ownership");
+      assert.ok(enemy.route.length > 0, "each opening pursuer must retain its authored route");
+      assert.ok(
+        enemy.x >= bounds.minX + enemy.radius
+          && enemy.x <= bounds.maxX - enemy.radius
+          && enemy.y >= bounds.minY + enemy.radius
+          && enemy.y <= bounds.maxY - enemy.radius
+          && Number.isInteger(enemy.elevation),
+        "gate-anchor recovery must keep each pursuer within Cinder's legal floor bounds at an integer elevation",
+      );
+      if (!routeCompleteById.has(enemy.id) && enemy.waypointIndex === enemy.route.length) {
+        routeCompleteById.set(enemy.id, {
+          tick: snapshot.tick,
+          distanceSquared: squaredDistance(enemy, snapshot.commander),
+        });
+      }
+    });
+
+    snapshot.events.forEach((event) => {
+      if (!routeCompleteById.has(event.entityId)
+          || event.targetId !== "commander"
+          || event.policyId !== "player-pursuit") return;
+      if (event.type === "ENEMY_ATTACK_TELEGRAPHED") telegraphById.set(event.entityId, event);
+      if (event.type !== "ENEMY_ATTACK" || !telegraphById.has(event.entityId) || recovery) return;
+      const enemy = snapshot.enemies.find((entry) => entry.id === event.entityId);
+      assert.ok(enemy, "the recovered pursuer must remain observable when its attack resolves");
+      recovery = {
+        enemyId: enemy.id,
+        telegraph: telegraphById.get(enemy.id),
+        attack: event,
+        distanceSquared: squaredDistance(enemy, snapshot.commander),
+      };
+    });
+    if (recovery) break;
+  }
+
+  assert.ok(routeCompleteById.size > 0, `an authored route must complete before tick ${pressureDeadlineTick}`);
+  assert.ok(
+    recovery,
+    `at least one route-complete pursuer must regain commander pressure by tick ${pressureDeadlineTick}`,
+  );
+  assert.ok(
+    recovery.attack.tick > recovery.telegraph.tick,
+    "the recovered attack must follow its commander-pressure telegraph",
+  );
+  assert.ok(
+    recovery.attack.tick <= pressureDeadlineTick,
+    "the recovered attack must beat the measured gate-anchor collision deadline",
+  );
+  assert.ok(
+    recovery.distanceSquared < routeCompleteById.get(recovery.enemyId).distanceSquared,
+    "the route-complete pursuer must make net terrain-legal progress past the gate-anchor collision toward the commander",
+  );
+});
+
+test("a route-complete Cinder player pursuit outside the gate envelope retains fixed-gate clearance", () => {
+  const stageId = "cinder-span";
+  let run = advanceDefenseRun(createDefenseRun({ stageId, seed: 1 }), 1);
+  const spawned = getRunSnapshot(run);
+  const openingEnemy = spawned.enemies.find(
+    (enemy) => enemy.waveIndex === 0 && enemy.policyId === "player-pursuit",
+  );
+
+  assert.ok(openingEnemy, "the seeded opening wave must publish a commander-pursuit enemy");
+  assert.ok(openingEnemy.route.length > 0, "the fixture requires an authored player-pursuit route");
+
+  run = thawRun(run);
+  const pursuer = run.enemies.find((enemy) => enemy.id === openingEnemy.id);
+  const gateClearance = spawned.gate.radius + openingEnemy.radius;
+  run.commander.x = run.gate.x - run.gate.radius - run.commander.radius - 200;
+  run.commander.y = run.gate.y;
+  pursuer.x = run.gate.x;
+  pursuer.y = run.gate.y;
+  pursuer.waypointIndex = pursuer.route.length;
+  assert.equal(pursuer.policyId, "player-pursuit", "the configured enemy must retain player-pursuit policy");
+  assert.ok(
+    pursuer.waypointIndex >= pursuer.route.length,
+    "the configured player-pursuit enemy must be route-complete",
+  );
+  const configured = getRunSnapshot(run);
+  assert.ok(
+    squaredDistance(configured.commander, configured.gate)
+      > (configured.gate.radius + configured.commander.radius) ** 2,
+    "the commander fixture must be outside the gate envelope",
+  );
+
+  run = advanceDefenseRun(queueInput(run, "MOVE", { octant: "IDLE" }), 1);
+  const advanced = getRunSnapshot(run);
+  const advancedPursuer = advanced.enemies.find((enemy) => enemy.id === openingEnemy.id);
+
+  assert.ok(advancedPursuer, "the configured player-pursuit enemy must remain observable after one tick");
+  assert.ok(
+    squaredDistance(advancedPursuer, advanced.gate) >= gateClearance ** 2,
+    "a non-exempt route-complete pursuer must be separated from the fixed gate anchor",
+  );
+});
+
+test("Echo's declared opening low-hp focus reaches every spawned wave-0 enemy across seeds", () => {
+  const stageId = "echo-throne";
+  const declaredOpeningPolicy = STAGE_WAVE_DOCTRINE[stageId].openingPolicyId;
+  const seeds = [17, 71];
+  assert.equal(declaredOpeningPolicy, "low-hp-focus",
+    `${stageId} must declare low-hp-focus as its opening policy`);
+
+  for (const seed of seeds) {
+    const spawned = advanceDefenseRun(createDefenseRun({ stageId, seed }), 1);
+    const openingEnemies = getRunSnapshot(spawned).enemies.filter((enemy) => enemy.waveIndex === 0);
+    assert.ok(openingEnemies.length > 0, `${stageId} seed ${seed} must spawn its opening wave`);
+    assert.ok(
+      openingEnemies.every((enemy) => enemy.policyId === declaredOpeningPolicy),
+      `${stageId} seed ${seed} wave-0 enemies must receive declared opening policy ${declaredOpeningPolicy}; got ${openingEnemies.map((enemy) => enemy.policyId).join(", ")}`,
+    );
+  }
 });
 
 test("every stage replays with seeded enemy-composition variety inside its clear budget", () => {
@@ -1425,20 +1877,16 @@ const sha256 = (value) => crypto.createHash("sha256").update(value).digest("hex"
  * ran to completion, advanced dropRng, absent buffs/buffStats at SNAPSHOT_VERSION 7.
  */
 /*
- * REBASELINED 2026-08-02, final direct-combat pacing: these adversarial tapes retain their
- * established seeds and their stationary input program. `driveAdversarialTape` queues a light
- * attack only when one is available; it does not introduce movement, because movement changes the
- * encounter and kill cadence the tapes are meant to hold constant.
- *
- * Every fixture below completes at its stated tick with zero DROP_SPAWNED/BUFF_APPLIED events,
- * advances dropRng, and has absent `buffs`/`buffStats` at SNAPSHOT_VERSION 7; each SHA is
- * `sha256(getRunDigest(run))` from that remeasured direct-combat run.
+ * REBASELINED 2026-08-03, echo-throne/12/500 bare only: removal of the
+ * engagement-only commander-pressure deferral changed this single `low-hp-focus`
+ * tape. Preconditions remain zero DROP_SPAWNED, zero BUFF_APPLIED, completed
+ * window, advanced dropRng, and SNAPSHOT_VERSION 7.
  */
 const PRE_FEATURE_DIGEST_SHA256 = Object.freeze([
-  { label: "cinder-span/71/500 +ember-cohort", options: { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] }, steps: 500, sha: "6869c99a3add675bdbbab50574d3ad7badaddcd43d413ce8504a6ed9b66722ac" },
-  { label: "cinder-span/71/500 bare", options: { stageId: "cinder-span", seed: 71, companionLoadout: [] }, steps: 500, sha: "619ab30478623a13550d3ac66a8f22f762f53909d67af2f41af2038dea925ee6" },
-  { label: "abyss-chancel/71/1000 bare", options: { stageId: "abyss-chancel", seed: 71, companionLoadout: [] }, steps: 1000, sha: "5f908f3123abd43954f9498ee318698dd0e882d144aa0d16895a5e4a005b6c37" },
-  { label: "echo-throne/12/500 bare", options: { stageId: "echo-throne", seed: 12, companionLoadout: [] }, steps: 500, sha: "eaf3eecf78742e24055c99588a44e249d526beb5fa40a7e2179d4b71d2628a90" },
+  { label: "cinder-span/71/500 +ember-cohort", options: { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] }, steps: 500, sha: "f50f0817b493f018f60ff2d890c56544e1b5b492fe0f5daa8878e5a99afe6c58" },
+  { label: "cinder-span/71/500 bare", options: { stageId: "cinder-span", seed: 71, companionLoadout: [] }, steps: 500, sha: "5462eec2f933c5e2674382e795661d575b6f4940ed5a15deeabe4cee7d35f587" },
+  { label: "abyss-chancel/71/1000 bare", options: { stageId: "abyss-chancel", seed: 71, companionLoadout: [] }, steps: 1000, sha: "4665856b346c971a710afff046a191091a9992733070558cb262827d5ded8110" },
+  { label: "echo-throne/12/500 bare", options: { stageId: "echo-throne", seed: 12, companionLoadout: [] }, steps: 500, sha: "63439954c8a1f085443b8d06af36225e4ea6ebb8213f47826a9fc7d05ec87337" },
 ]);
 
 // ---------------------------------------------------------------------------------------------
@@ -2115,6 +2563,97 @@ test("legacy light, heavy, and directional dash inputs resolve their authored ve
     { x: snapshot.commander.x, y: snapshot.commander.y },
     { x: beforeDash.x, y: beforeDash.y },
     "a directional dash must move the commander",
+  );
+});
+
+test("direct lifecycle events retain tick, recovery, dash-charge, and recharge state for catch-up telemetry", () => {
+  let run = directCombatFixture(411);
+  run = advanceDefenseRun(queueInput(run, "ATTACK_LIGHT"), 1);
+  const attacking = getRunSnapshot(run);
+  const lightStart = attacking.events.find((event) => event.type === "VERB_STARTED" && event.verb === "LIGHT_1");
+
+  assert.ok(lightStart, "the fixture must start a direct light verb");
+  assert.ok(Number.isInteger(lightStart.tick), "each lifecycle event must retain its own simulation tick");
+  assert.equal(lightStart.recoveryUntilTick, attacking.commander.verbRecoveryUntil,
+    "the started verb must publish the recovery deadline that catch-up telemetry needs");
+
+  run = advanceDefenseRun(queueInput(run, "DASH"), 1);
+  const dashed = getRunSnapshot(run);
+  const cancelled = dashed.events.find((event) => event.type === "VERB_CANCELLED");
+  const dashStart = dashed.events.find((event) => event.type === "VERB_STARTED" && event.verb === "DASH");
+  const iframe = dashed.events.find((event) => event.type === "DASH_IFRAME_START");
+
+  assert.ok(cancelled, "a dash during recovery must publish the cancelled verb");
+  assert.ok(Number.isInteger(cancelled.tick), "the cancellation must retain its own simulation tick");
+  assert.equal(cancelled.actionId, lightStart.actionId);
+  assert.equal(cancelled.recoveryUntilTick, lightStart.recoveryUntilTick,
+    "dash cancellation must retain the cancelled verb's original recovery deadline");
+  assert.ok(dashStart, "the accepted dash must publish its replacement verb");
+  assert.ok(Number.isInteger(dashStart.tick), "the dash verb must retain its own simulation tick");
+  assert.equal(dashStart.recoveryUntilTick, dashed.commander.verbRecoveryUntil);
+  assert.ok(iframe, "the accepted dash must publish its iframe start");
+  assert.ok(Number.isInteger(iframe.tick), "the iframe event must retain its own simulation tick");
+  assert.equal(iframe.actionId, dashStart.actionId);
+  assert.equal(iframe.charges, dashed.commander.dashCharges,
+    "the iframe must expose charges after the dash spent one");
+  assert.equal(iframe.dashRechargeTick, dashed.commander.dashRechargeTick,
+    "the iframe must expose the recharge deadline established by that spend");
+  assert.equal(iframe.charges, DIRECT_COMBAT.dash.charges - 1);
+  assert.ok(iframe.dashRechargeTick > iframe.tick);
+});
+
+test("a terrain-blocked dash preserves an active direct verb and its recovery state", () => {
+  const bounds = STAGE_FLOOR_BOUNDS["cinder-span"];
+  let run = advanceDefenseRun(queueInput(directCombatFixture(413), "ATTACK_LIGHT"), 1);
+  assert.notEqual(getRunSnapshot(run).commander.verbState, "IDLE", "the fixture must start a recovering direct verb");
+
+  run = thawRun(run);
+  run.commander.x = bounds.minX + run.commander.radius;
+  run = advanceDefenseRun(queueInput(run, "MOVE", "W"), 1);
+  const beforeDash = getRunSnapshot(run).commander;
+  assert.notEqual(beforeDash.verbState, "IDLE", "the fixture must have an active recovering verb before the blocked dash");
+
+  run = advanceDefenseRun(queueInput(run, "DASH"), 1);
+  const blocked = getRunSnapshot(run);
+  const rejection = blocked.events.find((event) => event.type === "INPUT_REJECTED");
+
+  assert.equal(rejection?.reason, "DASH_BLOCKED", "an edge-clamped dash must reject through the public direct-input event");
+  assert.equal(blocked.events.some((event) => event.type === "VERB_CANCELLED"), false, "a blocked dash must not cancel the recovering verb");
+  assert.equal(blocked.events.some((event) => event.type === "COMBO_DROPPED"), false, "a blocked dash must not drop the active combo");
+  assert.equal(blocked.events.some((event) => event.type === "VERB_STARTED" && event.verb === "DASH"), false, "a blocked dash must not start a replacement verb");
+  assert.equal(blocked.events.some((event) => event.type === "DASH_IFRAME_START"), false, "a blocked dash must not spend an iframe");
+  assert.deepEqual(
+    {
+      actionId: blocked.commander.actionId,
+      comboStep: blocked.commander.comboStep,
+      comboWindowUntil: blocked.commander.comboWindowUntil,
+      dashCharges: blocked.commander.dashCharges,
+      elevation: blocked.commander.elevation,
+      dashIFrameUntil: blocked.commander.dashIFrameUntil,
+      dashRechargeTick: blocked.commander.dashRechargeTick,
+      facingX: blocked.commander.facingX,
+      facingY: blocked.commander.facingY,
+      verbRecoveryUntil: blocked.commander.verbRecoveryUntil,
+      verbState: blocked.commander.verbState,
+      x: blocked.commander.x,
+      y: blocked.commander.y,
+    },
+    {
+      actionId: beforeDash.actionId,
+      comboStep: beforeDash.comboStep,
+      comboWindowUntil: beforeDash.comboWindowUntil,
+      dashCharges: beforeDash.dashCharges,
+      elevation: beforeDash.elevation,
+      dashIFrameUntil: beforeDash.dashIFrameUntil,
+      dashRechargeTick: beforeDash.dashRechargeTick,
+      facingX: beforeDash.facingX,
+      facingY: beforeDash.facingY,
+      verbRecoveryUntil: beforeDash.verbRecoveryUntil,
+      verbState: beforeDash.verbState,
+      x: beforeDash.x,
+      y: beforeDash.y,
+    },
+    "a blocked dash must leave direct action, combo, recovery, charge, position, elevation, and facing state byte-identically unchanged",
   );
 });
 

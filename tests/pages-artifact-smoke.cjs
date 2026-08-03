@@ -147,6 +147,50 @@ function main() {
     !openingTags.some(([tag]) => /\son[\w:-]*/i.test(tag.replace(/"[^"]*"|'[^']*'/g, ""))),
     "abyssal-oneline.html must not include inline event handlers",
   );
+  const campaignCtas = openingTags.filter(([tag, name]) => name.toLowerCase() === "a"
+    && /\bhref\s*=\s*(?:"index\.html"|'index\.html'|index\.html(?=[\s/>]))/i.test(tag));
+  assert.equal(
+    campaignCtas.length,
+    1,
+    "abyssal-oneline.html must have exactly one campaign CTA to index.html",
+  );
+  assert.match(
+    markup,
+    /<a\b[^>]*\bhref\s*=\s*(?:"index\.html"|'index\.html'|index\.html(?=[\s/>]))[^>]*>[\s\S]*?현재 전선 작전 로비 열기[\s\S]*?<\/a>/i,
+    "abyssal-oneline.html must label the campaign CTA as opening the current-front lobby",
+  );
+  const lockedReels = [...markup.matchAll(
+    /<li\b[^>]*\bcampaign-entry__reel--locked\b[^>]*>[\s\S]*?<\/li>/gi,
+  )];
+  assert.equal(lockedReels.length, 2, "abyssal-oneline.html must keep exactly two locked campaign reels");
+  assert.ok(
+    lockedReels.every(([reel]) => !/<img\b/i.test(reel)),
+    "locked campaign reels must not expose stage thumbnails",
+  );
+  assert.match(
+    oneline,
+    /\.campaign-entry__reel--locked::before\s*\{[^}]*\bbackground\s*:/i,
+    "locked campaign reels must have a spoiler-safe background treatment",
+  );
+  assert.doesNotMatch(
+    oneline,
+    /\.campaign-entry__reel--(?:abyss|throne)\b/i,
+    "abyssal-oneline.html must not retain deprecated future-stage reel styles",
+  );
+  assert.match(oneline, /Cinder Span/i, "abyssal-oneline.html must name the first campaign stage");
+  assert.doesNotMatch(oneline, /Abyss Chancel/i, "abyssal-oneline.html must not reveal the second stage");
+  assert.doesNotMatch(oneline, /Echo Throne/i, "abyssal-oneline.html must not reveal the third stage");
+  assert.doesNotMatch(
+    oneline,
+    /assets\/images\/battle\/ui\/stages\/abyss-chancel\.png/i,
+    "abyssal-oneline.html must not load the second-stage thumbnail",
+  );
+  assert.doesNotMatch(
+    oneline,
+    /assets\/images\/battle\/ui\/stages\/echo-throne-steps\.png/i,
+    "abyssal-oneline.html must not load the third-stage thumbnail",
+  );
+
   const legacyOneline = readFileSync(resolve(root, "abbysal-oneline.html"), "utf8");
   assert.match(
     legacyOneline,
