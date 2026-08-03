@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "protocol": "angular-medoid-v1",
+  "quaternionOrder": "[x,y,z,w]",
+  "angleToleranceDeg": 0.1,
+  "vectors": [
+    {
+      "id": "V1",
+      "description": "constant identity track",
+      "times": [0, 0.5, 1],
+      "quaternions": [[0, 0, 0, 1], [0, 0, 0, 1], [0, 0, 0, 1]],
+      "expected": {"peakDeg": 0, "stepDeg": 0, "medoidIndex": 0}
+    },
+    {
+      "id": "V2",
+      "description": "symmetric quarter-turn progression",
+      "times": [0, 1, 2],
+      "quaternions": [[0, 0, 0, 1], [0, 0, 0.7071067811865476, 0.7071067811865476], [0, 0, 1, 0]],
+      "expected": {"peakDeg": 90, "stepDeg": 90, "medoidIndex": 1}
+    },
+    {
+      "id": "V3",
+      "description": "antipodal unit-quaternion representation is identical rotation",
+      "times": [0, 1],
+      "quaternions": [[0, 0, 0, 1], [0, 0, 0, -1]],
+      "expected": {"peakDeg": 0, "stepDeg": 0, "medoidIndex": 0}
+    },
+    {
+      "id": "V4",
+      "description": "non-uniform timestamps do not alter frozen adjacent-sample metric",
+      "times": [0, 0.125, 3],
+      "quaternions": [[0, 0, 0, 1], [0, 0.3826834323650898, 0, 0.9238795325112867], [0, 0.7071067811865476, 0, 0.7071067811865476]],
+      "expected": {"peakDeg": 45, "stepDeg": 45, "medoidIndex": 1}
+    },
+    {
+      "id": "V5",
+      "description": "equal medoid totals select earliest frame; a 200-degree adjacent rotation folds to 160 degrees via abs(dot)",
+      "times": [0, 1],
+      "quaternions": [[0, 0, 0, 1], [0.984807753012208, 0, 0, -0.1736481776669303]],
+      "expected": {"peakDeg": 160, "stepDeg": 160, "medoidIndex": 0}
+    }
+  ]
+}

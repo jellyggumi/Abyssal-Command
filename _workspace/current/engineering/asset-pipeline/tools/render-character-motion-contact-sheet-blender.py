@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -22,9 +23,14 @@ def script_args() -> list[str]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Render character motion key poses")
-    parser.add_argument("--model", required=True)
-    parser.add_argument("--asset-id", required=True)
-    parser.add_argument("--out-dir", required=True)
+    parser.add_argument("--model")
+    parser.add_argument("--asset-id")
+    parser.add_argument("--out-dir")
+    parser.add_argument("--pose-pairs", type=Path)
+    parser.add_argument("--target-rig", type=Path)
+    parser.add_argument("--actors-root", type=Path)
+    parser.add_argument("--worst-n", type=int, default=5)
+    parser.add_argument("--out", type=Path)
     return parser.parse_args(script_args())
 
 
@@ -42,6 +48,54 @@ def reset_scene() -> None:
     scene.view_settings.look = "AgX - Medium High Contrast"
 
 
+def bind_action_slot(armature: bpy.types.Object, action: bpy.types.Action) -> None:
+    armature.animation_data_create()
+    animation_data = armature.animation_data
+    animation_data.action = action
+    candidates = [slot for slot in action.slots if slot.target_id_type == armature.id_type]
+    if len(candidates) != 1:
+        raise RuntimeError(f"KG_ACTION_SLOT: expected one {armature.id_type} slot for {action.name}, found {len(candidates)}")
+    animation_data.action_slot = candidates[0]
+    if animation_data.action_slot != candidates[0]:
+        raise RuntimeError(f"KG_ACTION_SLOT: failed to bind action slot for {action.name}")
+
+
+def assert_action_sampled(armature: bpy.types.Object, action: bpy.types.Action, frame: int) -> None:
+    animation_data = armature.animation_data
+    slot = animation_data.action_slot
+    curves = []
+    layers = list(getattr(action, "layers", []))
+    if layers:
+        for layer in layers:
+            for strip in layer.strips:
+                if strip.type == "KEYFRAME":
+                    channelbag = strip.channelbag(slot)
+                    if channelbag is not None:
+                        curves.extend(channelbag.fcurves)
+    else:
+        curves.extend(getattr(action, "fcurves", []))
+    groups: dict[str, dict[int, bpy.types.FCurve]] = {}
+    for curve in curves:
+        if "rotation_quaternion" not in curve.data_path:
+            continue
+        groups.setdefault(curve.data_path, {})[curve.array_index] = curve
+    for data_path, group in groups.items():
+        if set(group) != {0, 1, 2, 3}:
+            raise RuntimeError(f"KG_ACTION_SLOT: incomplete quaternion group in {action.name}: {data_path}")
+        bone_name = data_path.split('pose.bones["', 1)[1].split('"]', 1)[0]
+        pose_bone = armature.pose.bones.get(bone_name)
+        if pose_bone is None:
+            raise RuntimeError(f"KG_ACTION_SLOT: action {action.name} targets missing bone {bone_name}")
+        expected = [float(group[index].evaluate(frame)) for index in range(4)]
+        rest = list(pose_bone.bone.matrix_local.to_quaternion())
+        expected_rest_dot = abs(sum(left * right for left, right in zip(expected, rest)))
+        if expected_rest_dot < 1.0 - 1e-5:
+            actual = list(pose_bone.rotation_quaternion)
+            actual_expected_dot = abs(sum(left * right for left, right in zip(actual, expected)))
+            if actual_expected_dot < 1.0 - 1e-4:
+                raise RuntimeError(f"KG_ACTION_SLOT: sampled animated bone stayed at rest for {action.name}/{bone_name}")
+            return
+
 def evaluated_extents(
     scene: bpy.types.Scene,
     armature: bpy.types.Object,
@@ -52,8 +106,9 @@ def evaluated_extents(
     maximum = Vector((float("-inf"), float("-inf"), float("-inf")))
     found_vertex = False
     for _, _, action, frame in plans:
-        armature.animation_data.action = action
+        bind_action_slot(armature, action)
         scene.frame_set(frame)
+        assert_action_sampled(armature, action, frame)
         bpy.context.view_layer.update()
         depsgraph = bpy.context.evaluated_depsgraph_get()
         for obj in scene.objects:
@@ -182,8 +237,138 @@ def build_contact_sheet(images: list[Path], output: Path) -> None:
         raise RuntimeError(f"contact sheet assembly failed: {exc.stderr.strip()}") from exc
 
 
+def file_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def repo_path(path: Path, label: str) -> Path:
+    resolved = path.resolve()
+    try:
+        resolved.relative_to(REPO_ROOT)
+    except ValueError as exc:
+        raise RuntimeError(f"{label} must stay under repository root {REPO_ROOT}: {resolved}") from exc
+    return resolved
+
+
+def static_camera(scene: bpy.types.Scene) -> bpy.types.Object:
+    minimum = Vector((float("inf"), float("inf"), float("inf")))
+    maximum = Vector((float("-inf"), float("-inf"), float("-inf")))
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    found = False
+    for obj in scene.objects:
+        if obj.type != "MESH":
+            continue
+        evaluated = obj.evaluated_get(depsgraph)
+        mesh = evaluated.to_mesh()
+        try:
+            for vertex in mesh.vertices:
+                point = evaluated.matrix_world @ vertex.co
+                minimum = Vector((min(minimum[i], point[i]) for i in range(3)))
+                maximum = Vector((max(maximum[i], point[i]) for i in range(3)))
+                found = True
+        finally:
+            evaluated.to_mesh_clear()
+    if not found:
+        raise RuntimeError("model has no evaluated mesh vertices")
+    center = (minimum + maximum) * 0.5
+    span = max(0.1, max(maximum[axis] - minimum[axis] for axis in range(3)))
+    camera_data = bpy.data.cameras.new("MotionPosePairCamera")
+    camera = bpy.data.objects.new("MotionPosePairCamera", camera_data)
+    scene.collection.objects.link(camera)
+    scene.camera = camera
+    camera.data.type = "ORTHO"
+    camera.data.ortho_scale = span * 1.18
+    camera.location = center + Vector((0.48, -1.0, 0.12)).normalized() * (span * 4.0)
+    camera.rotation_euler = (center - camera.location).to_track_quat("-Z", "Y").to_euler()
+    return camera
+
+
+def render_static_pose(model: Path, output: Path, label_text: str, bone: str) -> None:
+    reset_scene()
+    bpy.ops.import_scene.gltf(filepath=str(model))
+    scene = bpy.context.scene
+    armatures = [obj for obj in scene.objects if obj.type == "ARMATURE"]
+    if len(armatures) != 1 or bone not in armatures[0].pose.bones:
+        raise RuntimeError(f"model must have exactly one armature with pose-alignment bone: {bone}")
+    armature = armatures[0]
+    camera = static_camera(scene)
+    add_lighting(scene, camera)
+    label = add_label(camera)
+    label.data.body = label_text
+    scene.render.filepath = str(output)
+    bpy.ops.render.render(write_still=True)
+
+
+def render_pose_pairs(args: argparse.Namespace) -> int:
+    if args.target_rig is None or args.actors_root is None or args.out is None:
+        raise RuntimeError("--pose-pairs requires --target-rig, --actors-root, and --out")
+    if args.worst_n <= 0:
+        raise RuntimeError("--worst-n must be positive")
+    residuals_path = repo_path(args.pose_pairs, "pose-pairs")
+    target_rig = repo_path(args.target_rig, "target-rig")
+    actors_root = repo_path(args.actors_root, "actors-root")
+    out = repo_path(args.out, "out")
+    residuals = json.loads(residuals_path.read_text())
+    provenance_path = target_rig.with_suffix(".provenance.json")
+    if not provenance_path.is_file():
+        raise RuntimeError(f"KG_TARGET_RIG_HASH: certification provenance missing: {provenance_path}")
+    provenance = json.loads(provenance_path.read_text())
+    target_sha = file_sha256(target_rig)
+    if provenance.get("targetRigSha256") != target_sha or residuals.get("targetRigSha256") != target_sha:
+        raise RuntimeError("KG_TARGET_RIG_HASH: target rig hash does not match certification/residual input")
+    grouped: dict[str, list[dict]] = {}
+    for row in residuals.get("rows", []):
+        grouped.setdefault(row["actorId"], []).append(row)
+    if not grouped:
+        raise RuntimeError("static-rest-residuals contains no rows")
+    out.mkdir(parents=True, exist_ok=True)
+    pair_rows = []
+    for actor_id in sorted(grouped):
+        selected = sorted(grouped[actor_id], key=lambda row: (-float(row["restResidualDeg"]), row["bone"]))[:args.worst_n]
+        actor_model = actors_root / actor_id / "model.glb"
+        for rank, row in enumerate(selected, start=1):
+            bone = row["bone"]
+            pair_dir = out / actor_id
+            pair_dir.mkdir(parents=True, exist_ok=True)
+            canonical = pair_dir / f"{rank:02d}-{bone}-canonical.png"
+            actor = pair_dir / f"{rank:02d}-{bone}-actor.png"
+            entry = {"actorId": actor_id, "bone": bone, "rank": rank, "frame": 0, "restResidualDeg": row["restResidualDeg"],
+                     "canonical": str(canonical.relative_to(REPO_ROOT)), "actor": str(actor.relative_to(REPO_ROOT)),
+                     "actorModel": str(actor_model.relative_to(REPO_ROOT)), "status": "failed"}
+            try:
+                if not actor_model.is_file():
+                    raise RuntimeError(f"actor model missing: {actor_model}")
+                entry["actorModelSha256"] = file_sha256(actor_model)
+                render_static_pose(target_rig, canonical, f"CANONICAL  {bone}", bone)
+                render_static_pose(actor_model, actor, f"{actor_id.upper()}  {bone}", bone)
+                entry["status"] = "passed"
+            except Exception as exc:  # batch failures are recorded, not aborting
+                entry["error"] = str(exc)
+            pair_rows.append(entry)
+    passed = [row for row in pair_rows if row["status"] == "passed"]
+    actor_coverage = {actor_id: any(row["actorId"] == actor_id for row in passed) for actor_id in grouped}
+    manifest = {
+        "schemaVersion": 1, "kind": "pose-pairs", "targetRig": str(target_rig.relative_to(REPO_ROOT)),
+        "targetRigSha256": target_sha, "residuals": str(residuals_path.relative_to(REPO_ROOT)),
+        "residualsSha256": file_sha256(residuals_path), "actorsRoot": str(actors_root.relative_to(REPO_ROOT)),
+        "camera": {"type": "ORTHO", "direction": [0.48, -1.0, 0.12], "orthoSpanMultiplier": 1.18},
+        "lighting": {"keyEnergy": 1100.0, "fillEnergy": 650.0}, "resolution": [640, 640],
+        "pairs": pair_rows, "passedPairs": len(passed), "totalPairs": len(pair_rows),
+        "passThreshold": 0.9, "actorCoverage": actor_coverage,
+    }
+    manifest_path = out / "render-manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+    successful = bool(pair_rows) and len(passed) / len(pair_rows) >= 0.9 and all(actor_coverage.values())
+    print("MOTION_POSE_PAIR_RESULT_JSON:" + json.dumps({"manifest": str(manifest_path), "passed": successful, "pairs": len(pair_rows)}))
+    return 0 if successful else 2
+
+
 def main() -> int:
     args = parse_args()
+    if args.pose_pairs is not None:
+        return render_pose_pairs(args)
+    if args.model is None or args.asset_id is None or args.out_dir is None:
+        raise RuntimeError("default contact-sheet mode requires --model, --asset-id, and --out-dir")
     model = Path(args.model).resolve()
     out_dir = Path(args.out_dir).resolve()
     if not model.is_file():
@@ -199,9 +384,10 @@ def main() -> int:
     reset_scene()
     bpy.ops.import_scene.gltf(filepath=str(model))
     scene = bpy.context.scene
-    armature = next((obj for obj in scene.objects if obj.type == "ARMATURE"), None)
-    if armature is None:
-        raise RuntimeError("model has no armature")
+    armatures = [obj for obj in scene.objects if obj.type == "ARMATURE"]
+    if len(armatures) != 1:
+        raise RuntimeError(f"expected one armature, found {len(armatures)}")
+    armature = armatures[0]
     armature.animation_data_create()
     for track in list(armature.animation_data.nla_tracks):
         track.mute = True
@@ -224,8 +410,9 @@ def main() -> int:
     rows = []
     rendered_images: list[Path] = []
     for index, action_key, action, frame in plans:
-        armature.animation_data.action = action
+        bind_action_slot(armature, action)
         scene.frame_set(frame)
+        assert_action_sampled(armature, action, frame)
         bpy.context.view_layer.update()
         label.data.body = f"{index + 1:02d}  {action_key.upper()}"
         output = keypose_dir / f"{index:02d}-{action_key}.png"

@@ -1,0 +1,328 @@
+{
+  "originCommit": "cbe937ed",
+  "deletedBy": "30fc758d",
+  "originPath": "assets/images/battle/glb/commander/dusk-warden.glb",
+  "targetRigSha256": "f2023c08ad69a4b75a200b6275da1dbf0594b6cb3a5e0bfd5ba278f6142175cc",
+  "targetRigBytes": 6734720,
+  "recoveryCommand": "git cat-file blob cbe937ed:assets/images/battle/glb/commander/dusk-warden.glb > _workspace/current/engineering/asset-pipeline/motion-bench/target-rig/dusk-warden-def-humanoid-v1.glb",
+  "schemaVersion": 1,
+  "targetRig": "_workspace/current/engineering/asset-pipeline/motion-bench/target-rig/dusk-warden-def-humanoid-v1.glb",
+  "blender": {
+    "version": "5.1.2",
+    "executable": "/Applications/Blender.app/Contents/MacOS/Blender"
+  },
+  "targetBoneNames": [
+    "DEF-foot.L",
+    "DEF-foot.R",
+    "DEF-forearm.L",
+    "DEF-forearm.R",
+    "DEF-hand.L",
+    "DEF-hand.R",
+    "DEF-pelvis.L",
+    "DEF-pelvis.R",
+    "DEF-shin.L",
+    "DEF-shin.R",
+    "DEF-shoulder.L",
+    "DEF-shoulder.R",
+    "DEF-spine",
+    "DEF-spine.001",
+    "DEF-spine.002",
+    "DEF-spine.003",
+    "DEF-spine.004",
+    "DEF-spine.005",
+    "DEF-thigh.L",
+    "DEF-thigh.R",
+    "DEF-toe.L",
+    "DEF-toe.R",
+    "DEF-upper_arm.L",
+    "DEF-upper_arm.R"
+  ],
+  "restQuaternions": {
+    "DEF-spine": [
+      0.7071067690849304,
+      0.7071067690849304,
+      2.649798780396395e-08,
+      2.649798780396395e-08
+    ],
+    "DEF-spine.001": [
+      0.7071067690849304,
+      0.7071067690849304,
+      2.653377251249367e-08,
+      2.653377251249367e-08
+    ],
+    "DEF-spine.002": [
+      0.7071067690849304,
+      0.7071067690849304,
+      6.64446559994758e-08,
+      6.64446559994758e-08
+    ],
+    "DEF-spine.003": [
+      0.7071067690849304,
+      0.7071067690849304,
+      2.926816833337398e-08,
+      2.926816833337398e-08
+    ],
+    "DEF-spine.004": [
+      0.7071067690849304,
+      0.7071067690849304,
+      6.77390303849279e-08,
+      6.77390303849279e-08
+    ],
+    "DEF-spine.005": [
+      0.7071067690849304,
+      0.7071067690849304,
+      6.773903749035526e-08,
+      6.773903749035526e-08
+    ],
+    "DEF-shoulder.L": [
+      0.70710688829422,
+      6.9266818947255615e-09,
+      1.8762763787094627e-08,
+      -0.7071066498756409
+    ],
+    "DEF-upper_arm.L": [
+      0.7071051001548767,
+      0.0015795320505276322,
+      0.001579544274136424,
+      -0.7071049213409424
+    ],
+    "DEF-forearm.L": [
+      0.7071051001548767,
+      0.001579531468451023,
+      0.001579543575644493,
+      -0.7071049213409424
+    ],
+    "DEF-hand.L": [
+      0.7071051001548767,
+      0.001579534262418747,
+      0.001579546369612217,
+      -0.7071049213409424
+    ],
+    "DEF-shoulder.R": [
+      0.7071067690849304,
+      1.0512835757481298e-07,
+      -1.1696442214770286e-07,
+      0.7071067690849304
+    ],
+    "DEF-upper_arm.R": [
+      0.7089000344276428,
+      0.0034760383423417807,
+      -2.3237082302784984e-07,
+      0.7053004503250122
+    ],
+    "DEF-forearm.R": [
+      0.7089000344276428,
+      0.0034759119153022766,
+      -8.161717346411024e-08,
+      0.7053004503250122
+    ],
+    "DEF-hand.R": [
+      0.7089000344276428,
+      0.003476238576695323,
+      -9.738226225408653e-08,
+      0.7053004503250122
+    ],
+    "DEF-pelvis.L": [
+      0.5930355787277222,
+      0.583529531955719,
+      -2.0101541053918481e-07,
+      -0.5547991991043091
+    ],
+    "DEF-pelvis.R": [
+      0.5930355191230774,
+      0.5835294127464294,
+      1.0050771237501976e-07,
+      0.5547993779182434
+    ],
+    "DEF-thigh.L": [
+      0.7071067690849304,
+      -0.7071067690849304,
+      2.688708988785038e-08,
+      -2.688708988785038e-08
+    ],
+    "DEF-shin.L": [
+      0.7071067690849304,
+      -0.7071067690849304,
+      7.002174129411287e-08,
+      -7.002174129411287e-08
+    ],
+    "DEF-foot.L": [
+      0.34003034234046936,
+      -0.9404144883155823,
+      6.567385923972324e-08,
+      -1.8163278525662463e-07
+    ],
+    "DEF-toe.L": [
+      0.049813851714134216,
+      -0.9987584948539734,
+      1.355737708763627e-07,
+      -2.718227051445865e-06
+    ],
+    "DEF-thigh.R": [
+      0.7071067690849304,
+      -0.7071067690849304,
+      2.688708988785038e-08,
+      -2.688708988785038e-08
+    ],
+    "DEF-shin.R": [
+      0.7071067690849304,
+      -0.7071067690849304,
+      7.002174129411287e-08,
+      -7.002174129411287e-08
+    ],
+    "DEF-foot.R": [
+      0.34003034234046936,
+      -0.9404144883155823,
+      8.311208432587591e-08,
+      -2.2986132819369232e-07
+    ],
+    "DEF-toe.R": [
+      0.04981381073594093,
+      -0.9987584948539734,
+      1.3557271927311376e-07,
+      -2.718207497309777e-06
+    ]
+  },
+  "poseAlignmentBones": [
+    "DEF-spine",
+    "DEF-spine.001",
+    "DEF-spine.002",
+    "DEF-spine.003",
+    "DEF-spine.004",
+    "DEF-spine.005",
+    "DEF-shoulder.L",
+    "DEF-upper_arm.L",
+    "DEF-forearm.L",
+    "DEF-hand.L",
+    "DEF-shoulder.R",
+    "DEF-upper_arm.R",
+    "DEF-forearm.R",
+    "DEF-hand.R",
+    "DEF-thigh.L",
+    "DEF-shin.L",
+    "DEF-foot.L",
+    "DEF-toe.L",
+    "DEF-thigh.R",
+    "DEF-shin.R",
+    "DEF-foot.R",
+    "DEF-toe.R"
+  ],
+  "excludedStaticBones": [
+    "DEF-pelvis.L",
+    "DEF-pelvis.R"
+  ],
+  "excludedStaticBonesReason": "pelvis helpers intentionally retain target rest pose and are absent from MAPPING_ROWS",
+  "reproductionDiff": {
+    "scratchOverlay": "_workspace/current/qa/motion-repair-20260803/reproduced-unarmed-core.glb",
+    "overlay": "assets/motion/ingame/unarmed-core.glb",
+    "clips": [
+      {
+        "clipName": "unarmed-core::attack::v01",
+        "maxScalarDeviation": 1.4490028619766235
+      },
+      {
+        "clipName": "unarmed-core::attack_melee::v01",
+        "maxScalarDeviation": 1.3873428702354431
+      },
+      {
+        "clipName": "unarmed-core::attack_ranged::v01",
+        "maxScalarDeviation": 1.4446032643318176
+      },
+      {
+        "clipName": "unarmed-core::avoid::v01",
+        "maxScalarDeviation": 1.3437060713768005
+      },
+      {
+        "clipName": "unarmed-core::bighit::v01",
+        "maxScalarDeviation": 1.8575990796089172
+      },
+      {
+        "clipName": "unarmed-core::bighit_back::v01",
+        "maxScalarDeviation": 1.9368159174919128
+      },
+      {
+        "clipName": "unarmed-core::bighit_front::v01",
+        "maxScalarDeviation": 1.8575990796089172
+      },
+      {
+        "clipName": "unarmed-core::bighit_left::v01",
+        "maxScalarDeviation": 1.3986160159111023
+      },
+      {
+        "clipName": "unarmed-core::bighit_right::v01",
+        "maxScalarDeviation": 1.881718397140503
+      },
+      {
+        "clipName": "unarmed-core::critical::v01",
+        "maxScalarDeviation": 1.3352870643138885
+      },
+      {
+        "clipName": "unarmed-core::defence::v01",
+        "maxScalarDeviation": 1.3342823684215546
+      },
+      {
+        "clipName": "unarmed-core::die::v01",
+        "maxScalarDeviation": 1.8727441430091858
+      },
+      {
+        "clipName": "unarmed-core::hit::v01",
+        "maxScalarDeviation": 1.7575728297233582
+      },
+      {
+        "clipName": "unarmed-core::hit_back::v01",
+        "maxScalarDeviation": 1.881718397140503
+      },
+      {
+        "clipName": "unarmed-core::hit_front::v01",
+        "maxScalarDeviation": 1.198186218738556
+      },
+      {
+        "clipName": "unarmed-core::hit_left::v01",
+        "maxScalarDeviation": 1.7575728297233582
+      },
+      {
+        "clipName": "unarmed-core::hit_right::v01",
+        "maxScalarDeviation": 1.3842269778251648
+      },
+      {
+        "clipName": "unarmed-core::idle::v01",
+        "maxScalarDeviation": 1.416939616203308
+      },
+      {
+        "clipName": "unarmed-core::move::v01",
+        "maxScalarDeviation": 1.2662770748138428
+      },
+      {
+        "clipName": "unarmed-core::run::v01",
+        "maxScalarDeviation": 1.3050344586372375
+      },
+      {
+        "clipName": "unarmed-core::show::v01",
+        "maxScalarDeviation": 1.416939616203308
+      }
+    ],
+    "maxAngularDeviationDeg": 180.0,
+    "firstMaxDivergence": {
+      "clipName": "unarmed-core::attack_melee::v01",
+      "targetBone": "DEF-shoulder.R",
+      "channel": "pose.bones[\"DEF-shoulder.R\"].rotation_quaternion",
+      "frameTime": 47.0,
+      "sampleIndex": 47,
+      "angularDeviationDeg": 180.0,
+      "scratchQuaternion": [
+        0.4324966073036194,
+        0.5144490003585815,
+        -0.4281916618347168,
+        -0.6041032075881958
+      ],
+      "committedQuaternion": [
+        0.6041032075881958,
+        0.4281916618347168,
+        0.5144490003585815,
+        0.4324966073036194
+      ]
+    },
+    "thresholdDeg": 0.5,
+    "passed": false
+  }
+}

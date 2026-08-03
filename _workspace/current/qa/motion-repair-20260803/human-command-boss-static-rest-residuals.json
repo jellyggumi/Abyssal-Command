@@ -1,0 +1,2083 @@
+{
+  "schemaVersion": 1,
+  "kind": "static-rest-residuals",
+  "blender": {
+    "version": "5.1.2",
+    "executable": "/Applications/Blender.app/Contents/MacOS/Blender"
+  },
+  "orientationSpace": "world",
+  "renderRankingMetric": "restResidualDeg",
+  "numericGateMetric": "localRestResidualDeg",
+  "targetRig": "_workspace/current/engineering/asset-pipeline/motion-bench/target-rig/human-command-boss-def-humanoid-v1.glb",
+  "targetRigSha256": "a2fd435880d12a56d70599d701c3b562c0869a0d51062e7d7db26b4a066137e6",
+  "bindings": {
+    "overlay": {
+      "path": "assets/motion/ingame/unarmed-core.glb",
+      "sha256": "c642c139c6649cb8d909e40c62becc2c15a0e4eeef0e09ff45abeb17647db91c",
+      "expectedClipNames": [
+        "unarmed-core::attack::v01",
+        "unarmed-core::attack_melee::v01",
+        "unarmed-core::attack_ranged::v01",
+        "unarmed-core::avoid::v01",
+        "unarmed-core::bighit::v01",
+        "unarmed-core::bighit_back::v01",
+        "unarmed-core::bighit_front::v01",
+        "unarmed-core::bighit_left::v01",
+        "unarmed-core::bighit_right::v01",
+        "unarmed-core::critical::v01",
+        "unarmed-core::defence::v01",
+        "unarmed-core::die::v01",
+        "unarmed-core::hit::v01",
+        "unarmed-core::hit_back::v01",
+        "unarmed-core::hit_front::v01",
+        "unarmed-core::hit_left::v01",
+        "unarmed-core::hit_right::v01",
+        "unarmed-core::idle::v01",
+        "unarmed-core::move::v01",
+        "unarmed-core::run::v01",
+        "unarmed-core::show::v01"
+      ]
+    },
+    "config": {
+      "path": "_workspace/current/engineering/asset-pipeline/character-motion-library/library-config.json",
+      "sha256": "267c1d3f9c47de2c6e89ffd737dde3973745d1ea2420d1ce2c386665cd3340d1"
+    },
+    "completeness": {
+      "actorCount": 11,
+      "poseBoneCount": 22,
+      "clipCount": 21,
+      "staticRows": 242,
+      "worldRows": 10164,
+      "expectedStaticRows": 242,
+      "expectedWorldRows": 10164
+    }
+  },
+  "rows": [
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-spine",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-spine.001",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-spine.002",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-spine.003",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-spine.004",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-spine.005",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-shoulder.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-upper_arm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 10.852104477972386,
+      "localRestResidualDeg": 10.85210123519184
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-forearm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 10.852094100271968,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-hand.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 10.852100536512271,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-shoulder.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-upper_arm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 11.330588952381728,
+      "localRestResidualDeg": 11.330583728604855
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-forearm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 11.330587318270966,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-hand.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 11.330595885566046,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-thigh.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-shin.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-foot.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 1.846043398651606,
+      "localRestResidualDeg": 1.8460399835560717
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-toe.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 1.8460412103783002
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-thigh.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-shin.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-foot.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 1.846043398651606,
+      "localRestResidualDeg": 1.8460399835560717
+    },
+    {
+      "actorId": "broken-court-monarch-boss",
+      "bone": "DEF-toe.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 1.8460412103783002
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-spine",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-spine.001",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-spine.002",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-spine.003",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-spine.004",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-spine.005",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-shoulder.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-upper_arm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 3.682224549555087,
+      "localRestResidualDeg": 3.682224549555483
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-forearm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 3.682222117578628,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-hand.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 3.68222653076298,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-shoulder.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-upper_arm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 2.751683708511802,
+      "localRestResidualDeg": 2.751683708510742
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-forearm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 2.7516929255747544,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-hand.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 2.7516949279384146,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-thigh.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-shin.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-foot.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 5.523360250128621,
+      "localRestResidualDeg": 5.523360250128886
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-toe.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 5.5233644674646465
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-thigh.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-shin.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-foot.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 5.523360250128621,
+      "localRestResidualDeg": 5.523360250128886
+    },
+    {
+      "actorId": "broken-court-monarch-v04",
+      "bone": "DEF-toe.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 5.5233644674646465
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-spine",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-spine.001",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-spine.002",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-spine.003",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-spine.004",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-spine.005",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-shoulder.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-upper_arm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 5.899085061459173,
+      "localRestResidualDeg": 5.899085061458926
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-forearm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 5.899084548278218,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-hand.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 5.899091375563423,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-shoulder.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-upper_arm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 8.11639129647341,
+      "localRestResidualDeg": 8.11639129647341
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-forearm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 8.116389201163175,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-hand.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 8.11638523499014,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-thigh.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-shin.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-foot.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 7.154254826063841,
+      "localRestResidualDeg": 7.154254826064045
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-toe.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 7.154251726660846
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-thigh.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-shin.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-foot.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 7.154254826063841,
+      "localRestResidualDeg": 7.154254826064045
+    },
+    {
+      "actorId": "ember-cohort",
+      "bone": "DEF-toe.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 7.154251726660846
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-spine",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-spine.001",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-spine.002",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-spine.003",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-spine.004",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-spine.005",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-shoulder.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-upper_arm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 9.4240801233296,
+      "localRestResidualDeg": 9.424086925704856
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-forearm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 9.424078004595952,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-hand.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 9.424084190317103,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-shoulder.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-upper_arm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 9.003211141244703,
+      "localRestResidualDeg": 9.003206099589411
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-forearm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 9.003210630380392,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-hand.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 9.003209162377408,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-thigh.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-shin.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-foot.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 15.05661874166174,
+      "localRestResidualDeg": 15.056618741661838
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-toe.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 15.05661267365437
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-thigh.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-shin.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-foot.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 15.05661874166174,
+      "localRestResidualDeg": 15.056618741661838
+    },
+    {
+      "actorId": "guard",
+      "bone": "DEF-toe.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 15.05661267365437
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-spine",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-spine.001",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-spine.002",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-spine.003",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-spine.004",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-spine.005",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-shoulder.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-upper_arm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-forearm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-hand.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-shoulder.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-upper_arm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-forearm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-hand.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-thigh.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-shin.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-foot.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-toe.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-thigh.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-shin.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-foot.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "human-command-boss",
+      "bone": "DEF-toe.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-spine",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-spine.001",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-spine.002",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-spine.003",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-spine.004",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-spine.005",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-shoulder.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-upper_arm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0.9963161828229626,
+      "localRestResidualDeg": 0.9963161828214995
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-forearm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0.9963204743889948,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-hand.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0.9963088603705796,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-shoulder.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-upper_arm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 3.232189875551939,
+      "localRestResidualDeg": 3.232189875552841
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-forearm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 3.232183335304504,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-hand.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 3.2321973340567793,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-thigh.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-shin.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-foot.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 4.331434824007428,
+      "localRestResidualDeg": 4.331434824007092
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-toe.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 4.331436770211348
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-thigh.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-shin.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-foot.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 4.331434824007428,
+      "localRestResidualDeg": 4.331434824007092
+    },
+    {
+      "actorId": "lantern-reaver",
+      "bone": "DEF-toe.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 4.331436770211348
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-spine",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-spine.001",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-spine.002",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-spine.003",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-spine.004",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-spine.005",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-shoulder.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-upper_arm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 2.8889209931472988,
+      "localRestResidualDeg": 2.8889209931462894
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-forearm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 2.8889401675218243,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-hand.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 2.8889090382825033,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-shoulder.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-upper_arm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 2.188302237857074,
+      "localRestResidualDeg": 2.188302237858406
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-forearm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 2.1882972922278947,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-hand.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 2.188306138824868,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-thigh.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-shin.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-foot.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 22.193998270059602,
+      "localRestResidualDeg": 22.193998270064558
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-toe.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 22.193978362192617
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-thigh.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-shin.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-foot.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 22.193998270059602,
+      "localRestResidualDeg": 22.193998270064558
+    },
+    {
+      "actorId": "possessed",
+      "bone": "DEF-toe.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 22.193978362192617
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-spine",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-spine.001",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-spine.002",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-spine.003",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-spine.004",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-spine.005",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-shoulder.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-upper_arm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 3.4704224944141036,
+      "localRestResidualDeg": 3.470428019820172
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-forearm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 3.4704063625421684,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-hand.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 3.470431114010185,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-shoulder.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-upper_arm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 3.8182349439989514,
+      "localRestResidualDeg": 3.8182346504981424
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-forearm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 3.8182392019335554,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-hand.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 3.8182414359596195,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-thigh.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-shin.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-foot.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 2.5143635036067513,
+      "localRestResidualDeg": 2.5143600885113893
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-toe.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 2.514364825187585
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-thigh.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-shin.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-foot.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 2.5143635036067513,
+      "localRestResidualDeg": 2.5143600885113893
+    },
+    {
+      "actorId": "scout",
+      "bone": "DEF-toe.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 2.514364825187585
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-spine",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-spine.001",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-spine.002",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-spine.003",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-spine.004",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-spine.005",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-shoulder.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-upper_arm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 6.269565893060709,
+      "localRestResidualDeg": 6.2695658930611735
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-forearm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 6.269557998990044,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-hand.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 6.269584948807575,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-shoulder.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-upper_arm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 6.867005277527395,
+      "localRestResidualDeg": 6.867005277526969
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-forearm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 6.867007669905622,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-hand.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 6.866994851695382,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-thigh.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-shin.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-foot.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 4.1600221846197245,
+      "localRestResidualDeg": 4.160022184643911
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-toe.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 4.16002802229676
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-thigh.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-shin.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-foot.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 4.1600221846197245,
+      "localRestResidualDeg": 4.160022184643911
+    },
+    {
+      "actorId": "shade",
+      "bone": "DEF-toe.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 4.16002802229676
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-spine",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-spine.001",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-spine.002",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-spine.003",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-spine.004",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-spine.005",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-shoulder.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-upper_arm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 7.994989883484801,
+      "localRestResidualDeg": 7.994989883485349
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-forearm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 7.994979745283363,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-hand.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 7.994986870874873,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-shoulder.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-upper_arm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 7.3417167730526645,
+      "localRestResidualDeg": 7.3417167730528625
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-forearm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 7.3417178674797565,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-hand.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 7.341712389790765,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-thigh.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-shin.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-foot.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 12.032127408065739,
+      "localRestResidualDeg": 12.032127408066103
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-toe.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 12.032127592532971
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-thigh.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-shin.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-foot.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 12.032127408065739,
+      "localRestResidualDeg": 12.032127408066103
+    },
+    {
+      "actorId": "shadow-soldier-v04",
+      "bone": "DEF-toe.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 12.032127592532971
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-spine",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-spine.001",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-spine.002",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-spine.003",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-spine.004",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-spine.005",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-shoulder.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-upper_arm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 3.0329691023632406,
+      "localRestResidualDeg": 3.0329691023637215
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-forearm.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 3.0329698614358294,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-hand.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 3.032962017443433,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-shoulder.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-upper_arm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 2.756342063244604,
+      "localRestResidualDeg": 2.75634639779165
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-forearm.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 2.756393711069254,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-hand.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 2.7563124624216244,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-thigh.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-shin.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-foot.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 17.461083142440238,
+      "localRestResidualDeg": 17.461083142440405
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-toe.L",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 17.461090370301456
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-thigh.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-shin.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 0
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-foot.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 17.461083142440238,
+      "localRestResidualDeg": 17.461083142440405
+    },
+    {
+      "actorId": "shadow-commander-boss",
+      "bone": "DEF-toe.R",
+      "orientationSpace": "world",
+      "localOrientationSpace": "local",
+      "restResidualDeg": 0,
+      "localRestResidualDeg": 17.461090370301456
+    }
+  ],
+  "perActor": {
+    "broken-court-monarch-boss": {
+      "maxDeg": 11.330583728604855,
+      "p99Deg": 11.230102404988122,
+      "countOver2Deg": 2,
+      "worldMaxDeg": 11.330595885566046,
+      "worldP99Deg": 11.330594429597339,
+      "worldCountOver2Deg": 6
+    },
+    "broken-court-monarch-v04": {
+      "maxDeg": 5.5233644674646465,
+      "p99Deg": 5.5233644674646465,
+      "countOver2Deg": 6,
+      "worldMaxDeg": 5.523360250128621,
+      "worldP99Deg": 5.523360250128621,
+      "worldCountOver2Deg": 8
+    },
+    "ember-cohort": {
+      "maxDeg": 8.11639129647341,
+      "p99Deg": 7.914342637687442,
+      "countOver2Deg": 6,
+      "worldMaxDeg": 8.11639129647341,
+      "worldP99Deg": 8.11639085645826,
+      "worldCountOver2Deg": 8
+    },
+    "guard": {
+      "maxDeg": 15.056618741661838,
+      "p99Deg": 15.056618741661838,
+      "countOver2Deg": 6,
+      "worldMaxDeg": 15.05661874166174,
+      "worldP99Deg": 15.05661874166174,
+      "worldCountOver2Deg": 8
+    },
+    "human-command-boss": {
+      "maxDeg": 0,
+      "p99Deg": 0,
+      "countOver2Deg": 0,
+      "worldMaxDeg": 0,
+      "worldP99Deg": 0,
+      "worldCountOver2Deg": 0
+    },
+    "lantern-reaver": {
+      "maxDeg": 4.331436770211348,
+      "p99Deg": 4.331436770211348,
+      "countOver2Deg": 5,
+      "worldMaxDeg": 4.331434824007428,
+      "worldP99Deg": 4.331434824007428,
+      "worldCountOver2Deg": 5
+    },
+    "possessed": {
+      "maxDeg": 22.193998270064558,
+      "p99Deg": 22.193998270064558,
+      "countOver2Deg": 6,
+      "worldMaxDeg": 22.193998270059602,
+      "worldP99Deg": 22.193998270059602,
+      "worldCountOver2Deg": 8
+    },
+    "scout": {
+      "maxDeg": 3.8182346504981424,
+      "p99Deg": 3.745195258055768,
+      "countOver2Deg": 6,
+      "worldMaxDeg": 3.8182414359596195,
+      "worldP99Deg": 3.818240966814146,
+      "worldCountOver2Deg": 8
+    },
+    "shade": {
+      "maxDeg": 6.867005277526969,
+      "p99Deg": 6.7415430067891515,
+      "countOver2Deg": 6,
+      "worldMaxDeg": 6.867007669905622,
+      "worldP99Deg": 6.867007167506194,
+      "worldCountOver2Deg": 8
+    },
+    "shadow-soldier-v04": {
+      "maxDeg": 12.032127592532971,
+      "p99Deg": 12.032127592532971,
+      "countOver2Deg": 6,
+      "worldMaxDeg": 12.032127408065739,
+      "worldP99Deg": 12.032127408065739,
+      "worldCountOver2Deg": 8
+    },
+    "shadow-commander-boss": {
+      "maxDeg": 17.461090370301456,
+      "p99Deg": 17.461090370301456,
+      "countOver2Deg": 6,
+      "worldMaxDeg": 17.461083142440238,
+      "worldP99Deg": 17.461083142440238,
+      "worldCountOver2Deg": 8
+    }
+  }
+}

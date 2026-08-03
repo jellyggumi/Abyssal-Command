@@ -1,0 +1,220 @@
+{
+  "schemaVersion": 1,
+  "originCommit": "d70d81e6fe80ddc4917f53d62d53c390ff1dc9d0",
+  "deletedBy": "51a2c1759f8ab311917feb79873ff8cea8cb772c",
+  "originPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/model.glb",
+  "originBlobSha1": "02afd84e2177fdf1ff211f46fa121042cbb84a95",
+  "recoveryCommitAliases": [
+    "d70d81e6fe80ddc4917f53d62d53c390ff1dc9d0",
+    "2359578bfb6a2418a83633e0956d97a3b14bdc85"
+  ],
+  "targetRigSha256": "a2fd435880d12a56d70599d701c3b562c0869a0d51062e7d7db26b4a066137e6",
+  "targetRigBytes": 9750392,
+  "recoveryCommand": "git cat-file blob d70d81e6fe80ddc4917f53d62d53c390ff1dc9d0:_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/model.glb > _workspace/current/engineering/asset-pipeline/motion-bench/target-rig/human-command-boss-def-humanoid-v1.glb",
+  "targetRig": "_workspace/current/engineering/asset-pipeline/motion-bench/target-rig/human-command-boss-def-humanoid-v1.glb",
+  "blender": {
+    "version": "5.1.2",
+    "executable": "/Applications/Blender.app/Contents/MacOS/Blender"
+  },
+  "targetBoneNames": [
+    "DEF-foot.L",
+    "DEF-foot.R",
+    "DEF-forearm.L",
+    "DEF-forearm.R",
+    "DEF-hand.L",
+    "DEF-hand.R",
+    "DEF-pelvis.L",
+    "DEF-pelvis.R",
+    "DEF-shin.L",
+    "DEF-shin.R",
+    "DEF-shoulder.L",
+    "DEF-shoulder.R",
+    "DEF-spine",
+    "DEF-spine.001",
+    "DEF-spine.002",
+    "DEF-spine.003",
+    "DEF-spine.004",
+    "DEF-spine.005",
+    "DEF-thigh.L",
+    "DEF-thigh.R",
+    "DEF-toe.L",
+    "DEF-toe.R",
+    "DEF-upper_arm.L",
+    "DEF-upper_arm.R"
+  ],
+  "restQuaternions": {
+    "DEF-spine": [
+      5.338507591545749e-08,
+      5.338507591545749e-08,
+      -0.7071067690849304,
+      -0.7071067690849304
+    ],
+    "DEF-spine.001": [
+      3.090862321641907e-08,
+      3.0908619663705394e-08,
+      0.7071067690849304,
+      0.7071067690849304
+    ],
+    "DEF-spine.002": [
+      3.090862321641907e-08,
+      3.0908619663705394e-08,
+      0.7071067690849304,
+      0.7071067690849304
+    ],
+    "DEF-spine.003": [
+      3.0908619663705394e-08,
+      3.0908619663705394e-08,
+      0.7071067690849304,
+      0.7071067690849304
+    ],
+    "DEF-spine.004": [
+      3.0908619663705394e-08,
+      3.0908619663705394e-08,
+      0.7071067690849304,
+      0.7071067690849304
+    ],
+    "DEF-spine.005": [
+      3.0908619663705394e-08,
+      3.0908619663705394e-08,
+      0.7071067690849304,
+      0.7071067690849304
+    ],
+    "DEF-shoulder.L": [
+      0.7071068286895752,
+      -9.69376245940623e-11,
+      -1.5122857632832165e-08,
+      -0.7071067094802856
+    ],
+    "DEF-upper_arm.L": [
+      0.6473711729049683,
+      -0.002680818550288677,
+      0.003156086662784219,
+      -0.7621636390686035
+    ],
+    "DEF-forearm.L": [
+      0.6473711729049683,
+      -0.0026809838600456715,
+      0.0031562831718474627,
+      -0.7621636390686035
+    ],
+    "DEF-hand.L": [
+      0.6473711729049683,
+      -0.0026807861868292093,
+      0.003156048245728016,
+      -0.7621636390686035
+    ],
+    "DEF-shoulder.R": [
+      0.7071067690849304,
+      -9.510353748964917e-08,
+      8.007762630768411e-08,
+      0.7071067690849304
+    ],
+    "DEF-upper_arm.R": [
+      0.6481708288192749,
+      -0.0028661391697824,
+      -0.003367004683241248,
+      0.7614821791648865
+    ],
+    "DEF-forearm.R": [
+      0.6481708288192749,
+      -0.0028658497612923384,
+      -0.003366665216162801,
+      0.7614821791648865
+    ],
+    "DEF-hand.R": [
+      0.6481707692146301,
+      -0.0028660474345088005,
+      -0.003366896416991949,
+      0.7614821791648865
+    ],
+    "DEF-pelvis.L": [
+      0.3260909914970398,
+      -0.3983250856399536,
+      -0.5430771112442017,
+      -0.663377046585083
+    ],
+    "DEF-pelvis.R": [
+      0.3260909616947174,
+      -0.3983250856399536,
+      0.5430771112442017,
+      0.663377046585083
+    ],
+    "DEF-thigh.L": [
+      0.7071067690849304,
+      -0.7071067690849304,
+      5.364445243571936e-08,
+      -5.364445598843304e-08
+    ],
+    "DEF-shin.L": [
+      0.7071067690849304,
+      -0.7071067690849304,
+      2.8879677316240304e-08,
+      -2.8879682645310822e-08
+    ],
+    "DEF-foot.L": [
+      2.00098924096892e-08,
+      -1.1460623738912545e-07,
+      -0.1719951033592224,
+      0.9850978255271912
+    ],
+    "DEF-toe.L": [
+      8.096043302430189e-08,
+      -1.623243406356778e-06,
+      0.04981382191181183,
+      -0.9987585544586182
+    ],
+    "DEF-thigh.R": [
+      0.7071067690849304,
+      -0.7071067690849304,
+      5.364445243571936e-08,
+      -5.364445598843304e-08
+    ],
+    "DEF-shin.R": [
+      0.7071067690849304,
+      -0.7071067690849304,
+      2.8879677316240304e-08,
+      -2.8879682645310822e-08
+    ],
+    "DEF-foot.R": [
+      2.000989773875972e-08,
+      -1.1460622317827074e-07,
+      -0.1719951033592224,
+      0.9850978255271912
+    ],
+    "DEF-toe.R": [
+      8.096044012972925e-08,
+      -1.623243406356778e-06,
+      0.049813807010650635,
+      -0.9987585544586182
+    ]
+  },
+  "poseAlignmentBones": [
+    "DEF-spine",
+    "DEF-spine.001",
+    "DEF-spine.002",
+    "DEF-spine.003",
+    "DEF-spine.004",
+    "DEF-spine.005",
+    "DEF-shoulder.L",
+    "DEF-upper_arm.L",
+    "DEF-forearm.L",
+    "DEF-hand.L",
+    "DEF-shoulder.R",
+    "DEF-upper_arm.R",
+    "DEF-forearm.R",
+    "DEF-hand.R",
+    "DEF-thigh.L",
+    "DEF-shin.L",
+    "DEF-foot.L",
+    "DEF-toe.L",
+    "DEF-thigh.R",
+    "DEF-shin.R",
+    "DEF-foot.R",
+    "DEF-toe.R"
+  ],
+  "excludedStaticBones": [
+    "DEF-pelvis.L",
+    "DEF-pelvis.R"
+  ],
+  "excludedStaticBonesReason": "pelvis helpers intentionally retain target rest pose and are absent from MAPPING_ROWS"
+}

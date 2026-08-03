@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "looseRoot": "assets/motion/bench",
+  "expectedLooseFbx": 66,
+  "archives": [
+    {
+      "path": "assets/motion/bench/Sword and Shield Pack.zip",
+      "expectedFbx": 50
+    }
+  ],
+  "deathCandidates": [
+    "assets/motion/bench/Defeated.fbx",
+    "assets/motion/bench/Dying.fbx",
+    "assets/motion/bench/Standing Death Right 02.fbx",
+    "assets/motion/bench/Sword and Shield Pack.zip!sword and shield death.fbx",
+    "assets/motion/bench/Sword and Shield Pack.zip!sword and shield death (2).fbx"
+  ],
+  "exclusions": [
+    {
+      "path": "assets/motion/bench/Turn To Knocked Unconscious.fbx",
+      "classification": "raw-candidate-only",
+      "reason": "Death-adjacent filename; excluded from die because the approved source requirement names only three loose and two archive death candidates."
+    }
+  ]
+}
