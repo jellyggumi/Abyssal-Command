@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "kind": "static-pose-repair",
+  "mode": "write",
+  "policy": "/private/tmp/abyssal-motion-repair/_workspace/current/qa/motion-repair-20260803/static-pose-policy-v1.json",
+  "policyDecision": "focused-ember-cohort-and-possessed",
+  "targetRigSha256": "a2fd435880d12a56d70599d701c3b562c0869a0d51062e7d7db26b4a066137e6",
+  "toleranceWorldDeg": 0.001,
+  "toleranceLocalDeg": 0.001,
+  "actors": [
+    {
+      "assetId": "ember-cohort",
+      "model": "/private/tmp/abyssal-motion-repair/assets/motion/ingame/characters/ember-cohort/model.glb",
+      "written": true,
+      "sha256Before": "4b59c24d94c9eb827ad3ff82e2450802250297d562d4ee4acd7d5411a249c5af",
+      "sha256After": "8f2133868c49a55cc1c995fd029a74e7d7d04dd2e72ed7b29e30ed3bb7666345",
+      "bones": [
+        {
+          "bone": "DEF-upper_arm.R",
+          "preWorldResidualDeg": 8.11639129647395,
+          "preLocalResidualDeg": 8.116391296473411,
+          "postWorldResidualDeg": 0.0,
+          "postLocalResidualDeg": 0.0,
+          "withinTolerance": true,
+          "effective": true
+        },
+        {
+          "bone": "DEF-forearm.R",
+          "preWorldResidualDeg": 8.116389201163534,
+          "preLocalResidualDeg": 1.4886052178675776e-05,
+          "postWorldResidualDeg": 2.4148365394514667e-06,
+          "postLocalResidualDeg": 0.0,
+          "withinTolerance": true,
+          "effective": false
+        },
+        {
+          "bone": "DEF-hand.R",
+          "preWorldResidualDeg": 8.116385234990679,
+          "preLocalResidualDeg": 2.0059138823654082e-05,
+          "postWorldResidualDeg": 2.4148365394514667e-06,
+          "postLocalResidualDeg": 0.0,
+          "withinTolerance": true,
+          "effective": false
+        },
+        {
+          "bone": "DEF-foot.L",
+          "preWorldResidualDeg": 7.154254826064045,
+          "preLocalResidualDeg": 7.154254826064045,
+          "postWorldResidualDeg": 0.0,
+          "postLocalResidualDeg": 2.4148365394514667e-06,
+          "withinTolerance": true,
+          "effective": true
+        },
+        {
+          "bone": "DEF-foot.R",
+          "preWorldResidualDeg": 7.154254826064045,
+          "preLocalResidualDeg": 7.154254826064045,
+          "postWorldResidualDeg": 0.0,
+          "postLocalResidualDeg": 2.4148365394514667e-06,
+          "withinTolerance": true,
+          "effective": true
+        },
+        {
+          "bone": "DEF-toe.L",
+          "preWorldResidualDeg": 2.9575586669421963e-06,
+          "preLocalResidualDeg": 7.154251726660233,
+          "postWorldResidualDeg": 0.0,
+          "postLocalResidualDeg": 0.0,
+          "withinTolerance": true,
+          "effective": true
+        },
+        {
+          "bone": "DEF-toe.R",
+          "preWorldResidualDeg": 2.9575586669421963e-06,
+          "preLocalResidualDeg": 7.154251726660233,
+          "postWorldResidualDeg": 0.0,
+          "postLocalResidualDeg": 0.0,
+          "withinTolerance": true,
+          "effective": true
+        }
+      ]
+    },
+    {
+      "assetId": "possessed",
+      "model": "/private/tmp/abyssal-motion-repair/assets/motion/ingame/characters/possessed/model.glb",
+      "written": true,
+      "sha256Before": "e0e449903042f298a833da988e8e4e67a391db9253feaea0bfb9281f875be187",
+      "sha256After": "146f8194a7b030bc213fb80c4cc063a9c5546da4243b6e35a69931c052032e09",
+      "bones": [
+        {
+          "bone": "DEF-foot.L",
+          "preWorldResidualDeg": 22.193998270059602,
+          "preLocalResidualDeg": 22.193998270064558,
+          "postWorldResidualDeg": 6.830189170012753e-06,
+          "postLocalResidualDeg": 2.4148365394514667e-06,
+          "withinTolerance": true,
+          "effective": true
+        },
+        {
+          "bone": "DEF-foot.R",
+          "preWorldResidualDeg": 22.193998270059602,
+          "preLocalResidualDeg": 22.193998270064558,
+          "postWorldResidualDeg": 6.830189170012753e-06,
+          "postLocalResidualDeg": 2.4148365394514667e-06,
+          "withinTolerance": true,
+          "effective": true
+        },
+        {
+          "bone": "DEF-toe.L",
+          "preWorldResidualDeg": 1.9913252241518875e-05,
+          "preLocalResidualDeg": 22.193978362192418,
+          "postWorldResidualDeg": 6.830189170012753e-06,
+          "postLocalResidualDeg": 0.0,
+          "withinTolerance": true,
+          "effective": true
+        },
+        {
+          "bone": "DEF-toe.R",
+          "preWorldResidualDeg": 1.9913252241518875e-05,
+          "preLocalResidualDeg": 22.193978362192418,
+          "postWorldResidualDeg": 6.830189170012753e-06,
+          "postLocalResidualDeg": 0.0,
+          "withinTolerance": true,
+          "effective": true
+        },
+        {
+          "bone": "DEF-forearm.L",
+          "preWorldResidualDeg": 2.888940167520815,
+          "preLocalResidualDeg": 2.769176357445477e-05,
+          "postWorldResidualDeg": 0.0,
+          "postLocalResidualDeg": 0.0,
+          "withinTolerance": true,
+          "effective": false
+        },
+        {
+          "bone": "DEF-upper_arm.L",
+          "preWorldResidualDeg": 2.888920993146794,
+          "preLocalResidualDeg": 2.8889209931462894,
+          "postWorldResidualDeg": 1.7075472925031877e-06,
+          "postLocalResidualDeg": 1.7075472925031877e-06,
+          "withinTolerance": true,
+          "effective": true
+        },
+        {
+          "bone": "DEF-hand.L",
+          "preWorldResidualDeg": 2.8889090382835128,
+          "preLocalResidualDeg": 3.171628329212882e-05,
+          "postWorldResidualDeg": 2.4148365394514667e-06,
+          "postLocalResidualDeg": 0.0,
+          "withinTolerance": true,
+          "effective": false
+        }
+      ]
+    }
+  ],
+  "failures": [],
+  "unlistedDrift": [],
+  "pass": true
+}

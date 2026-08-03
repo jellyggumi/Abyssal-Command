@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-index.py",
-  "generationId": "ada19f5524d2a384e3545923281945026bf683b46e974a39217b9e104c6599ef",
+  "generationId": "d86015cdda1a4a6f50ca4766c6ec4626e6e6f9309637005dc824b449fb0cb426",
   "motionAuthority": "derived-retargeted",
   "motionLineage": {
     "authority": "derived-retargeted",
@@ -15,7 +15,7 @@
     "clips": 121,
     "retargetedClips": 110,
     "authoredFallbackClips": 11,
-    "bytes": 133242428
+    "bytes": 133242452
   },
   "assets": [
     {
@@ -116,7 +116,7 @@
       "category": "enemies",
       "replaces": "assets/mesh/character/ember-cohort-character/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/ember-cohort/model.glb",
-      "modelSha256": "4b59c24d94c9eb827ad3ff82e2450802250297d562d4ee4acd7d5411a249c5af",
+      "modelSha256": "8f2133868c49a55cc1c995fd029a74e7d7d04dd2e72ed7b29e30ed3bb7666345",
       "manifest": "assets/motion/ingame/characters/ember-cohort/manifest.json",
       "clipNames": {
         "idle": "ember-cohort::idle::v01",
@@ -144,7 +144,7 @@
         "die": "authored-fallback",
         "show": "retargeted"
       },
-      "bytes": 12305508,
+      "bytes": 12305516,
       "motionAuthority": "derived-retargeted",
       "loopingActions": [
         "idle",
@@ -311,7 +311,7 @@
       "category": "enemies",
       "replaces": "assets/mesh/enemy/possessed/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/possessed/model.glb",
-      "modelSha256": "e0e449903042f298a833da988e8e4e67a391db9253feaea0bfb9281f875be187",
+      "modelSha256": "146f8194a7b030bc213fb80c4cc063a9c5546da4243b6e35a69931c052032e09",
       "manifest": "assets/motion/ingame/characters/possessed/manifest.json",
       "clipNames": {
         "idle": "possessed::idle::v01",
@@ -339,7 +339,7 @@
         "die": "authored-fallback",
         "show": "retargeted"
       },
-      "bytes": 11825936,
+      "bytes": 11825952,
       "motionAuthority": "derived-retargeted",
       "loopingActions": [
         "idle",

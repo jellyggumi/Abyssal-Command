@@ -82,7 +82,10 @@ const EXPECTED_REGISTRY_COUNTS = {
   retargetedClips: ASSET_IDS.length * RETARGETED_ACTIONS.length,
   authoredFallbackClips: ASSET_IDS.length,
 };
-const EXPECTED_REGISTRY_BYTES = 133242428;
+// 133242428 before the focused static rest-pose repair; ember-cohort and
+// possessed each grew their glTF JSON chunk (+8 and +16 bytes) when their
+// selected DEF-bone rotations took the certified target's values.
+const EXPECTED_REGISTRY_BYTES = 133242452;
 
 // Provenance a retargeted clip must carry and an authored fallback must not:
 // the fallback has no source frame range to cite.

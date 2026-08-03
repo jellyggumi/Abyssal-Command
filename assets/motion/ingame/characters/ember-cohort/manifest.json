@@ -10,8 +10,8 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "assets/motion/ingame/characters/ember-cohort/model.glb",
-  "modelSha256": "4b59c24d94c9eb827ad3ff82e2450802250297d562d4ee4acd7d5411a249c5af",
-  "modelBytes": 12305508,
+  "modelSha256": "8f2133868c49a55cc1c995fd029a74e7d7d04dd2e72ed7b29e30ed3bb7666345",
+  "modelBytes": 12305516,
   "targetBoneNames": [
     "DEF-spine",
     "DEF-spine.001",
@@ -418,7 +418,74 @@
   },
   "runtimeEligible": true,
   "gateErrors": [],
-  "generationId": "ada19f5524d2a384e3545923281945026bf683b46e974a39217b9e104c6599ef",
+  "staticPoseRepair": {
+    "tool": "scripts/repair-static-rest-pose.py",
+    "policyDecision": "focused-ember-cohort-and-possessed",
+    "targetRigSha256": "a2fd435880d12a56d70599d701c3b562c0869a0d51062e7d7db26b4a066137e6",
+    "shaBeforeRepair": "4b59c24d94c9eb827ad3ff82e2450802250297d562d4ee4acd7d5411a249c5af",
+    "toleranceWorldDeg": 0.001,
+    "toleranceLocalDeg": 0.001,
+    "bones": [
+      {
+        "bone": "DEF-upper_arm.R",
+        "preWorldResidualDeg": 8.11639129647395,
+        "preLocalResidualDeg": 8.116391296473411,
+        "postWorldResidualDeg": 0.0,
+        "postLocalResidualDeg": 0.0,
+        "effective": true
+      },
+      {
+        "bone": "DEF-forearm.R",
+        "preWorldResidualDeg": 8.116389201163534,
+        "preLocalResidualDeg": 1.4886052178675776e-05,
+        "postWorldResidualDeg": 2.4148365394514667e-06,
+        "postLocalResidualDeg": 0.0,
+        "effective": false
+      },
+      {
+        "bone": "DEF-hand.R",
+        "preWorldResidualDeg": 8.116385234990679,
+        "preLocalResidualDeg": 2.0059138823654082e-05,
+        "postWorldResidualDeg": 2.4148365394514667e-06,
+        "postLocalResidualDeg": 0.0,
+        "effective": false
+      },
+      {
+        "bone": "DEF-foot.L",
+        "preWorldResidualDeg": 7.154254826064045,
+        "preLocalResidualDeg": 7.154254826064045,
+        "postWorldResidualDeg": 0.0,
+        "postLocalResidualDeg": 2.4148365394514667e-06,
+        "effective": true
+      },
+      {
+        "bone": "DEF-foot.R",
+        "preWorldResidualDeg": 7.154254826064045,
+        "preLocalResidualDeg": 7.154254826064045,
+        "postWorldResidualDeg": 0.0,
+        "postLocalResidualDeg": 2.4148365394514667e-06,
+        "effective": true
+      },
+      {
+        "bone": "DEF-toe.L",
+        "preWorldResidualDeg": 2.9575586669421963e-06,
+        "preLocalResidualDeg": 7.154251726660233,
+        "postWorldResidualDeg": 0.0,
+        "postLocalResidualDeg": 0.0,
+        "effective": true
+      },
+      {
+        "bone": "DEF-toe.R",
+        "preWorldResidualDeg": 2.9575586669421963e-06,
+        "preLocalResidualDeg": 7.154251726660233,
+        "postWorldResidualDeg": 0.0,
+        "postLocalResidualDeg": 0.0,
+        "effective": true
+      }
+    ],
+    "rationale": "Selected DEF-bone rest rotations assigned from the certified target rig so the shared overlay pack composes against the rest pose its deltas were authored for. Inverse bind matrices are deliberately untouched: baked clips stay bit-identical while the rest pose moves."
+  },
+  "generationId": "d86015cdda1a4a6f50ca4766c6ec4626e6e6f9309637005dc824b449fb0cb426",
   "sourceAssetRights": {
     "source": "user-provided",
     "runtimeUseDirectedAt": "2026-07-29",

@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "kind": "static-pose-policy",
+  "decision": "focused-ember-cohort-and-possessed",
+  "decisionSource": "user selection 2026-08-03",
+  "evidence": {
+    "manifest": "pose-pairs-semantic-v3/render-manifest.json",
+    "manifestSha256": "dea668ccbdbdc0dba8f47913ae1254da6cca4249c8eeebc754402622b2d50564",
+    "targetRigSha256": "a2fd435880d12a56d70599d701c3b562c0869a0d51062e7d7db26b4a066137e6",
+    "worstN": 5,
+    "candidateActors": 10,
+    "candidatePairs": 73,
+    "excludedReference": {
+      "actorId": "human-command-boss",
+      "reason": "self-target reference"
+    }
+  },
+  "actors": {
+    "ember-cohort": {
+      "bones": [
+        "DEF-upper_arm.R",
+        "DEF-forearm.R",
+        "DEF-hand.R",
+        "DEF-foot.L",
+        "DEF-foot.R",
+        "DEF-toe.L",
+        "DEF-toe.R"
+      ]
+    },
+    "possessed": {
+      "bones": [
+        "DEF-foot.L",
+        "DEF-foot.R",
+        "DEF-toe.L",
+        "DEF-toe.R",
+        "DEF-forearm.L",
+        "DEF-upper_arm.L",
+        "DEF-hand.L"
+      ]
+    }
+  },
+  "excludedActors": [
+    "broken-court-monarch-boss",
+    "broken-court-monarch-v04",
+    "guard",
+    "human-command-boss",
+    "lantern-reaver",
+    "scout",
+    "shade",
+    "shadow-commander-boss",
+    "shadow-soldier-v04"
+  ],
+  "requirements": {
+    "applyOnlyListedBones": true,
+    "preserveRootMotion": true,
+    "preserveUnlistedBones": true,
+    "preserveActionClipNames": true,
+    "requirePostWorldResidualDegAtMost": 0.001,
+    "requirePostLocalResidualDegAtMost": 0.001
+  }
+}

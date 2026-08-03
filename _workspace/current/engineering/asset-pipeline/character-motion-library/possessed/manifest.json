@@ -11,8 +11,8 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/model.glb",
-  "modelSha256": "e0e449903042f298a833da988e8e4e67a391db9253feaea0bfb9281f875be187",
-  "modelBytes": 11825936,
+  "modelSha256": "146f8194a7b030bc213fb80c4cc063a9c5546da4243b6e35a69931c052032e09",
+  "modelBytes": 11825952,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/rig-report.json",
   "targetBoneNames": [
@@ -241,7 +241,7 @@
       "repository-inclusion",
       "redistribution"
     ],
-    "attestationEvidence": "User selected '저장소 포함·배포 권한 있음' in the 2026-07-29 promotion gate."
+    "attestationEvidence": "User selected '\uc800\uc7a5\uc18c \ud3ec\ud568\u00b7\ubc30\ud3ec \uad8c\ud55c \uc788\uc74c' in the 2026-07-29 promotion gate."
   },
   "rightsReceipt": "user-directed-runtime-use-retargeted-from-audited-bench-with-unverified-redistribution",
   "checks": {
@@ -420,5 +420,72 @@
     }
   },
   "runtimeEligible": true,
-  "gateErrors": []
+  "gateErrors": [],
+  "staticPoseRepair": {
+    "tool": "scripts/repair-static-rest-pose.py",
+    "policyDecision": "focused-ember-cohort-and-possessed",
+    "targetRigSha256": "a2fd435880d12a56d70599d701c3b562c0869a0d51062e7d7db26b4a066137e6",
+    "shaBeforeRepair": "e0e449903042f298a833da988e8e4e67a391db9253feaea0bfb9281f875be187",
+    "toleranceWorldDeg": 0.001,
+    "toleranceLocalDeg": 0.001,
+    "bones": [
+      {
+        "bone": "DEF-foot.L",
+        "preWorldResidualDeg": 22.193998270059602,
+        "preLocalResidualDeg": 22.193998270064558,
+        "postWorldResidualDeg": 6.830189170012753e-06,
+        "postLocalResidualDeg": 2.4148365394514667e-06,
+        "effective": true
+      },
+      {
+        "bone": "DEF-foot.R",
+        "preWorldResidualDeg": 22.193998270059602,
+        "preLocalResidualDeg": 22.193998270064558,
+        "postWorldResidualDeg": 6.830189170012753e-06,
+        "postLocalResidualDeg": 2.4148365394514667e-06,
+        "effective": true
+      },
+      {
+        "bone": "DEF-toe.L",
+        "preWorldResidualDeg": 1.9913252241518875e-05,
+        "preLocalResidualDeg": 22.193978362192418,
+        "postWorldResidualDeg": 6.830189170012753e-06,
+        "postLocalResidualDeg": 0.0,
+        "effective": true
+      },
+      {
+        "bone": "DEF-toe.R",
+        "preWorldResidualDeg": 1.9913252241518875e-05,
+        "preLocalResidualDeg": 22.193978362192418,
+        "postWorldResidualDeg": 6.830189170012753e-06,
+        "postLocalResidualDeg": 0.0,
+        "effective": true
+      },
+      {
+        "bone": "DEF-forearm.L",
+        "preWorldResidualDeg": 2.888940167520815,
+        "preLocalResidualDeg": 2.769176357445477e-05,
+        "postWorldResidualDeg": 0.0,
+        "postLocalResidualDeg": 0.0,
+        "effective": false
+      },
+      {
+        "bone": "DEF-upper_arm.L",
+        "preWorldResidualDeg": 2.888920993146794,
+        "preLocalResidualDeg": 2.8889209931462894,
+        "postWorldResidualDeg": 1.7075472925031877e-06,
+        "postLocalResidualDeg": 1.7075472925031877e-06,
+        "effective": true
+      },
+      {
+        "bone": "DEF-hand.L",
+        "preWorldResidualDeg": 2.8889090382835128,
+        "preLocalResidualDeg": 3.171628329212882e-05,
+        "postWorldResidualDeg": 2.4148365394514667e-06,
+        "postLocalResidualDeg": 0.0,
+        "effective": false
+      }
+    ],
+    "rationale": "Selected DEF-bone rest rotations assigned from the certified target rig so the shared overlay pack composes against the rest pose its deltas were authored for. Inverse bind matrices are deliberately untouched: baked clips stay bit-identical while the rest pose moves."
+  }
 }
