@@ -4608,9 +4608,11 @@ function applyFixedRate(run, key, ratePerSecond) {
 const WAVE_CLEAR_COMMANDER_RECOVERY_BP = 800;
 const WAVE_CLEAR_GATE_RECOVERY_BP = 500;
 function processWaveClearRecovery(run) {
+  const encounter = ensureEncounterState(run);
   if (run.objectives.gateDefense.completed) return;
   if (run.waveIndex <= run.waveClearIndex || run.waveIndex === 0) return;
-  if (ensureEncounterState(run).spawnQueue.length) return;
+  if (encounter.status === "RECOVERY") return;
+  if (encounter.spawnQueue.length) return;
   if (run.enemies.some((enemy) => enemy.hp > 0 && !enemy.elite && enemy.class !== "boss")) return;
   run.waveClearIndex = run.waveIndex;
   const waveIndex = run.waveClearIndex - 1;
