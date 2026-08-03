@@ -1051,6 +1051,89 @@ test("published facing drives which directional hit clip resolves, end to end", 
   assert.deepEqual(played, ["hit_front"], "re-aiming at the attacker turns a back hit into a front hit");
 });
 
+// Damage arrives in the same snapshot that reconciles an attacker's new facing,
+// before the visual yaw has been eased toward its fresh target. Directional
+// reaction routing must use that fresh target rather than yesterday's render yaw.
+test("RealtimeBattle classifies same-snapshot hit reactions from fresh target yaw", () => {
+  const adapter = realtimeBattleHarness();
+  const played = [];
+  adapter.triggerAction = (record, key) => { played.push(key); return true; };
+
+  adapter.reconcileActors({ commander: { id: "commander", x: 12000, y: 6000 } });
+  const target = facingActor(adapter, "commander");
+  target.actions = { hit: {}, bighit: {}, hit_front: {}, hit_back: {}, hit_left: {}, hit_right: {} };
+
+  // This is the rendered heading from the preceding frame. An attacker on +x
+  // would route as hit_right from yaw 0, but snapshot +x now aims at +PI/2.
+  target.yaw = 0;
+  target.root.rotation.y = 0;
+  adapter.reconcileActors({
+    commander: { id: "commander", x: 12000, y: 6000, facingX: 1000, facingY: 0 },
+  });
+  assert.ok(
+    Math.abs(target.targetYaw - Math.PI / 2) < 1e-9,
+    `snapshot +x must publish targetYaw +PI/2, got ${target.targetYaw}`,
+  );
+
+  const attacker = { root: new THREE.Object3D() };
+  attacker.root.position.set(target.root.position.x + 5, 0, target.root.position.z);
+  // Deliberately no updateActorFacing(): damage is consumed in this snapshot.
+  adapter.triggerHitReaction(target, attacker, false, 0);
+
+  assert.deepEqual(played, ["hit_front"], "fresh target yaw must beat stale visual yaw for the hit reaction");
+  assert.doesNotThrow(() => adapter.dispose());
+});
+
+// The guard widened from "a finite render yaw" to "either heading is finite",
+// so the fallback order has to hold in both directions: a fresh targetYaw wins,
+// a null/absent one must still let the eased render yaw pick the clip, and a
+// record carrying neither must degrade to the flat front reaction instead of
+// routing on an undefined operand.
+test("RealtimeBattle falls back from target yaw to render yaw and defaults when neither is finite", () => {
+  const adapter = realtimeBattleHarness();
+  const played = [];
+  adapter.triggerAction = (record, key) => { played.push(key); return true; };
+
+  adapter.reconcileActors({ commander: { id: "commander", x: 12000, y: 6000 } });
+  const target = facingActor(adapter, "commander");
+  target.actions = { hit: {}, bighit: {}, hit_front: {}, hit_back: {}, hit_left: {}, hit_right: {} };
+
+  // Parked on world +x of the target, so every case below sees the same
+  // incoming heading of +PI/2 and only the target's facing varies.
+  const attacker = { root: new THREE.Object3D() };
+  attacker.root.position.set(target.root.position.x + 5, 0, target.root.position.z);
+
+  // No render yaw at all -- the pre-fix guard rejected this record outright and
+  // the blow degraded to the flat front clip. A finite targetYaw alone routes.
+  target.yaw = null;
+  target.targetYaw = 0;
+  adapter.triggerHitReaction(target, attacker, false, 0);
+  assert.deepEqual(played, ["hit_right"], "a finite target yaw alone must route the blow directionally");
+
+  // targetYaw null: the rendered yaw still drives routing. Facing -z with the
+  // attacker on +x is a LEFT hit, a value no default can produce by accident.
+  played.length = 0;
+  target.yaw = Math.PI;
+  target.targetYaw = null;
+  adapter.triggerHitReaction(target, attacker, false, 0);
+  assert.deepEqual(played, ["hit_left"], "a null target yaw falls back to the rendered yaw");
+
+  // Same fallback when the field is absent entirely rather than nulled.
+  played.length = 0;
+  delete target.targetYaw;
+  adapter.triggerHitReaction(target, attacker, false, 0);
+  assert.deepEqual(played, ["hit_left"], "an absent target yaw falls back to the rendered yaw");
+
+  // Neither heading usable: front reaction, and no throw on the missing operand.
+  played.length = 0;
+  target.yaw = null;
+  target.targetYaw = null;
+  assert.doesNotThrow(() => adapter.triggerHitReaction(target, attacker, false, 0));
+  assert.deepEqual(played, ["hit_front"], "with no usable heading the blow defaults to the front reaction");
+
+  assert.doesNotThrow(() => adapter.dispose());
+});
+
 test("RealtimeBattle trails companions behind their simulation position but never the commander", () => {
   const adapter = realtimeBattleHarness();
   // The simulation hard-snaps companions to commander+offset every tick;
