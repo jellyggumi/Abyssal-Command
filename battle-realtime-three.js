@@ -4510,7 +4510,7 @@ export class RealtimeBattle {
       record.lastMovingFlinchMs = now;
     }
     let direction = "front";
-    if (attackerRecord?.root && record.root && Number.isFinite(record.yaw)) {
+    if (attackerRecord?.root && record.root && (Number.isFinite(record.targetYaw) || Number.isFinite(record.yaw))) {
       const from = attackerRecord.root.position;
       const to = record.root.position;
       const dx = from.x - to.x;
@@ -4518,7 +4518,7 @@ export class RealtimeBattle {
       if (Math.abs(dx) > 1e-6 || Math.abs(dz) > 1e-6) {
         direction = hitReactionDirection(
           wrapAngle(Math.atan2(dx, dz) + MODEL_FORWARD_YAW_OFFSET),
-          record.yaw,
+          Number.isFinite(record.targetYaw) ? record.targetYaw : record.yaw,
         );
       }
     }
