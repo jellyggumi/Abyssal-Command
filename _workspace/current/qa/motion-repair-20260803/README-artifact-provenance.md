@@ -56,3 +56,37 @@ caveat recorded honestly: `pose-pairs-post-repair/` was rendered *before* the
 Blender bind-pose import defect was fixed (commit `53293208`), so its four
 `KG_POSE_METRIC` failures on the repaired feet are that defect, not an asset
 fault. Re-render if those sheets are needed as evidence.
+
+### KNOWN GAP — the v3 evidence corpus is not reproducible from this tree
+
+`pose-pairs-semantic-v3/render-manifest.json` is committed and its digest
+`dea668cc…` is pinned in `scripts/repair-static-rest-pose.py` as
+`APPROVED_EVIDENCE_MANIFEST_SHA256`, so the repair tool refuses to run without
+it. **But the renderer that produced it no longer exists in this tree.** The
+concurrent revert took the hardened
+`tools/render-character-motion-contact-sheet-blender.py` with it, and only the
+Blender bind-pose fix was restored afterwards.
+
+The manifest declares fields the committed renderer cannot emit:
+
+| manifest field | value in the corpus | committed renderer |
+|---|---|---|
+| `worstN` | `5` | absent |
+| `zeroNoOpCandidateRows` | `[]` | absent |
+| `excludedReferences` | `human-command-boss`, self-target reference | absent |
+| `derivation.kind` | `actor-exclusion` | absent |
+| `--camera-direction` | default `[0.48,-1,0.12]` | flag absent |
+
+So the reverted renderer capabilities were: target-SHA self-reference exclusion,
+zero-residual no-op provenance, the fail-closed complete-render gate, `worstN`
+recording, and camera-direction validation. All were reviewed and test-covered
+at the time; the tests went with the same revert.
+
+Consequence: the corpus is readable evidence and the numbers in it are
+trustworthy — 73/73 pairs, 10 candidate actors, independently audited — but
+**regenerating or extending it requires restoring that renderer first.** Asset
+determinism (documented above) does not extend to the evidence renderer.
+
+Restoring it is a separate decision for the human owner. Nothing currently
+depends on re-rendering: the repair's own gate is numeric and passes from this
+tree (`repair-static-rest-pose.py --check` exit 0, 13/13 suite).
