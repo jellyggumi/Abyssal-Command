@@ -396,7 +396,13 @@ function renderGates() {
   el.gates.append(auth);
 
   for (const [gid, meta] of Object.entries(GATES)) {
-    const docs = scan.gates[gid] || [];
+    // The filter narrows to a gate id or a document path, so typing "g6" or
+    // "perf" answers a question instead of scrolling eight groups.
+    const all = scan.gates[gid] || [];
+    const docs = state.filter
+      ? all.filter((p) => p.toLowerCase().includes(state.filter))
+      : all;
+    if (state.filter && !docs.length && !gid.toLowerCase().includes(state.filter)) continue;
     const withVerdict = scan.docs.filter(
       (d) => d.gates.includes(gid) && Object.keys(d.verdicts).length);
     const numberless = scan.docs.filter(
@@ -1725,9 +1731,14 @@ window.matchMedia('(max-width: 1100px)').addEventListener('change', (m) => {
 // so the toggle's honesty has to be re-evaluated on resize too.
 window.matchMedia('(max-width: 1700px)').addEventListener('change', syncOutlineButton);
 
+// The filter applies to whichever axis is showing. Calling renderTree()
+// unconditionally left the gate and asset lanes frozen on their previous
+// render -- including a filter for a file that had since been deleted.
 el.filter.addEventListener('input', () => {
   state.filter = el.filter.value.trim().toLowerCase();
-  renderTree();
+  if (state.sideMode === 'gate') renderGates();
+  else if (state.sideMode === 'asset') renderAssets();
+  else renderTree();
 });
 el.runSelect.addEventListener('change', async () => {
   stashDraft();
