@@ -13,7 +13,7 @@ import {
  * System-diversification doctrine. The wave doctrine already proves a stage is CLEARABLE
  * (`tests/stage-wave-doctrine.test.mjs`); this suite proves the campaign is not the same stage
  * three times with a bigger `scale`. Both thresholds are ratchets set at the shipped catalog:
- * the worst shipped pair shares 3 of 20 axes (0.15), and response types run 16 -> 17 -> 17.
+ * the worst shipped pair shares 3 of 20 axes (0.15), and response types run 17 -> 17 -> 18.
  */
 
 test("no two stages copy more than a fifth of the authored variation axes", () => {
@@ -42,6 +42,11 @@ test("the wave-kind rhythm, the mid-boss class and the class rotation are stage-
 test("difficulty escalates as response types, not as an HP multiplier", () => {
   const report = scanStageVariation();
   const counts = report.escalation.map(({ responseTypes }) => responseTypes);
+  assert.deepEqual(
+    counts,
+    [17, 17, 18],
+    `campaign response-type escalation must remain 17 -> 17 -> 18, got ${counts.join(" -> ")}`,
+  );
   const scales = report.escalation.map(({ stageId }) => STAGE_BY_ID[stageId].scale);
 
   // The HP curve is real but it is not the difficulty claim, so it is asserted separately.

@@ -10,6 +10,7 @@
 | Encounter director | vetted profile의 scheduled window에서 legal variant/reinforcement/recovery 선택 | peak와 lull을 만듦 | authored hurdle을 지우면 tuning 불명확 | runtime layout/stats rewrite 없이 bounded overlay |
 | DDA | player condition에 따라 미래 content를 조정 | 넓은 skill band 보정 가능 | fairness/reproducibility 위험 | Stage 1–3 baseline 검증 후에만 고려 |
 | 2D image-first renderer | orthographic camera + sprite atlas/card + explicit render bands | 3D asset production 감소, fixed-view readability | transparency/order와 visual/gameplay 혼동 위험 | read-only observer invariant |
+| Existing asset promotion lane | `gti` concept/texture plates와 `ppgen` sprite bundle을 concept→candidate→receipt→runtime promotion으로 분리 | 기존 권리·provenance·runtime eligibility 경계를 재사용 | 새 2D 자산도 manifest/allowlist와 post-composite readability 검증이 필요 | sprite source는 simulation authority가 아니며 candidate는 기본 `runtimeEligible: false` (`CLAUDE.md#68-89`, `engineering/asset-pipeline/asset-lanes.json#35-50`) |
 
 PCG Book은 constructive dungeon/level generation, grammar, experience-driven generation, generator evaluation을 다룬다. `direct page retrieval`: https://www.pcgbook.com/ ; chapter 3: https://www.pcgbook.com/chapter03.pdf. WFC는 lowest-entropy observation/constraint propagation을 쓰며 contradiction이 날 수 있음을 명시한다. `direct page retrieval`: https://github.com/mxgmn/WaveFunctionCollapse
 
@@ -41,19 +42,20 @@ PCG Book은 constructive dungeon/level generation, grammar, experience-driven ge
 5. Single stat multiplier — [OBSERVED] 이 저장소의 난이도 계약은 HP 단독 배율보다 clear budget·response type·class rotation·density/concurrency를 분리한다 (`wiki/concepts/stage-difficulty-and-system-variation.md#43-72`). 외부 practice의 일반화는 [INFERENCE]이며 단독 해결책이 아니다.
 
 ## Key Gaps
-- 외부 source는 이 게임의 600초 Stage 1–3 curve, enemy speed ratio, TTK/TTD, spawn density의 보편 상수를 제공하지 않는다. 이들은 [TARGET] telemetry calibration 대상이다.
+- 외부 source는 이 게임의 Stage별 계획 band 300–480초, hard ceiling 540초, 세 Stage 기준 1080초 campaign curve, enemy speed ratio, TTK/TTD, spawn density의 보편 상수를 제공하지 않는다. 시간 수치는 `design/master-numeric-contract.md#17-19`의 `[TARGET]`이고, 나머지는 telemetry calibration 대상이다.
 - [OBSERVED] 현 레포는 wave HP/response를 계약화했지만 wave pressure/readability의 simultaneous telegraph coverage는 직접 측정하지 않는다 (`wiki/concepts/stage-difficulty-and-system-variation.md#43-72,185-189`). local density와 simultaneous telegraph coverage/egress가 필요하다.
 - WFC/CA는 global exit path, encounter sightline, camera readability를 보장하지 않는다. offline graph/template validation과 human curation이 선행해야 한다.
 - [OBSERVED] 새 runtime resource의 Pages 승격은 네 allowlist 일치가 필요하다 (`README.md#154-157`). raw candidate는 deployable resource가 아니다.
+- [OBSERVED] asset lane은 concept/candidate/runtime을 분리하고 candidate sidecar에 source·generator·rightsReceipt·runtimeReceipt와 `runtimeEligible: false`를 요구한다 (`engineering/asset-pipeline/asset-lanes.json#35-50`). 2D sprite/plate도 이 경계를 통과하기 전에는 runtime resource가 아니다.
 
 ## Contradictions
 - **상승 baseline vs DDA:** 고정 Stage 1–3 curve는 비교 가능해야 하지만 unrestricted DDA는 실제 난이도를 바꾼다. [DECISION] current slice에서는 schedule·hurdle timestamp를 hard constraint로 두고 adaptation은 defer한다.
 - **director vs difficulty rewrite:** director가 variant/timing을 바꾸는 것과 base stats를 바꾸는 것은 별개다. [DECISION] director는 legal budget variant만 고른다.
 - **2D visual occlusion vs gameplay occlusion:** PNG alpha/overlap은 collision과 LOS가 아니다. [DECISION] simulation primitive와 foot anchor만 authority다.
-- **sine wave vs logistic:** [DECISION] curve는 logistic sigmoid가 아니다. versioned record는 normalized components `density(t)`, `damagePressure(t)`, `telegraphCoverage(t)`, `egressRisk(t)`를 declared cap으로 `[0,1]`에 normalize하여 `load(t)`를 계산한다. `load(t) = B(t) + Σ a_i·w_i(t)`에서 `B(t)`는 단조이고 `w_i(t)=sin(π·(t-start_i)/(end_i-start_i))` for `start_i ≤ t < end_i`, otherwise `0` (`half-sine-v1`)다. planned/realized pulse record는 shape/version, stageId, start/end/recovery tick, amplitude bound, expected response, sample stride, max error를 가지며 every declared sample에서 compare한다.
+- **사인 파형 vs 검증:** [DECISION] curve는 logistic sigmoid가 아니다. versioned record는 normalized components `density(t)`, `damagePressure(t)`, `telegraphCoverage(t)`, `egressRisk(t)`를 declared cap으로 `[0,1]`에 normalize하여 `load(t)`를 계산한다. `load(t) = B(t) + Σ a_i·w_i(t)`에서 `B(t)`는 단조이고 `w_i(t)=sin(π·(t-start_i)/(end_i-start_i))` for `start_i ≤ t < end_i`, otherwise `0` (`half-sine-v1`)다. planned/realized pulse record는 shape/version, stageId, start/end/recovery tick, amplitude bound, expected response, sample stride, max error를 가지며 every declared sample에서 compare한다. 이것은 `[TARGET]` 계측 계약이며 난이도·재미 PASS 증거가 아니다.
 
 ## Key Insight
-PCG는 pacing의 주인이 아니라 **offline-authored pacing contract의 constrained realization**이어야 한다. layout seed가 만든 proposal은 사람의 route/clearance/camera/objective validation을 거쳐 committed static profile이 되고, runtime은 그 profile에서 deterministic encounter variant만 고른다. image-first renderer는 foot anchor와 render band를 read-only로 투영한다. 이 구조만이 one-stick readability, telegraph egress, 2.5D visual depth, profile-aware replay, Stage 1–3 variation, 그리고 측정 가능한 상승+사인형 hurdle 곡선을 함께 보장한다.
+PCG는 pacing의 주인이 아니라 **offline-authored pacing contract의 constrained realization**이어야 한다. layout seed가 만든 proposal은 사람의 route/clearance/camera/objective validation을 거쳐 committed static profile이 되고, runtime은 그 profile에서 deterministic encounter variant만 고른다. image-first renderer는 foot anchor와 render band를 read-only로 투영하며, 입력은 직접 콤보·대시를 유지한다. 이 구조만이 one-stick-adjacent mobile readability, telegraph egress, 2.5D visual depth, profile-aware replay, Stage 1–3 variation, 그리고 측정 가능한 상승+사인형 hurdle 곡선을 함께 보장한다. [TARGET] 세 Stage 계획 band는 900–1440초(기준 1080초)이고 Stage별 hard ceiling 540초를 모두 쓰면 1620초다. G4/G7/G8의 사람 플레이 게이트는 별도 검증 없이는 PASS가 아니다.
 
 ## Curated Sources
 - `direct page retrieval` — PCG Book (constructive dungeons, experience-driven PCG, evaluation): https://www.pcgbook.com/
@@ -66,7 +68,7 @@ PCG는 pacing의 주인이 아니라 **offline-authored pacing contract의 const
 ## Metric Candidate Matrix
 | Metric | Grain | What it falsifies | Target status |
 |------|------|-------------------|---------------|
-| Run scope and duration | `cinder-span`→`abyss-chancel`→`echo-throne`, first controllable tick→final objective tick, declared cohort | 600초 미만, Stage 4/legacy route 혼입, pause/loading으로 부풀린 시간 | [TARGET] all-and-only three profiles, simulation gameplay clock ≥600 s |
+| Run scope and duration | `cinder-span`→`abyss-chancel`→`echo-throne`, first controllable tick→final objective tick, declared cohort | Stage가 계획 band 300–480초를 벗어난 원인을 설명하지 못함, Stage별 540초 hard ceiling 초과 또는 보스 생략 강제 종막, Stage 4/legacy route 혼입, pause/loading으로 부풀린 시간 | [TARGET] all-and-only three profiles: planned gameplay clock 900–1440 s, nominal 1080 s; absolute forced-finale ceiling 1620 s (`design/master-numeric-contract.md#17-19`) |
 | Conditional failure hazard | 30 s bin, profile/seed/build/input cohort | unplanned collapse 또는 hurdle 후 회복 실패 | [TARGET] monotone baseline + declared pulse만 허용 |
 | TTK | spawn/first-hit→death, normal/elite/boss | HP·armor·DPS mismatch | [TARGET] stage cohort별 p10/p50/p90 |
 | TTD / damage pressure | trailing 10 s post-mitigation incoming DPS | unfair spike, recovery 부재 | [TARGET] hurdle 뒤 declared recoveryEndTick readout |

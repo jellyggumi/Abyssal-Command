@@ -410,12 +410,73 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
     await page.locator("#start-defense").click();
     const surface = page.locator('#defense-battle-surface[data-defense-started="true"]');
     await surface.waitFor({ state: "attached" });
+    // LORE FEEDBACK IS A SINGLE-SHOT PUBLICATION ON A SYNTHETIC CLOCK, REVOKED ON A REAL ONE.
+    // `LORE_SURPRISE_RESOLVED` is emitted once, at run creation (defense-run-simulation.js:5484,
+    // tick 0), so renderEventFeedback() publishes data-defense-feedback="lore" on the FIRST frame
+    // that renders tick-0 events and never again -- its per-tick key dedupe (app.js:3110-3115)
+    // swallows every repeat. That publication is then revoked by a real-time setTimeout(..., 1800)
+    // (app.js:3124-3130) which the synthetic rAF clock installed above does NOT control: page
+    // frames advance only when __pumpFrame() is called, but the revoke runs on wall time.
+    // A bare `waitForFunction` here hung for the full 90 s on CI run 30801125333, two ways. Its
+    // polling is alive -- measured: Playwright polls off a pristine rAF, not this page's hijacked
+    // one -- but (1) if the single pumped frame rendered nothing (e.g. the session had not
+    // registered its loop rAF callback yet, so the pump drained an empty queue), no later frame
+    // ever runs and the predicate polls forever against a frozen page; and (2) if the attribute
+    // WAS set, the 1800 ms revoke deletes it and nothing can set it again -- no frames advance and
+    // the tick-0 event is already deduped -- so the poll spins on state that will never return.
+    // #battle-event-feedback had the same exposure, being read AFTER the wait.
+    // So: latch the observation the instant it happens (an attribute observer, whose callback is a
+    // microtask and therefore always ahead of the 1800 ms macrotask revoke) and drive the wait by
+    // pumping it forward instead of assuming one frame was enough.
+    await page.evaluate(() => {
+      const captureLoreFeedback = () => {
+        if (window.__loreFeedbackLatch) return;
+        const surfaceNode = document.querySelector("#defense-battle-surface");
+        if (surfaceNode?.dataset.defenseFeedback !== "lore") return;
+        const feedbackNode = document.querySelector("#battle-event-feedback");
+        window.__loreFeedbackLatch = {
+          surfaceFeedback: surfaceNode.dataset.defenseFeedback,
+          feedback: feedbackNode?.dataset.feedback ?? null,
+          text: feedbackNode?.textContent ?? "",
+        };
+      };
+      window.__loreFeedbackLatch = null;
+      window.__captureLoreFeedback = captureLoreFeedback;
+      // #defense-battle-surface and #battle-event-feedback are mounted exactly once for the whole
+      // page lifetime (app.js:1183-1187, 1868-1881), so this observer can never be orphaned.
+      new MutationObserver(captureLoreFeedback).observe(document.querySelector("#defense-battle-surface"), {
+        attributes: true,
+        attributeFilter: ["data-defense-feedback"],
+      });
+      captureLoreFeedback();
+    });
+    await page.evaluate(() => window.__pumpFrame(100));
     report.events.push("battle-visible");
-    await page.waitForFunction(() => document.querySelector("#defense-battle-surface")?.dataset.defenseFeedback === "lore");
-    const loreFeedback = page.locator("#battle-event-feedback");
-    assert.equal(await loreFeedback.getAttribute("data-feedback"), "lore");
+    // Bounded by construction: at most LORE_FEEDBACK_MAX_PUMPS synthetic frames (100 ms of game
+    // time each), one evaluate round trip apiece, checking before every pump so the common case
+    // where the frame above already published costs zero extra frames. This cannot hang -- it
+    // latches or it fails with the pump count -- and it is not a wait that cannot fail: a run that
+    // never publishes lore feedback still fails, just promptly and with a diagnosis.
+    const LORE_FEEDBACK_MAX_PUMPS = 240;
+    let loreFeedback = null;
+    let loreFeedbackPumps = 0;
+    while (!loreFeedback) {
+      loreFeedback = await page.evaluate(() => {
+        window.__captureLoreFeedback();
+        return window.__loreFeedbackLatch;
+      });
+      if (loreFeedback || loreFeedbackPumps >= LORE_FEEDBACK_MAX_PUMPS) break;
+      await page.evaluate(() => window.__pumpFrame(100));
+      loreFeedbackPumps += 1;
+    }
+    assert.ok(
+      loreFeedback,
+      `lore feedback never reached #defense-battle-surface within ${LORE_FEEDBACK_MAX_PUMPS} pumped frames`,
+    );
+    report.events.push({ event: "lore-feedback-latched", pumps: loreFeedbackPumps });
+    assert.equal(loreFeedback.feedback, "lore");
     assert.match(
-      await loreFeedback.textContent() ?? "",
+      loreFeedback.text,
       /\S/,
       "lore feedback must render safe snapshot-derived text through the live status region",
     );
@@ -870,6 +931,35 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
         return snapshot;
       };
       const queuedInputs = [];
+      const extractionState = (snapshot) => {
+        const extraction = snapshot.tactics.extraction ?? null;
+        const liveEnemies = snapshot.enemies.filter((enemy) => enemy.hp > 0);
+        const liveEnemyInZoneCount = extraction
+          ? liveEnemies.filter((enemy) => (enemy.x - extraction.x) ** 2 + (enemy.y - extraction.y) ** 2 <= extraction.radius ** 2).length
+          : 0;
+        const progress = snapshot.extractionProgress;
+        return {
+          phase: snapshot.objectives.phase,
+          tick: snapshot.tick,
+          hold: { ticks: progress.holdTicks, maxTicks: progress.maxHoldTicks },
+          ready: progress.ready,
+          completed: progress.completed,
+          failed: progress.failed,
+          expiry: {
+            tick: progress.expiresAt,
+            remainingTicks: progress.expiresAt === null ? null : progress.expiresAt - snapshot.tick,
+          },
+          commander: { x: snapshot.commander.x, y: snapshot.commander.y },
+          extraction: extraction ? {
+            id: extraction.id,
+            x: extraction.x,
+            y: extraction.y,
+            radius: extraction.radius,
+          } : null,
+          liveEnemyCount: liveEnemies.length,
+          liveEnemyInZoneCount,
+        };
+      };
       const queue = (type, payload) => {
         queuedInputs.push({ type, payload });
         run = queueInput(run, type, payload);
@@ -884,6 +974,7 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
             canQueueDash: Boolean(bossDash),
             bossDash,
             growthOffer: Boolean(snapshot.growthOffer),
+            extraction: extractionState(snapshot),
           };
         },
         queueMove: (octant) => queue("MOVE", octant),
@@ -945,6 +1036,7 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
             phase: snapshot.objectives.phase,
             tick: snapshot.tick,
             level: snapshot.commander.level,
+            extraction: extractionState(snapshot),
           };
         },
       };
@@ -958,7 +1050,7 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
     }, campaign.runOptions);
     const FRAME_MS = 100;
     const TICK_FRAME_MS = FRAME_MS / 6;
-    const MAX_PUMPS = 2000;
+    const MAX_PUMPS = 2100;
     let mirrorAccumulator = 0;
     let mirrorFrameStarted = false;
     let initialCapturePromptText = null;
@@ -967,6 +1059,7 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
     let holdingCapturePromptText = null;
     let extractionReadyPromptState = null;
     let bindStarted = false;
+    let firstExtractionPhasePump = null;
     let worldHud = await readWorldHud();
     let pumps = 0;
     let extractionClaimed = false;
@@ -1006,6 +1099,7 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
     };
     while (pumps < MAX_PUMPS) {
       const routeDecision = await page.evaluate(() => window.__survivorObjectiveRoute.decide());
+      if (routeDecision.extraction.phase === "extraction") firstExtractionPhasePump ??= pumps;
       await setMovementDirection(routeDecision.octant);
       const cutsceneDismiss = page.locator("#defense-cutscene-overlay [data-cutscene-dismiss]");
       if (await cutsceneDismiss.isVisible().catch(() => false)) await cutsceneDismiss.press("Enter");
@@ -1072,10 +1166,11 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
       pumps += 1;
       await page.waitForTimeout(0);
     }
+    worldHud = await readWorldHud();
     for (const key of [...heldMovementKeys]) {
       await page.keyboard.up(key);
       heldMovementKeys = heldMovementKeys.filter((held) => held !== key);
-      await queueHeldMovement();
+      if (worldHud.battleState !== "victory") await queueHeldMovement();
     }
     const journeyEvidence = await page.evaluate(() => {
       window.__stopWorldHudDamageObserver?.();
@@ -1100,6 +1195,8 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
       finalObjectivePhase: worldHud.objectivePhase,
       route: journeyEvidence.route,
       nativeInputs: journeyEvidence.nativeInputs,
+      firstExtractionPhasePump,
+      extraction: journeyEvidence.route.extraction,
       issuedLegalAttacks,
       liveMeleeImpactEventIds: [...new Set(worldHud.damageSamples
         .filter((sample) => sample.eventType === "MELEE_IMPACT" && sample.eventId)
@@ -1147,7 +1244,7 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
     // Bug #4 guard: the prompt starts in an explicit pre-bind state and, after
     // the player activates that route, reaches the actionable extraction-ready
     // state. Both states must name the real seeded elite companion prototype.
-    assert.ok(drive.initialCapturePromptText, `the elite capture prompt must appear once an elite candidate and extraction zone exist (Bug #4 guard); final public state: ${JSON.stringify({ stageId: worldHud.stageId, battleState: worldHud.battleState, objectivePhase: worldHud.objectivePhase, status: worldHud.status, nameplateCount: worldHud.nameplateCount, damageSamples: drive.damageSamples.length, liveMeleeImpactCount: drive.liveMeleeImpactEventIds.length, pumps: drive.pumps, issuedLegalAttacks: drive.issuedLegalAttacks, route: drive.route, nativeInputTypes: drive.nativeInputs.map((input) => input.type) })}`);
+    assert.ok(drive.initialCapturePromptText, `the elite capture prompt must appear once an elite candidate and extraction zone exist (Bug #4 guard); final public state: ${JSON.stringify({ stageId: worldHud.stageId, battleState: worldHud.battleState, objectivePhase: worldHud.objectivePhase, status: worldHud.status, nameplateCount: worldHud.nameplateCount, damageSamples: drive.damageSamples.length, liveMeleeImpactCount: drive.liveMeleeImpactEventIds.length, pumps: drive.pumps, firstExtractionPhasePump: drive.firstExtractionPhasePump, extraction: drive.extraction, issuedLegalAttacks: drive.issuedLegalAttacks, route: drive.route, nativeInputTypes: drive.nativeInputs.map((input) => input.type) })}`);
     assert.match(drive.initialCapturePromptText, /^(?:Bind 대기|결속 홀드 \d+\/\d+초|추출 가능) · Ember Cohort$/, "the initial capture prompt must expose the real companion name and an explicit bind/extraction state");
     assert.ok(drive.initialCapturePromptState, "the initial capture prompt must have a matching extraction action");
     const initiallyReady = drive.initialCapturePromptText.startsWith("추출 가능");
@@ -1156,14 +1253,17 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
     if (!initiallyReady) assert.equal(drive.bindStarted, true, "the enabled Bind CTA must be activated exactly once before waiting for extraction readiness");
     assert.ok(drive.holdingCapturePromptText, "the elite capture prompt must expose the active hold state after the Bind route starts");
     assert.match(drive.holdingCapturePromptText, /^결속 홀드 \d+\/\d+초 · Ember Cohort$/, "the active hold prompt must expose deterministic progress and the real companion name");
-    assert.ok(drive.extractionReadyPromptText, `the elite extraction-ready prompt must appear after the Bind hold completes (Bug #4 guard); drive: ${JSON.stringify({ initialCapturePromptText: drive.initialCapturePromptText, holdingCapturePromptText: drive.holdingCapturePromptText, finalPromptText: drive.finalPromptText, finalObjectivePhase: drive.finalObjectivePhase, pumps: drive.pumps })}`);
+    assert.ok(drive.extractionReadyPromptText, `the elite extraction-ready prompt must appear after the Bind hold completes (Bug #4 guard); drive: ${JSON.stringify({ initialCapturePromptText: drive.initialCapturePromptText, holdingCapturePromptText: drive.holdingCapturePromptText, finalPromptText: drive.finalPromptText, finalObjectivePhase: drive.finalObjectivePhase, pumps: drive.pumps, firstExtractionPhasePump: drive.firstExtractionPhasePump, extraction: drive.extraction })}`);
     assert.match(drive.extractionReadyPromptText, /^추출 가능 · Ember Cohort$/, "the elite capture prompt must reach the concrete Korean extraction-ready CTA with the real companion name");
     assert.ok(drive.extractionReadyPromptState, "the extraction-ready prompt must have a matching extraction action");
     assert.equal(drive.extractionReadyPromptState.disabled, false, "the extraction-ready CTA must remain enabled");
     assert.equal(drive.extractionReadyPromptState.ariaDisabled, "false", "the extraction-ready CTA aria-disabled state must be false");
     assert.equal(extractionClaimed, true, "the native extraction CTA must be activated after Bind completes");
+    assert.ok(
+      pumps < MAX_PUMPS || worldHud.battleState === "victory",
+      `the ${MAX_PUMPS}-pump cap was exhausted without victory; final public state/route: ${JSON.stringify({ pumps, stageId: worldHud.stageId, battleState: worldHud.battleState, objectivePhase: worldHud.objectivePhase, status: worldHud.status, promptText: worldHud.promptText, route: { phase: drive.route.phase, tick: drive.route.tick, bossContacted: drive.route.bossContacted, extraction: drive.route.extraction } })}`,
+    );
     assert.equal(worldHud.battleState, "victory", "the live Cinder journey must finish in victory");
-    assert.ok(drive.pumps <= MAX_PUMPS, `the complete Cinder journey must finish within ${MAX_PUMPS} pumps, took ${drive.pumps}`);
     assert.ok(drive.route.acceptedDirectAttacks > 0, "the objective-aware driver must queue at least one legal direct-light attack");
     assert.equal(drive.route.bossContacted, true, "the objective-aware driver must bring the commander into direct-light contact with the Cinder boss");
     assert.deepEqual(drive.route.rejectedDirectAttacks, [], `the route must not queue stale or out-of-range direct light: ${JSON.stringify(drive.route.rejectedDirectAttacks)}`);
@@ -1190,6 +1290,8 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
       extractionReadyPromptState: drive.extractionReadyPromptState,
       bindStarted: drive.bindStarted,
       pumps: drive.pumps,
+      firstExtractionPhasePump: drive.firstExtractionPhasePump,
+      extraction: drive.extraction,
       route: drive.route,
       gameTimeMs: drive.gameTimeMs,
     };

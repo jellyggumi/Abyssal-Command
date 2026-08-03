@@ -146,6 +146,79 @@ function installDeterministicAnimationClock() {
     }),
   });
 }
+function installLiveDprMediaQueryFake() {
+  let devicePixelRatio = 1;
+  const mediaQueries = new Set();
+  const resolutionPattern = /^\(resolution:\s*([0-9]+(?:\.[0-9]+)?)dppx\)$/;
+
+  const matches = (media) => {
+    const match = resolutionPattern.exec(media);
+    return match ? Number(match[1]) === devicePixelRatio : false;
+  };
+
+  const createMediaQueryList = (media) => {
+    let currentMatches = matches(media);
+    let onchange = null;
+    const listeners = new Set();
+    const mediaQueryList = {
+      media,
+      get matches() {
+        return currentMatches;
+      },
+      get onchange() {
+        return onchange;
+      },
+      set onchange(listener) {
+        onchange = typeof listener === "function" ? listener : null;
+      },
+      addEventListener(type, listener) {
+        if (type === "change" && typeof listener === "function") listeners.add(listener);
+      },
+      removeEventListener(type, listener) {
+        if (type === "change") listeners.delete(listener);
+      },
+      addListener(listener) {
+        if (typeof listener === "function") listeners.add(listener);
+      },
+      removeListener(listener) {
+        listeners.delete(listener);
+      },
+      notifyIfChanged() {
+        const nextMatches = matches(media);
+        if (nextMatches === currentMatches) return;
+        currentMatches = nextMatches;
+        const event = new Event("change");
+        Object.defineProperties(event, {
+          matches: { value: currentMatches },
+          media: { value: media },
+        });
+        for (const listener of [...listeners]) listener.call(mediaQueryList, event);
+        if (onchange) onchange.call(mediaQueryList, event);
+      },
+    };
+    mediaQueries.add(mediaQueryList);
+    return mediaQueryList;
+  };
+
+  Object.defineProperty(window, "devicePixelRatio", {
+    configurable: true,
+    get: () => devicePixelRatio,
+  });
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    value: (media) => createMediaQueryList(String(media)),
+  });
+  Object.defineProperty(window, "__spriteLiveDpr", {
+    configurable: false,
+    value: Object.freeze({
+      set(nextDevicePixelRatio) {
+        devicePixelRatio = nextDevicePixelRatio;
+        for (const mediaQueryList of [...mediaQueries]) mediaQueryList.notifyIfChanged();
+      },
+    }),
+  });
+}
+
 
 function installCanvas2DRenderProbe() {
   const events = [];
@@ -174,10 +247,21 @@ function installCanvas2DRenderProbe() {
       const source = image instanceof HTMLImageElement
         ? new URL(image.currentSrc || image.src, location.href).pathname
         : "";
+      const hasNumericRectangles = args.length === 9
+        && args.slice(1).every((value) => typeof value === "number" && Number.isFinite(value));
       events.push({
         type: "drawImage",
         argumentCount: args.length,
         source,
+        sourceRect: hasNumericRectangles
+          ? { x: args[1], y: args[2], width: args[3], height: args[4] }
+          : null,
+        destinationRect: hasNumericRectangles
+          ? { x: args[5], y: args[6], width: args[7], height: args[8] }
+          : null,
+        sourceSize: hasNumericRectangles && image instanceof HTMLImageElement
+          ? { width: image.naturalWidth, height: image.naturalHeight }
+          : null,
         transform: transformSnapshot(this),
       });
     }
@@ -221,6 +305,9 @@ function installCanvas2DRenderProbe() {
         return events.map((event) => ({
           ...event,
           args: event.args && event.args.slice(),
+          sourceRect: event.sourceRect && { ...event.sourceRect },
+          destinationRect: event.destinationRect && { ...event.destinationRect },
+          sourceSize: event.sourceSize && { ...event.sourceSize },
           transform: { ...event.transform },
         }));
       },
@@ -555,9 +642,11 @@ async function verifyDepthPerspective(browser, hosting) {
         },
         snapshot: {
           frozen: Object.isFrozen(firstSnapshot),
+          backingScaleReadOnly: Object.getOwnPropertyDescriptor(firstSnapshot, "backingScale")?.writable === false,
           actorsFrozen: Object.isFrozen(firstSnapshot.actors),
           actorFrozen: Object.isFrozen(firstActor),
           anchorFrozen: Object.isFrozen(firstActor.spriteAnchor),
+          destinationFrozen: Object.isFrozen(firstActor.spriteDest),
           geometryFrozen: Object.isFrozen(firstActor.shadow),
           snapshotsDistinct: firstSnapshot !== secondSnapshot,
           actorsDistinct: firstSnapshot.actors !== secondSnapshot.actors,
@@ -583,9 +672,11 @@ async function verifyDepthPerspective(browser, hosting) {
     }, "the public render snapshot hook must remain read-only");
     assert.deepEqual(depthProof.snapshot, {
       frozen: true,
+      backingScaleReadOnly: true,
       actorsFrozen: true,
       actorFrozen: true,
       anchorFrozen: true,
+      destinationFrozen: true,
       geometryFrozen: true,
       snapshotsDistinct: true,
       actorsDistinct: true,
@@ -638,10 +729,45 @@ async function verifyDepthPerspective(browser, hosting) {
         actor.spriteAnchor,
         "actual sprite draw order and translate anchor must match the y-sorted render snapshot",
       );
-      const actualSpriteScale = Math.hypot(spriteDraw.transform.c, spriteDraw.transform.d);
+      assert.equal(
+        Math.abs(spriteDraw.transform.a / renderSnapshot.backingScale),
+        1,
+        "actual Canvas2D actor transforms must retain a unit horizontal facing scale",
+      );
+      assert.deepEqual(
+        {
+          x: spriteDraw.transform.a / renderSnapshot.backingScale,
+          y: spriteDraw.transform.d / renderSnapshot.backingScale,
+          skewX: Math.abs(spriteDraw.transform.c),
+          skewY: Math.abs(spriteDraw.transform.b),
+        },
+        {
+          x: Math.sign(spriteDraw.transform.a),
+          y: 1,
+          skewX: 0,
+          skewY: 0,
+        },
+        "actual Canvas2D actor transforms must only mirror horizontally after backing-scale normalization",
+      );
+      assert.deepEqual(
+        spriteDraw.destinationRect,
+        actor.spriteDest,
+        "actual Canvas2D sprite draws must consume the snapshotted integer destination rectangle",
+      );
       assert.ok(
-        Math.abs(actualSpriteScale - actor.spriteScale) < 1e-6,
-        `the actual Canvas2D sprite transform must consume the snapshotted depth scale (${actualSpriteScale} versus ${actor.spriteScale})`,
+        Object.values(spriteDraw.destinationRect).every(Number.isInteger),
+        "all actual actor sprite destination coordinates and dimensions must be integer snapped",
+      );
+      assert.ok(
+        spriteDraw.sourceRect
+          && spriteDraw.sourceSize
+          && spriteDraw.sourceRect.x >= 0
+          && spriteDraw.sourceRect.y >= 0
+          && spriteDraw.sourceRect.width > 0
+          && spriteDraw.sourceRect.height > 0
+          && spriteDraw.sourceRect.x + spriteDraw.sourceRect.width <= spriteDraw.sourceSize.width
+          && spriteDraw.sourceRect.y + spriteDraw.sourceRect.height <= spriteDraw.sourceSize.height,
+        "actual actor sprite source rectangles must stay within their image sheet bounds",
       );
       assert.deepEqual(
         shadowDraw.args.slice(0, 4),
@@ -667,15 +793,14 @@ async function verifyDepthPerspective(browser, hosting) {
     );
     const farActorDraw = actorDrawEvents[farActor.drawOrder];
     const nearActorDraw = actorDrawEvents[nearActor.drawOrder];
-    const actualSpriteRatio = Math.hypot(nearActorDraw.transform.c, nearActorDraw.transform.d)
-      / Math.hypot(farActorDraw.transform.c, farActorDraw.transform.d);
+    const actualSpriteRatio = nearActorDraw.destinationRect.width / farActorDraw.destinationRect.width;
     assert.ok(
       farActor.drawOrder < nearActor.drawOrder,
       "the actual Canvas2D draw sequence must paint the far actor before the near actor",
     );
     assert.ok(
       actualSpriteRatio > 1.1,
-      `the actual Canvas2D near sprite transform must exceed the far transform by 10% (ratio ${actualSpriteRatio})`,
+      `the actual snapped near sprite destination must exceed the far destination by 10% (ratio ${actualSpriteRatio})`,
     );
 
     const assertRatio = (nearValue, farValue, label) => {
@@ -768,6 +893,194 @@ async function verifyDepthPerspective(browser, hosting) {
     await context.close();
   }
 }
+
+async function verifyPixelStableDpr(browser, hosting) {
+  const requestedDprs = [1, 1.5, 2];
+  let baselineActors = null;
+
+  for (const requestedDpr of requestedDprs) {
+    const context = await browser.newContext({
+      baseURL: hosting.url,
+      viewport: { width: 844, height: 390 },
+      deviceScaleFactor: requestedDpr,
+    });
+    try {
+      const { page, failures } = await openRunningPage(context);
+      let renderSnapshot;
+      let frames = 0;
+      while (frames < 120) {
+        renderSnapshot = await page.evaluate(() => window.__SPRITE_2_5D_TEST__.readRenderSnapshot());
+        if (renderSnapshot.actors.filter((actor) => actor.kind === "enemy").length >= 2) {
+          break;
+        }
+        await stepFrames(page, 1);
+        frames += 1;
+      }
+      assert.ok(
+        renderSnapshot.actors.filter((actor) => actor.kind === "enemy").length >= 2,
+        `DPR ${requestedDpr} must reach the deterministic far/near actor fixture`,
+      );
+
+      await page.evaluate(() => window.__spriteCanvas2DProbe.reset());
+      await stepFrames(page, 1);
+      const dprProof = await page.evaluate(() => {
+        const canvas = document.querySelector("#sprite-2-5d-canvas");
+        const snapshot = window.__SPRITE_2_5D_TEST__.readRenderSnapshot();
+        return {
+          effectiveDpr: window.devicePixelRatio,
+          backingCanvas: { width: canvas.width, height: canvas.height },
+          imageRendering: getComputedStyle(canvas).imageRendering,
+          snapshot: {
+            backingScale: snapshot.backingScale,
+            frozen: Object.isFrozen(snapshot),
+            backingScaleReadOnly: Object.getOwnPropertyDescriptor(snapshot, "backingScale")?.writable === false,
+            destinationsFrozen: snapshot.actors.every((actor) => Object.isFrozen(actor.spriteDest)),
+            actors: snapshot.actors,
+          },
+          drawEvents: window.__spriteCanvas2DProbe.take(),
+        };
+      });
+
+      assert.equal(dprProof.effectiveDpr, requestedDpr, `the DPR ${requestedDpr} browser context must be active`);
+      assert.deepEqual(
+        dprProof.backingCanvas,
+        { width: 1536 * requestedDpr, height: 1024 * requestedDpr },
+        `DPR ${requestedDpr} must scale the canvas backing store without changing logical coordinates`,
+      );
+      assert.deepEqual(
+        {
+          backingScale: dprProof.snapshot.backingScale,
+          frozen: dprProof.snapshot.frozen,
+          backingScaleReadOnly: dprProof.snapshot.backingScaleReadOnly,
+          destinationsFrozen: dprProof.snapshot.destinationsFrozen,
+        },
+        {
+          backingScale: dprProof.effectiveDpr,
+          frozen: true,
+          backingScaleReadOnly: true,
+          destinationsFrozen: true,
+        },
+        `DPR ${requestedDpr} must publish an immutable effective backing scale with immutable snapped destinations`,
+      );
+      assert.equal(
+        dprProof.imageRendering,
+        "pixelated",
+        `DPR ${requestedDpr} must preserve nearest-neighbor CSS image rendering`,
+      );
+
+      const actorDrawEvents = dprProof.drawEvents.filter((event) => event.type === "drawImage" && event.argumentCount === 9);
+      assert.equal(
+        actorDrawEvents.length,
+        dprProof.snapshot.actors.length,
+        `DPR ${requestedDpr} must emit one nine-argument actor draw for every snapshot actor`,
+      );
+      for (let index = 0; index < dprProof.snapshot.actors.length; index += 1) {
+        const actor = dprProof.snapshot.actors[index];
+        const spriteDraw = actorDrawEvents[index];
+        assert.deepEqual(
+          spriteDraw.destinationRect,
+          actor.spriteDest,
+          `DPR ${requestedDpr} actor ${actor.id} must draw its snapshotted destination rectangle`,
+        );
+        assert.ok(
+          Object.values(spriteDraw.destinationRect).every(Number.isInteger),
+          `DPR ${requestedDpr} actor ${actor.id} must use integer destination coordinates and dimensions`,
+        );
+        assert.equal(
+          Math.abs(spriteDraw.transform.a / dprProof.snapshot.backingScale),
+          1,
+          `DPR ${requestedDpr} actor ${actor.id} must retain a unit horizontal facing scale`,
+        );
+        assert.deepEqual(
+          {
+            x: spriteDraw.transform.a / dprProof.snapshot.backingScale,
+            y: spriteDraw.transform.d / dprProof.snapshot.backingScale,
+            skewX: Math.abs(spriteDraw.transform.c),
+            skewY: Math.abs(spriteDraw.transform.b),
+          },
+          {
+            x: Math.sign(spriteDraw.transform.a),
+            y: 1,
+            skewX: 0,
+            skewY: 0,
+          },
+          `DPR ${requestedDpr} actor ${actor.id} must use a unit facing-only transform`,
+        );
+      }
+
+      if (baselineActors === null) {
+        baselineActors = dprProof.snapshot.actors;
+      } else {
+        assert.deepEqual(
+          dprProof.snapshot.actors,
+          baselineActors,
+          `DPR ${requestedDpr} must preserve the DPR 1 logical actor snapshots and snapped destinations`,
+        );
+      }
+      assert.deepEqual(failures, [], `DPR ${requestedDpr} pixel-stability verification must not emit page or console errors`);
+    } finally {
+      await context.close();
+    }
+  }
+}
+
+async function verifyLiveDprMediaQueryRebind(browser, hosting) {
+  const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
+  try {
+    const page = await context.newPage();
+    const failures = [];
+    page.on("pageerror", (error) => failures.push(`page: ${error.message}`));
+    page.on("console", (message) => {
+      if (message.type() === "error") failures.push(`console: ${message.text()}`);
+    });
+    await page.addInitScript(installLiveDprMediaQueryFake);
+    await page.addInitScript(installDeterministicAnimationClock);
+    await page.addInitScript(installCanvas2DRenderProbe);
+    const response = await page.goto("/sprite-2-5d.html", { waitUntil: "load" });
+    assert(response?.ok(), "live-DPR sprite route response must succeed");
+    const body = page.locator("body:not([data-game-state=\"loading\"])");
+    await body.waitFor({ state: "attached" });
+    assert.equal(await body.getAttribute("data-game-state"), "running", "live-DPR sprite route must run");
+
+    for (const { dpr, width, height } of [
+      { dpr: 1, width: 1536, height: 1024 },
+      { dpr: 1.5, width: 2304, height: 1536 },
+      { dpr: 2, width: 3072, height: 2048 },
+    ]) {
+      if (dpr !== 1) {
+        await page.evaluate((nextDpr) => window.__spriteLiveDpr.set(nextDpr), dpr);
+      }
+      const proof = await page.evaluate(() => {
+        const canvas = document.querySelector("#sprite-2-5d-canvas");
+        const snapshot = window.__SPRITE_2_5D_TEST__.readRenderSnapshot();
+        return {
+          canvas: { width: canvas.width, height: canvas.height },
+          snapshot: {
+            backingScale: snapshot.backingScale,
+            frozen: Object.isFrozen(snapshot),
+            backingScaleReadOnly: Object.getOwnPropertyDescriptor(snapshot, "backingScale")?.writable === false,
+          },
+        };
+      });
+      assert.deepEqual(
+        proof,
+        {
+          canvas: { width, height },
+          snapshot: {
+            backingScale: dpr,
+            frozen: true,
+            backingScaleReadOnly: true,
+          },
+        },
+        `DPR media-query transition to ${dpr} must update the physical backing store and immutable snapshot without resize`,
+      );
+    }
+    assert.deepEqual(failures, [], "live DPR media-query transitions must not emit page or console errors");
+  } finally {
+    await context.close();
+  }
+}
+
 
 async function verifyLifecycleResume(browser, hosting) {
   const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
@@ -913,6 +1226,8 @@ async function run() {
       await verifyViewport(browser, hosting, viewport);
     }
     await verifyDepthPerspective(browser, hosting);
+    await verifyPixelStableDpr(browser, hosting);
+    await verifyLiveDprMediaQueryRebind(browser, hosting);
     await verifyLifecycleResume(browser, hosting);
     await verifyTerminalLoopStates(browser, hosting);
     await verifyReducedMotionTiming(browser, hosting);

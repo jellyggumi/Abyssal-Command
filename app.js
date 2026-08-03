@@ -53,7 +53,7 @@ import {
 } from "./defense-run-simulation.js";
 import { RealtimeBattle, MeshThumbnailService, meshRootForCompanion, meshRootForStageBoss, COMMANDER_MESH_ROOT } from "./battle-realtime-three.js";
 import { BattleVisualizer } from "./battle-visualizer.js";
-import { ARENA, COMPANIONS, CUTSCENES, REWARDS, RULES_VERSION, SKILLS, SKILL_RANK_COOLDOWN_FLOOR, SKILL_RANK_COOLDOWN_STEP, SKILL_RANK_DAMAGE_STEP, SKILL_RANK_PASSIVE_SHARE, STAGE_PRESENTATION_BY_ID, STAGE_REWARD_IDS, STAGE_TACTICS, TICK_RATE, XP_GROWTH, abyssDepthPackage } from "./defense-catalog.js";
+import { ARENA, COMPANIONS, CUTSCENES, DIRECT_COMBAT, REWARDS, RULES_VERSION, SKILLS, SKILL_RANK_COOLDOWN_FLOOR, SKILL_RANK_COOLDOWN_STEP, SKILL_RANK_DAMAGE_STEP, SKILL_RANK_PASSIVE_SHARE, STAGE_PRESENTATION_BY_ID, STAGE_REWARD_IDS, STAGE_TACTICS, TICK_RATE, XP_GROWTH, abyssDepthPackage } from "./defense-catalog.js";
 // Cycle 10 §5.3: BUFF_ITEMS is authored by the drop/buff cycle inside defense-catalog.js and
 // does not exist at this commit. A NAMESPACE import cannot throw on a missing export, whereas a
 // named import would be a hard module error that blanks the entire app before first paint. The
@@ -1889,9 +1889,9 @@ ${lobbyCinematicMarkup()}
             <span id="movement-hint" class="sr-only">스틱을 끌어 이동합니다. 키보드는 WASD 또는 방향키로 이동하며, 대각선은 두 키를 함께 누릅니다.</span>
           </div>
           <div class="combat-input-cluster" id="combat-input-cluster" role="group" aria-label="전투 입력">
-            <button type="button" id="manual-attack" class="manual-attack-action" data-combat-verb="ATTACK_LIGHT" aria-label="연속 베기 (Space 또는 J)" style="right:.5rem;bottom:.05rem"><span class="manual-attack-glyph" aria-hidden="true">✦</span><span class="manual-attack-label">연속 베기</span><kbd>SPACE</kbd></button>
-            <button type="button" id="manual-heavy" class="manual-attack-action" data-combat-verb="ATTACK_HEAVY" aria-label="강공격 (F)" style="right:4.9rem;bottom:.05rem"><span class="manual-attack-glyph" aria-hidden="true">◆</span><span class="manual-attack-label">강공격</span><kbd>F</kbd></button>
-            <button type="button" id="manual-dash" class="manual-attack-action" data-combat-verb="DASH" aria-label="대시 (Shift 또는 K)" style="right:2.7rem;bottom:4.3rem"><span class="manual-attack-glyph" aria-hidden="true">➜</span><span class="manual-attack-label">대시</span><kbd>SHIFT</kbd></button>
+            <button type="button" id="manual-attack" class="manual-attack-action" data-combat-verb="ATTACK_LIGHT" data-combat-state="unavailable" aria-label="연속 베기 (Space 또는 J)" style="right:.5rem;bottom:.05rem"><span class="manual-attack-glyph" aria-hidden="true">✦</span><span class="manual-attack-label">연속 베기</span><span class="manual-attack-status" aria-live="polite"></span><kbd>SPACE</kbd></button>
+            <button type="button" id="manual-heavy" class="manual-attack-action" data-combat-verb="ATTACK_HEAVY" data-combat-state="unavailable" aria-label="강공격 (F)" style="right:4.9rem;bottom:.05rem"><span class="manual-attack-glyph" aria-hidden="true">◆</span><span class="manual-attack-label">강공격</span><span class="manual-attack-status" aria-live="polite"></span><kbd>F</kbd></button>
+            <button type="button" id="manual-dash" class="manual-attack-action" data-combat-verb="DASH" data-combat-state="unavailable" aria-label="대시 (Shift 또는 K)" style="right:2.7rem;bottom:4.3rem"><span class="manual-attack-glyph" aria-hidden="true">➜</span><span class="manual-attack-label">대시</span><span class="manual-attack-status" aria-live="polite"></span><kbd>SHIFT</kbd></button>
             <div class="skill-actions skill-radial" id="skill-actions" aria-label="활성 스킬"></div>
           </div>
           <div class="hud-actions" id="battle-actions" aria-label="전투 행동"></div>
@@ -1948,6 +1948,10 @@ export class BattleSession {
     this.onGlobalPointerDown = this.onGlobalPointerDown.bind(this);
     this.accumulator = 0;
     this.inputSeq = 0;
+    // Direct controls begin visually pending, then resolve only when their own
+    // inputId returns from the deterministic simulation event stream.
+    this.pendingCombatControls = new Map();
+    this.combatControlFeedback = new Map();
     // this.pointer tracks the single active orbit-drag pointer (last known
     // logical position, for incremental deltas); this.pinch tracks a
     // two-finger zoom gesture once a second pointer joins.
@@ -2112,6 +2116,8 @@ export class BattleSession {
     delete this.surface.dataset.abyssDepth;
     this.run = this.createRunForStage(stageId);
     this.audio.resetRun();
+    this.pendingCombatControls = new Map();
+    this.combatControlFeedback = new Map();
     this.audioEventKeys.clear();
     // Cycle 10 §5.3a: a buff warns ONCE, not every frame for 180 ticks. Reset here as well as
     // in beginRun() because `nextId` is a shared per-run counter, so a re-entered stage can
@@ -2484,25 +2490,30 @@ export class BattleSession {
   onAttackControlDown(event) {
     if (event.button !== undefined && event.button !== 0) return;
     const control = event.target.closest?.("[data-combat-verb]");
-    if (!control) return;
+    if (!control || control.disabled) return;
     event.preventDefault();
-    this.send(control.dataset.combatVerb);
-    this.signalAttackFeedback(control);
+    this.queueDirectCombatCommand(control, control.dataset.combatVerb);
   }
 
   onAttackControlClick(event) {
     if (event.detail !== 0) return;
     const control = event.target.closest?.("[data-combat-verb]");
-    if (!control) return;
-    this.send(control.dataset.combatVerb);
-    this.signalAttackFeedback(control);
+    if (!control || control.disabled) return;
+    this.queueDirectCombatCommand(control, control.dataset.combatVerb);
   }
 
-  signalAttackFeedback(control = root.querySelector("#manual-attack")) {
-    if (!control) return;
-    control.dataset.feedback = "true";
-    clearTimeout(this.attackFeedbackTimer);
-    this.attackFeedbackTimer = setTimeout(() => control.removeAttribute("data-feedback"), 180);
+  queueDirectCombatCommand(control, type) {
+    if (!control || control.disabled) return null;
+    const queued = this.send(type);
+    if (!queued?.inputId) return queued;
+    const record = { controlId: control.id, type, inputId: queued.inputId };
+    this.pendingCombatControls.set(record.inputId, record);
+    control.dataset.combatState = "pending";
+    control.dataset.combatInputId = record.inputId;
+    control.dataset.feedback = "pending";
+    control.disabled = true;
+    control.setAttribute("aria-disabled", "true");
+    return queued;
   }
 
   /**
@@ -2716,8 +2727,7 @@ export class BattleSession {
       event.preventDefault();
       if (event.type === "keydown" && !event.repeat) {
         if (this.inLobby()) this.suppressLobbyShowcase();
-        this.send(directVerb);
-        this.signalAttackFeedback(root.querySelector(`[data-combat-verb="${directVerb}"]`));
+        this.queueDirectCombatCommand(root.querySelector(`[data-combat-verb="${directVerb}"]`), directVerb);
       }
       return;
     }
@@ -2733,9 +2743,10 @@ export class BattleSession {
   }
 
   send(type, payload) {
-    if (this.stopped || this.userPaused || (isTerminalRun(this.run) && type !== "REWARD_SELECTED")) return;
+    if (this.stopped || this.userPaused || (isTerminalRun(this.run) && type !== "REWARD_SELECTED")) return null;
     const inputAt = performance.now();
     this.run = queueInput(this.run, type, payload);
+    const inputId = this.run.inputs.at(-1)?.inputId ?? null;
     const inputSeq = ++this.inputSeq;
     this.surface.dataset.defenseInputSeq = String(inputSeq);
     // `data-defense-move` is a PUBLIC octant-string contract (asserted by
@@ -2758,10 +2769,11 @@ export class BattleSession {
     }
     this.renderer?.onVisualFeedback?.(inputSeq);
     const visibleAt = performance.now();
-    telemetry.recordInputFeedback({ inputSeq, type, inputAtMs: inputAt, visibleAtMs: visibleAt, tick: this.run.tick });
+    telemetry.recordInputFeedback({ inputSeq, inputId, type, inputAtMs: inputAt, visibleAtMs: visibleAt, tick: this.run.tick });
     window.dispatchEvent(new CustomEvent("abyssal:defense-input-feedback", {
-      detail: { inputSeq, type, admittedAt: inputAt, displayedAt: visibleAt, tick: this.run.tick },
+      detail: { inputSeq, inputId, type, admittedAt: inputAt, queuedAt: inputAt, displayedAt: visibleAt, tick: this.run.tick },
     }));
+    return { inputSeq, inputId, type };
   }
 
   loop(frameNow) {
@@ -3835,6 +3847,95 @@ export class BattleSession {
       setTimeout(() => number.remove(), 1200); // fallback if reduced-motion suppresses the animationend event
     }
   }
+  renderDirectCombatControls(snapshot) {
+    const commander = snapshot.commander;
+    const now = performance.now();
+    const definitions = {
+      ATTACK_LIGHT: { label: "연속 베기", type: "ATTACK_LIGHT" },
+      ATTACK_HEAVY: { label: "강공격", type: "ATTACK_HEAVY" },
+      DASH: { label: "대시", type: "DASH" },
+    };
+    const rejectionLabels = {
+      DASH_BLOCKED: "지형에 막힘",
+      DASH_INVALID_DIRECTION: "방향 없음",
+      DASH_NO_CHARGES: "충전 없음",
+      DIRECT_ACTION_NO_TARGET: "대상 없음",
+      DIRECT_ACTION_OUT_OF_RANGE: "사거리 밖",
+      STALE_DIRECT_INPUT: "입력 만료",
+      VERB_RECOVERING: "회복 중",
+    };
+
+    for (const event of snapshot.events ?? []) {
+      if ((event.type !== "INPUT_ACCEPTED" && event.type !== "INPUT_REJECTED") || !event.inputId) continue;
+      const pending = this.pendingCombatControls.get(event.inputId);
+      if (!pending) continue;
+      this.pendingCombatControls.delete(event.inputId);
+      this.combatControlFeedback.set(pending.controlId, {
+        inputId: event.inputId,
+        state: event.type === "INPUT_ACCEPTED" ? "accepted" : "rejected",
+        reason: event.reason ?? null,
+        until: now + 900,
+      });
+    }
+
+    root.querySelectorAll("[data-combat-verb]").forEach((control) => {
+      const definition = definitions[control.dataset.combatVerb];
+      if (!definition) return;
+      const pending = [...this.pendingCombatControls.values()].find((entry) => entry.controlId === control.id) ?? null;
+      const feedback = this.combatControlFeedback.get(control.id) ?? null;
+      if (feedback && feedback.until <= now) this.combatControlFeedback.delete(control.id);
+      const activeFeedback = this.combatControlFeedback.get(control.id) ?? null;
+      const recoveryTicks = Math.max(0, (commander.verbRecoveryUntil ?? 0) - snapshot.tick);
+      const recovering = commander.verbState !== "IDLE" && definition.type !== "DASH";
+      const dashCharges = commander.dashCharges ?? 0;
+      const dashRechargeTicks = Math.max(0, (commander.dashRechargeTick ?? 0) - snapshot.tick);
+      const unavailable = !this.started
+        || Boolean(snapshot.terminal)
+        || Boolean(pending)
+        || (definition.type === "DASH" ? dashCharges <= 0 : recovering);
+      const state = !this.started || snapshot.terminal
+        ? "unavailable"
+        : pending
+          ? "pending"
+          : activeFeedback?.state === "rejected"
+            ? "rejected"
+            : definition.type === "DASH" && dashCharges <= 0
+              ? "unavailable"
+              : recovering
+                ? "recovering"
+                : "ready";
+      const status = state === "unavailable"
+        ? !this.started
+          ? "출격 전"
+          : snapshot.terminal
+            ? "전투 종료"
+            : definition.type === "DASH"
+              ? `충전 대기 · ${Math.ceil(dashRechargeTicks / TICK_RATE)}초`
+              : "사용 불가"
+        : state === "pending"
+          ? "입력 확인 중"
+          : state === "rejected"
+            ? `거부 · ${rejectionLabels[activeFeedback?.reason] ?? activeFeedback?.reason ?? "불가"}`
+            : definition.type === "DASH"
+              ? `충전 ${dashCharges}/${DIRECT_COMBAT.dash.charges}${dashRechargeTicks ? ` · ${Math.ceil(dashRechargeTicks / TICK_RATE)}초` : ""}`
+              : state === "recovering"
+                ? `회복 ${Math.ceil(recoveryTicks / TICK_RATE)}초`
+                : "준비";
+
+      control.disabled = unavailable;
+      control.setAttribute("aria-disabled", String(unavailable));
+      control.dataset.combatState = state;
+      if (pending?.inputId || activeFeedback?.inputId) control.dataset.combatInputId = pending?.inputId ?? activeFeedback.inputId;
+      else delete control.dataset.combatInputId;
+      if (pending) control.dataset.feedback = "pending";
+      else if (activeFeedback) control.dataset.feedback = activeFeedback.state === "accepted" ? "true" : activeFeedback.state;
+      else delete control.dataset.feedback;
+      control.setAttribute("aria-label", `${definition.label} · ${status}`);
+      const statusNode = control.querySelector(".manual-attack-status");
+      if (statusNode?.textContent !== status) statusNode.textContent = status;
+    });
+  }
+
 
   renderControls(snapshot) {
     const skills = root.querySelector("#skill-actions");
@@ -3879,6 +3980,7 @@ export class BattleSession {
         passives.innerHTML = passiveMarkup;
       }
     }
+    this.renderDirectCombatControls(snapshot);
     if (!this.started) {
       const actions = root.querySelector("#battle-actions");
       if (actions?.dataset.actions) {

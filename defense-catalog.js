@@ -1358,7 +1358,7 @@ export const MIDBOSS_PROFILE = freeze({
  * `classes` are the enemy classes this map fields, in rotation order.
  */
 export const STAGE_WAVE_DOCTRINE = freeze({
-  "cinder-span": { gateIntegrity: 1600, defenseTicks: 10200, waveCount: 10, classes: freeze(["rusher", "flanker", "ranged"]), kindCycle: freeze(["normal", "normal", "big", "mid"]), pressureLane: "chokepath", midbossEnemy: "guardian" },
+  "cinder-span": { gateIntegrity: 1600, defenseTicks: 10200, waveCount: 10, classes: freeze(["rusher", "flanker", "ranged"]), kindCycle: freeze(["normal", "normal", "big", "mid"]), openingPolicyId: "player-pursuit", pressureLane: "chokepath", midbossEnemy: "guardian" },
   "abyss-chancel": { gateIntegrity: 1700, defenseTicks: 10500, waveCount: 10, classes: freeze(["ranged", "flanker", "rusher", "guardian"]), kindCycle: freeze(["normal", "big", "normal", "mid"]), pressureLane: "flank", midbossEnemy: "flanker" },
   // echo-throne is the campaign's LAST stage, so it must ask for the largest set of distinct
   // answers, not merely the largest HP `scale` (100 -> 115 -> 130). Measured by
@@ -1367,7 +1367,7 @@ export const STAGE_WAVE_DOCTRINE = freeze({
   // rhythm outright, so stage 3 was stage 1 with bigger numbers. It now fields all four classes in
   // its own rotation order, walls on a RANGED mid-boss (a body that must be closed on, not a slower
   // guardian to be out-traded), and keeps a 5-slot rhythm that no other stage uses.
-  "echo-throne": { gateIntegrity: 1800, defenseTicks: 10800, waveCount: 11, classes: freeze(["flanker", "ranged", "guardian", "rusher"]), kindCycle: freeze(["normal", "mid", "normal", "big", "normal"]), pressureLane: "chokepath", midbossEnemy: "ranged" },
+  "echo-throne": { gateIntegrity: 1800, defenseTicks: 10800, waveCount: 11, classes: freeze(["flanker", "ranged", "guardian", "rusher"]), kindCycle: freeze(["normal", "mid", "normal", "big", "normal"]), openingPolicyId: "low-hp-focus", pressureLane: "chokepath", midbossEnemy: "ranged" },
 });
 
 /**
@@ -1440,13 +1440,13 @@ function buildDoctrineWavePlan(stageId, doctrine, tactics, stageScale) {
       ? budgetComposition([[supportClass, 6000], [leadClass, 4000]])
       : budgetComposition([[leadClass, 6700], [supportClass, 3300]]);
     const count = primaryComposition[0].count;
-    // Only the STATEMENT waves pin a policy: a big wave is the map's pressure push (chokepath or
-    // flank) and a mid wave escorts its mid-boss. Normal waves deliberately leave the policy
-    // unpinned so buildWaveSchedule keeps rolling the seeded pool, which is where player-pursuit and
-    // low-hp-focus behaviour comes from — pinning every wave would delete those policies from play.
-    const policyId = kind === "big"
-      ? (flankLane ? "flank" : "gate-pressure")
-      : kind === "mid" ? "elite-escort" : null;
+    // Statement waves pin pressure behavior. Normal waves stay seeded except for a declared
+    // opening policy, which makes the first encounter's pressure legible.
+    const policyId = slot === 0 && doctrine.openingPolicyId
+      ? doctrine.openingPolicyId
+      : kind === "big"
+        ? (flankLane ? "flank" : "gate-pressure")
+        : kind === "mid" ? "elite-escort" : null;
     const direction = directions[slot % directions.length];
     const encounterPath = encounterRoute.paths.find((path) =>
       path.objectiveId === encounterObjective?.id && path.direction === direction);

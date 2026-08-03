@@ -51,10 +51,67 @@ if (!context) {
   throw new Error("A 2D canvas context is required for the Cinder Court route.");
 }
 
-canvas.width = WORLD_WIDTH;
-canvas.height = WORLD_HEIGHT;
+let canvasBackingScale = 1;
+let dprMatch = null;
+let dprMatchListener = null;
 context.imageSmoothingEnabled = false;
 
+function resolveCanvasBackingScale() {
+  const dpr = Number(window.devicePixelRatio);
+  return Number.isFinite(dpr) && dpr > 0 ? dpr : 1;
+}
+
+function syncCanvasBackingStore() {
+  const nextScale = resolveCanvasBackingScale();
+  const nextWidth = Math.max(1, Math.round(WORLD_WIDTH * nextScale));
+  const nextHeight = Math.max(1, Math.round(WORLD_HEIGHT * nextScale));
+
+  if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
+    canvas.width = nextWidth;
+    canvas.height = nextHeight;
+  }
+  context.setTransform(1, 0, 0, 1, 0, 0);
+  context.imageSmoothingEnabled = false;
+  context.setTransform(nextScale, 0, 0, nextScale, 0, 0);
+
+  canvasBackingScale = nextScale;
+}
+
+function rebindBackingScaleWatcher() {
+  const nextScale = resolveCanvasBackingScale();
+  const nextMatch = window.matchMedia(`(resolution: ${nextScale}dppx)`);
+  if (dprMatch && nextMatch.media === dprMatch.media) {
+    return;
+  }
+
+  if (dprMatch && dprMatchListener) {
+    if (dprMatch.removeEventListener) {
+      dprMatch.removeEventListener("change", dprMatchListener);
+    } else {
+      dprMatch.removeListener(dprMatchListener);
+    }
+  }
+
+  const onBackingScaleChange = () => {
+    resyncCanvasBackingScale();
+  };
+  dprMatch = nextMatch;
+  dprMatchListener = onBackingScaleChange;
+  if (dprMatch.addEventListener) {
+    dprMatch.addEventListener("change", dprMatchListener);
+  } else {
+    dprMatch.addListener(dprMatchListener);
+  }
+}
+
+function resyncCanvasBackingScale() {
+  syncCanvasBackingStore();
+  rebindBackingScaleWatcher();
+}
+
+window.addEventListener("resize", resyncCanvasBackingScale, { passive: true });
+syncCanvasBackingStore();
+rebindBackingScaleWatcher();
 const assets = {
   backdrop: null,
   warden: null,
@@ -118,6 +175,7 @@ const pointerBindings = new Map();
 const renderActors = [];
 const renderScratch = {
   anchor: { x: 0, y: 0 },
+  spriteDest: { x: 0, y: 0, width: 0, height: 0 },
   shadow: { centerX: 0, centerY: 0, radiusX: 0, radiusY: 0 },
   hitFlash: { visible: false, centerX: 0, centerY: 0, radiusX: 0, radiusY: 0, lineWidth: 0 },
   healthBar: {
@@ -739,6 +797,14 @@ function writeGroundRingGeometry(depthScale, anchor, output) {
   return output;
 }
 
+function writeSpriteDestinationGeometry(clip, spriteScale, rect, output) {
+  output.x = Math.round(-clip.pivot.x * spriteScale);
+  output.y = Math.round(-clip.pivot.y * spriteScale);
+  output.width = Math.max(1, Math.round(rect.w * spriteScale));
+  output.height = Math.max(1, Math.round(rect.h * spriteScale));
+  return output;
+}
+
 function drawShadow(actor, depthScale, anchor) {
   const shadow = writeShadowGeometry(actor, depthScale, anchor, renderScratch.shadow);
   context.save();
@@ -764,23 +830,24 @@ function drawActor(actor) {
   const depthScale = depthScaleForY(actor.y);
   const spriteScale = spriteScaleForActor(actor, depthScale);
   const anchor = spriteAnchorForActor(actor, renderScratch.anchor);
+  const spriteDest = writeSpriteDestinationGeometry(clip, spriteScale, rect, renderScratch.spriteDest);
   const fadeAlpha = actor.dead ? Math.max(0, actor.fadeTime / (state.reducedMotion ? 0.08 : 0.34)) : 1;
 
   drawShadow(actor, depthScale, anchor);
   context.save();
   context.globalAlpha = fadeAlpha;
   context.translate(anchor.x, anchor.y);
-  context.scale(actor.facing * spriteScale, spriteScale);
+  context.scale(actor.facing, 1);
   context.drawImage(
     actor.asset.image,
     rect.x,
     rect.y,
     rect.w,
     rect.h,
-    -clip.pivot.x,
-    -clip.pivot.y,
-    rect.w,
-    rect.h,
+    spriteDest.x,
+    spriteDest.y,
+    spriteDest.width,
+    spriteDest.height,
   );
   context.restore();
 
@@ -880,7 +947,13 @@ function compareActorDepth(actorA, actorB) {
 }
 function readActorRenderSnapshot(actor, drawOrder) {
   const depthScale = depthScaleForY(actor.y);
+  const spriteScale = spriteScaleForActor(actor, depthScale);
   const spriteAnchor = Object.freeze({ ...spriteAnchorForActor(actor, {}) });
+  const clip = actor.asset.manifest.animations[actor.clipName];
+  const rect = clip.rects[actor.clipFrame];
+  const spriteDest = Object.freeze({
+    ...writeSpriteDestinationGeometry(clip, spriteScale, rect, {}),
+  });
   const shadow = Object.freeze({
     ...writeShadowGeometry(actor, depthScale, spriteAnchor, {}),
   });
@@ -915,8 +988,9 @@ function readActorRenderSnapshot(actor, drawOrder) {
     y: actor.y,
     drawOrder,
     depthScale,
-    spriteScale: spriteScaleForActor(actor, depthScale),
+    spriteScale,
     spriteAnchor,
+    spriteDest,
     shadow,
     hitFlash,
     healthBar,
@@ -929,6 +1003,7 @@ function readRenderSnapshot() {
   const actors = [player, ...state.enemies].sort(compareActorDepth);
   return Object.freeze({
     renderer: "canvas2d",
+    backingScale: canvasBackingScale,
     actors: Object.freeze(actors.map(readActorRenderSnapshot)),
   });
 }

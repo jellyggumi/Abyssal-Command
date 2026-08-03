@@ -183,6 +183,28 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
     "artifact_smoke", "deploy_pages", "deployed_smoke", "release_receipt",
   ];
   for (const name of order) assert.ok(job(workflow, name), `workflow must include ${name}`);
+  for (const name of order) {
+    const timeout = job(workflow, name).match(/^    timeout-minutes: (?<minutes>\d+)$/m);
+    assert.ok(timeout, `${name} must define a finite timeout-minutes value`);
+    const minutes = Number(timeout.groups.minutes);
+    assert.ok(
+      Number.isSafeInteger(minutes) && minutes > 0 && minutes <= 360,
+      `${name} timeout-minutes must be a positive GitHub Actions-bounded value`,
+    );
+  }
+  const resolveRevision = job(workflow, "resolve_revision");
+  assert.match(
+    resolveRevision,
+    /^    timeout-minutes: 30$/m,
+    "resolve_revision must leave enough bounded time to fetch a rollback revision",
+  );
+  assert.match(
+    resolveRevision,
+    /fetch-depth: \$\{\{ github\.event_name == 'workflow_dispatch' && '0' \|\| '1' \}\}/,
+    "resolve_revision must fetch full history only for dispatch rollbacks and shallow history for pushes",
+  );
+
+
 
   for (const name of ["engine_contract", "release_closure", "browser_contract"]) {
     assert.match(job(workflow, name), /needs: resolve_revision/);
@@ -194,6 +216,13 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
   assert.match(job(workflow, "deployed_smoke"), /if: needs\.deploy_pages\.result == 'success'/);
   assert.match(job(workflow, "release_receipt"), /if: always\(\)/);
   assert.match(job(workflow, "release_receipt"), /needs: \[resolve_revision, engine_contract, release_closure, browser_contract, package_pages, artifact_smoke, deploy_pages, deployed_smoke\]/);
+  const artifactSmoke = job(workflow, "artifact_smoke");
+  assert.match(
+    artifactSmoke,
+    /node -e '[^']*createServer[^']*' "\$PWD\/\.pages-artifact" >\/dev\/null 2>&1 &\n\s*server_pid=\$!\n\s*trap 'kill "\$server_pid" 2>\/dev\/null \|\| true; kill -9 "\$server_pid" 2>\/dev\/null \|\| true' EXIT/,
+    "artifact_smoke must detach static-server output, retain its PID, and idempotently terminate it with a hard-kill fallback",
+  );
+
 
   const deployedSmoke = job(workflow, "deployed_smoke");
   const retryClassifier = deployedSmoke.match(
@@ -369,6 +398,10 @@ test("version scripts enforce the exact defense rules version", async () => {
   await writeFile(versionFile, JSON.stringify({ candidate_sha: sha, rules_version: RULES_VERSION }));
   await execFileAsync(process.execPath, ["scripts/validate-pages-version.mjs", "--file", versionFile, "--sha", sha]);
   await writeFile(versionFile, JSON.stringify({ candidate_sha: sha, rules_version: "wrong" }));
+  await assert.rejects(
+    execFileAsync(process.execPath, ["scripts/validate-pages-version.mjs", "--file", versionFile, "--sha", sha]),
+    "Pages version validator must reject an incorrect rules version before artifact assembly",
+  );
   const required = ["version.json", ...RUNTIME_PATHS];
   for (const file of required) {
     const target = join(directory, file);
@@ -379,7 +412,7 @@ test("version scripts enforce the exact defense rules version", async () => {
       file === "app.js"
         ? 'import "./bootstrap.js";\n'
         : file === "abyssal-oneline.html"
-          ? '<!doctype html><html lang="ko"><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="styles.css"></head><body><nav aria-labelledby="mode-navigation-title"><h2 id="mode-navigation-title">모드 탐색</h2><a href="index.html">홈</a><a href="sprite-2-5d.html">스프라이트</a><a href="sealbound.html">실바운드</a></nav><main><h1>어비스 원라인</h1></main></body></html>'
+          ? '<!doctype html><html lang="ko"><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="styles.css"><style>.campaign-entry__reel { position: relative; overflow: hidden; } .campaign-entry__reel::before { content: ""; position: absolute; inset: 0; } .campaign-entry__reel--locked::before { background: #081421; }</style></head><body><nav aria-labelledby="mode-navigation-title"><h2 id="mode-navigation-title">모드 탐색</h2><a href="sprite-2-5d.html">스프라이트</a><a href="sealbound.html">실바운드</a></nav><main><h1>어비스 원라인</h1><p>Cinder Span</p><a href="index.html">현재 전선 작전 로비 열기</a><ol><li class="campaign-entry__reel campaign-entry__reel--locked">봉인된 전선</li><li class="campaign-entry__reel campaign-entry__reel--locked">봉인된 전선</li></ol></main></body></html>'
         : file === "abbysal-oneline.html"
           ? '<!doctype html><html lang="ko"><head><meta http-equiv="refresh" content="0; url=abyssal-oneline.html"><link rel="canonical" href="abyssal-oneline.html"></head><body><a href="abyssal-oneline.html">어비스 원라인으로 이동</a></body></html>'
           : "",

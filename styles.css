@@ -2103,8 +2103,13 @@ body {
 }
 .manual-attack-action:active,
 .manual-attack-action[data-feedback="true"] { transform: scale(.92); filter: brightness(1.3); box-shadow: 0 0 0 .3rem rgb(233 196 106 / .2), 0 0 2rem rgb(233 196 106 / .62), inset 0 0 1rem rgb(255 255 255 / .12); }
+.manual-attack-action[data-combat-state="pending"] { border-color: #85c7e8; filter: saturate(.8); }
+.manual-attack-action[data-combat-state="recovering"] { border-color: #9e9a91; filter: saturate(.45); }
+.manual-attack-action[data-combat-state="rejected"] { border-color: #d96b62; box-shadow: 0 0 0 .2rem rgb(217 107 98 / .16), 0 0 1.2rem rgb(217 107 98 / .42); }
+.manual-attack-action:disabled { cursor: not-allowed; opacity: .56; }
 .manual-attack-glyph { font-size: clamp(1.45rem, 3vw, 2rem); line-height: 1; }
 .manual-attack-label { font-size: .62rem; font-weight: 900; letter-spacing: .08em; }
+.manual-attack-status { min-height: .7rem; max-width: 4.65rem; overflow: hidden; color: #b9d7e8; font-size: .43rem; font-weight: 800; line-height: 1.1; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 .manual-attack-action kbd { color: #f4d98f; font-size: .48rem; letter-spacing: .08em; }
 .skill-radial { position: absolute; inset: 0; display: block; pointer-events: none; }
 .skill-radial .skill-action {
