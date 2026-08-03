@@ -1180,6 +1180,8 @@ result = {
     "invalid": invalid,
     "surveyArgs": parsed(["--survey", "--corpus-manifest", "full-corpus-v1.json", "--vectors", "vectors.json", "--out", "out.json"]),
     "certifyArgs": parsed(["--certify-target-rig", "rig.glb", "--corpus-manifest", "full-corpus-v1.json", "--vectors", "vectors.json", "--out", "out.json"]),
+    "surveyScratchTargetArgs": parsed(["--survey", "--scratch-target-rig", "scratch-target.glb", "--corpus-manifest", "full-corpus-v1.json", "--vectors", "vectors.json", "--out", "out.json"]),
+    "certifyScratchTargetArgs": parsed(["--certify-target-rig", "rig.glb", "--scratch-target-rig", "scratch-target.glb", "--scratch-overlay", "scratch.glb", "--overlay", "overlay.glb", "--vectors", "vectors.json", "--out", "out.json"]),
     "temporaryRootRemoved": not root.exists(),
 }
 
@@ -1298,6 +1300,154 @@ with tempfile.TemporaryDirectory(prefix="survey-gap-") as temporary:
     materialized["removedAfter"] = not materialized["path"].exists()
 
 print(json.dumps({"dieGuard": die_guard, "materialized": materialized}, default=str))
+`;
+
+const SCRATCH_TARGET_IDENTITY_HARNESS = `
+import hashlib
+import importlib.util
+import json
+import sys
+import tempfile
+import types
+from pathlib import Path
+
+TOOL = Path(sys.argv[1])
+
+bpy = types.ModuleType("bpy")
+bpy.app = types.SimpleNamespace(version_string="5.1.2", binary_path="/stub/Blender")
+bpy.ops = types.SimpleNamespace(wm=types.SimpleNamespace(read_factory_settings=lambda **kwargs: None))
+bpy.context = types.SimpleNamespace(scene=types.SimpleNamespace(objects=[]))
+bpy.data = types.SimpleNamespace(actions=[])
+bpy.types = types.SimpleNamespace(Object=object)
+sys.modules["bpy"] = bpy
+mathutils = types.ModuleType("mathutils")
+mathutils.Quaternion = tuple
+sys.modules["mathutils"] = mathutils
+
+spec = importlib.util.spec_from_file_location("derive_kinematic_bounds_blender", TOOL)
+tool = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(tool)
+
+def captured(call):
+    try:
+        return {"ok": True, "value": call()}
+    except BaseException as error:
+        return {
+            "ok": False,
+            "code": getattr(error, "code", type(error).__name__),
+            "message": str(error),
+        }
+
+with tempfile.TemporaryDirectory(prefix="scratch-target-identity-") as temporary:
+    root = Path(temporary).resolve()
+    tool.REPO_ROOT = root
+    target = root / "certified-target.glb"
+    target_bytes = b"synthetic-target-glb"
+    target.write_bytes(target_bytes)
+    target_hash = hashlib.sha256(target_bytes).hexdigest()
+    target.with_suffix(".provenance.json").write_text(json.dumps({
+        "originCommit": "synthetic",
+        "deletedBy": "synthetic",
+        "originPath": "synthetic-target.glb",
+        "targetRigSha256": target_hash,
+        "targetRigBytes": len(target_bytes),
+        "recoveryCommand": "synthetic",
+    }))
+    matching_target = root / "matching-scratch-target.glb"
+    matching_target.write_bytes(target_bytes)
+    mismatched_target = root / "mismatched-scratch-target.glb"
+    mismatched_target.write_bytes(b"other-synthetic-target-glb")
+    scratch_overlay = root / "scratch-overlay.glb"
+    committed_overlay = root / "committed-overlay.glb"
+    scratch_overlay.write_bytes(b"synthetic-overlay")
+    committed_overlay.write_bytes(b"synthetic-overlay")
+    vectors = root / "vectors.json"
+    vectors.write_text("{}")
+    out = root / "out.json"
+
+    tool.run_conformance_vectors = lambda path: []
+    tool.certify_target_rig = lambda rig: {"synthetic": True}
+    tool.subprocess.run = lambda *args, **kwargs: types.SimpleNamespace(stdout=target_bytes)
+    compare_calls = []
+    tool.compare_overlays = lambda scratch, committed: (
+        compare_calls.append((str(scratch), str(committed))) or {"passed": True}
+    )
+    tool.print = lambda *args, **kwargs: None
+
+    def invoke(scratch_target=None):
+        args = [
+            "--certify-target-rig", str(target),
+            "--scratch-overlay", str(scratch_overlay),
+            "--overlay", str(committed_overlay),
+            "--vectors", str(vectors),
+            "--out", str(out),
+        ]
+        if scratch_target is not None:
+            args.extend(["--scratch-target-rig", str(scratch_target)])
+        previous = sys.argv
+        sys.argv = ["derive-kinematic-bounds-blender.py", "--", *args]
+        try:
+            return tool.main()
+        finally:
+            sys.argv = previous
+
+    result = {
+        "absent": captured(lambda: invoke()),
+        "mismatched": captured(lambda: invoke(mismatched_target)),
+        "matching": captured(lambda: invoke(matching_target)),
+        "compareCalls": len(compare_calls),
+    }
+
+print(json.dumps(result))
+`;
+
+const COMPARATOR_LOCATION_HARNESS = `
+import importlib.util
+import json
+import sys
+import tempfile
+import types
+from pathlib import Path
+
+TOOL = Path(sys.argv[1])
+bpy = types.ModuleType("bpy")
+bpy.app = types.SimpleNamespace(version_string="5.1.2", binary_path="/stub/Blender")
+sys.modules["bpy"] = bpy
+mathutils = types.ModuleType("mathutils")
+mathutils.Quaternion = tuple
+sys.modules["mathutils"] = mathutils
+
+spec = importlib.util.spec_from_file_location("derive_kinematic_bounds_blender", TOOL)
+tool = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(tool)
+
+def channels(quaternion):
+    return {
+        'pose.bones["DEF-spine"].rotation_quaternion[0]': [quaternion[0]],
+        'pose.bones["DEF-spine"].rotation_quaternion[1]': [quaternion[1]],
+        'pose.bones["DEF-spine"].rotation_quaternion[2]': [quaternion[2]],
+        'pose.bones["DEF-spine"].rotation_quaternion[3]': [quaternion[3]],
+    }
+
+identity = [0, 0, 0, 1]
+early_small = [0.08715574274765817, 0, 0, 0.9961946980917455]
+later_large = [0.7071067811865475, 0, 0, 0.7071067811865476]
+left = {
+    "early-temporal-divergence": {"sampleTimes": [1], "channels": channels(identity)},
+    "later-global-maximum": {"sampleTimes": [2], "channels": channels(identity)},
+}
+right = {
+    "early-temporal-divergence": {"sampleTimes": [1], "channels": channels(early_small)},
+    "later-global-maximum": {"sampleTimes": [2], "channels": channels(later_large)},
+}
+
+with tempfile.TemporaryDirectory(prefix="comparator-location-") as temporary:
+    root = Path(temporary).resolve()
+    tool.REPO_ROOT = root
+    scratch, committed = root / "scratch.glb", root / "committed.glb"
+    tool.action_channels = lambda path: left if path == scratch else right
+    tool.canonical_overlay_actions = lambda: set(left)
+    print(json.dumps(tool.compare_overlays(scratch, committed)))
 `;
 
 describe("Blender 5 layered action compatibility", () => {
@@ -1468,6 +1618,13 @@ describe("survey-only full corpus input contract", () => {
     assert.equal(result.temporaryRootRemoved, true, "synthetic archive extraction must leave no temporary tree");
   });
 
+  test("survey rejects the certification-only scratch target rig argument", { skip: PYTHON_SKIP }, () => {
+    const result = runPython(CORPUS_HARNESS, [repositoryPath(BLENDER_TOOL)]);
+    assert.equal(result.surveyScratchTargetArgs.ok, false, JSON.stringify(result.surveyScratchTargetArgs));
+    assert.equal(result.certifyScratchTargetArgs.ok, true, JSON.stringify(result.certifyScratchTargetArgs));
+    assert.equal(result.certifyScratchTargetArgs.value.scratch_target_rig, "scratch-target.glb");
+  });
+
   test("survey rejects a config-created sixth die outside the corpus manifest", { skip: PYTHON_SKIP }, () => {
     const result = runPython(SURVEY_GAP_HARNESS, [repositoryPath(BLENDER_TOOL)]);
     assert.equal(result.dieGuard.ok, false, JSON.stringify(result.dieGuard));
@@ -1479,5 +1636,48 @@ describe("survey-only full corpus input contract", () => {
     assert.equal(result.materialized.readableInside, true);
     assert.equal(result.materialized.existsInside, true);
     assert.equal(result.materialized.removedAfter, true);
+  });
+
+  test("certification rejects absent or mismatched scratch target rigs before overlay comparison", { skip: PYTHON_SKIP }, () => {
+    const result = runPython(SCRATCH_TARGET_IDENTITY_HARNESS, [repositoryPath(BLENDER_TOOL)]);
+    assert.equal(result.absent.ok, false, JSON.stringify(result.absent));
+    assert.equal(result.absent.code, "KG_TARGET_RIG_PROVENANCE", JSON.stringify(result.absent));
+    assert.equal(result.mismatched.ok, false, JSON.stringify(result.mismatched));
+    assert.equal(result.mismatched.code, "KG_TARGET_RIG_PROVENANCE", JSON.stringify(result.mismatched));
+    assert.equal(result.matching.ok, true, JSON.stringify(result.matching));
+    assert.equal(result.compareCalls, 1, "only the matching scratch target may reach overlay comparison");
+  });
+
+  test("compare_overlays exposes the deterministic global maxDivergenceLocation", { skip: PYTHON_SKIP }, () => {
+    const result = runPython(COMPARATOR_LOCATION_HARNESS, [repositoryPath(BLENDER_TOOL)]);
+    assert.equal("firstMaxDivergence" in result, false, JSON.stringify(result));
+    assert.equal(result.maxDivergenceLocation.clipName, "later-global-maximum");
+    assert.equal(result.maxDivergenceLocation.targetBone, "DEF-spine");
+    assert.equal(result.maxDivergenceLocation.frameTime, 2);
+    assert.ok(Math.abs(result.maxDivergenceLocation.angularDeviationDeg - 90) < 1e-9);
+  });
+});
+
+describe("pose-pair render evidence", () => {
+  test("render manifest paths resolve inside its supplied pose-pairs output root", () => {
+    const outputRoot = "_workspace/current/qa/motion-repair-20260803/pose-pairs";
+    const outputDirectory = repositoryPath(outputRoot);
+    const manifest = readJson(`${outputRoot}/render-manifest.json`);
+    assert.equal(manifest.pairs.length, 55, "the T4b render manifest preserves every actor/bone row");
+
+    const renderedFiles = new Set();
+    for (const pair of manifest.pairs) {
+      for (const field of ["canonical", "actor"]) {
+        const storedPath = pair[field];
+        const resolvedPath = resolve(REPOSITORY_ROOT, storedPath);
+        assert.ok(
+          resolvedPath === outputDirectory || resolvedPath.startsWith(`${outputDirectory}/`),
+          `${pair.actorId}/${pair.bone} ${field} must resolve inside ${outputRoot}, got ${storedPath}`,
+        );
+        assert.ok(statSync(resolvedPath).isFile(), `${pair.actorId}/${pair.bone} ${field} must exist: ${storedPath}`);
+        renderedFiles.add(resolvedPath);
+      }
+    }
+    assert.equal(renderedFiles.size, 110, "55 pose rows retain one canonical and one actor PNG each");
   });
 });

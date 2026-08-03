@@ -57,6 +57,7 @@ def parse_args() -> argparse.Namespace:
     mode.add_argument("--certify-target-rig")
     mode.add_argument("--survey", action="store_true")
     parser.add_argument("--scratch-overlay")
+    parser.add_argument("--scratch-target-rig")
     parser.add_argument("--overlay")
     parser.add_argument("--config")
     parser.add_argument("--corpus-manifest")
@@ -67,6 +68,8 @@ def parse_args() -> argparse.Namespace:
         parser.error("--corpus-manifest is only valid with --survey")
     if args.survey and args.corpus_manifest is None:
         parser.error("--survey requires --corpus-manifest")
+    if args.survey and (args.scratch_overlay or args.overlay or args.scratch_target_rig):
+        parser.error("--survey forbids certification-only overlay arguments")
     return args
 
 
@@ -205,7 +208,7 @@ def compare_overlays(scratch: Path, overlay: Path) -> dict[str, Any]:
         actual_actions = set(actions)
         if actual_actions != expected_actions:
             raise KinematicGateError("KG_OVERLAY_ACTIONS", f"{label} action names differ from shipped manifest; missing={sorted(expected_actions - actual_actions)}, unexpected={sorted(actual_actions - expected_actions)}")
-    rows, quaternion_max, first_max_divergence = [], 0.0, None
+    rows, quaternion_max, max_divergence_location = [], 0.0, None
     for action_name in sorted(left):
         left_action, right_action = left[action_name], right[action_name]
         left_channels, right_channels = left_action["channels"], right_action["channels"]
@@ -233,7 +236,7 @@ def compare_overlays(scratch: Path, overlay: Path) -> dict[str, Any]:
                 if angular_deviation > quaternion_max:
                     quaternion_max = angular_deviation
                     bone = prefix.split('pose.bones["', 1)[1].split('"]', 1)[0]
-                    first_max_divergence = {
+                    max_divergence_location = {
                         "clipName": action_name,
                         "targetBone": bone,
                         "channel": prefix,
@@ -244,7 +247,7 @@ def compare_overlays(scratch: Path, overlay: Path) -> dict[str, Any]:
                         "committedQuaternion": committed_quaternion,
                     }
         rows.append({"clipName": action_name, "maxScalarDeviation": max_scalar})
-    return {"scratchOverlay": str(scratch.relative_to(REPO_ROOT)), "overlay": str(overlay.relative_to(REPO_ROOT)), "clips": rows, "maxAngularDeviationDeg": quaternion_max, "firstMaxDivergence": first_max_divergence, "thresholdDeg": 0.5, "passed": quaternion_max <= 0.5}
+    return {"scratchOverlay": str(scratch.relative_to(REPO_ROOT)), "overlay": str(overlay.relative_to(REPO_ROOT)), "clips": rows, "maxAngularDeviationDeg": quaternion_max, "maxDivergenceLocation": max_divergence_location, "thresholdDeg": 0.5, "passed": quaternion_max <= 0.5}
 
 
 def load_survey_corpus(manifest_path: Path) -> list[dict[str, Any]]:
@@ -365,6 +368,8 @@ def main() -> int:
             raise KinematicGateError("KG_TARGET_RIG", f"missing target rig: {rig}")
         if bool(args.scratch_overlay) != bool(args.overlay):
             raise KinematicGateError("KG_OVERLAY_PAIR", "--scratch-overlay and --overlay must be supplied together")
+        if args.scratch_target_rig and not args.scratch_overlay:
+            raise KinematicGateError("KG_OVERLAY_PAIR", "--scratch-target-rig requires --scratch-overlay")
         provenance = rig.with_suffix(".provenance.json")
         if not provenance.is_file():
             raise KinematicGateError("KG_TARGET_RIG_PROVENANCE", f"recovery provenance missing: {provenance}")
@@ -386,14 +391,17 @@ def main() -> int:
             raise KinematicGateError("KG_TARGET_RIG_PROVENANCE", "certified rig does not match originCommit:originPath")
         report = {**recovery, **certify_target_rig(rig)}
         if args.scratch_overlay:
+            scratch_target_rig = ensure_repo_path(Path(args.scratch_target_rig), "scratch target rig") if args.scratch_target_rig else None
+            if scratch_target_rig is None or not scratch_target_rig.is_file() or sha256(scratch_target_rig) != sha256(rig):
+                raise KinematicGateError("KG_TARGET_RIG_PROVENANCE", "scratch target rig must match the certified target rig")
             report["reproductionDiff"] = compare_overlays(ensure_repo_path(Path(args.scratch_overlay), "scratch overlay"), ensure_repo_path(Path(args.overlay), "overlay"))
             if not report["reproductionDiff"]["passed"]:
                 out.write_text(json.dumps(report, indent=2) + "\n")
                 raise KinematicGateError("KG_TARGET_RIG_REPRODUCTION", "scratch overlay exceeds 0.5-degree reproduction limit")
         provenance.write_text(json.dumps(report, indent=2) + "\n")
     else:
-        if args.scratch_overlay or args.overlay or not args.config or not args.corpus_manifest:
-            raise KinematicGateError("KG_SURVEY_ARGUMENTS", "--survey requires --config and --corpus-manifest and forbids overlay arguments")
+        if args.scratch_overlay or args.overlay or args.scratch_target_rig or not args.config or not args.corpus_manifest:
+            raise KinematicGateError("KG_SURVEY_ARGUMENTS", "--survey requires --config and --corpus-manifest and forbids certification-only overlay arguments")
         report = survey(ensure_repo_path(Path(args.config), "config"), ensure_repo_path(Path(args.corpus_manifest), "corpus manifest"))
     out.write_text(json.dumps(report, indent=2) + "\n")
     print("KINEMATIC_DERIVE_RESULT_JSON:" + json.dumps({"out": str(out), "mode": "certify" if args.certify_target_rig else "survey"}))

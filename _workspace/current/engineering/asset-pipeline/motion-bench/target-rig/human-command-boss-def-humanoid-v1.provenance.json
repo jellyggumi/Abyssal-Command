@@ -307,7 +307,7 @@
       }
     ],
     "maxAngularDeviationDeg": 0.0,
-    "firstMaxDivergence": null,
+    "maxDivergenceLocation": null,
     "thresholdDeg": 0.5,
     "passed": true
   }
