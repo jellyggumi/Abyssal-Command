@@ -49,7 +49,7 @@ async function activeSkillCampaign() {
 }
 
 async function battle(page, { force = false } = {}) {
-  await page.goto("/index.html", { waitUntil: "networkidle" });
+  await page.goto("/campaign.html", { waitUntil: "networkidle" });
   // D9 unified shell: #defense-battle-surface (and its data-defense-ready="true") exists
   // from page load -- the lobby/battle screens no longer swap. data-defense-started is
   // the real "a run is now ticking" signal, set only by BattleSession.beginRun().

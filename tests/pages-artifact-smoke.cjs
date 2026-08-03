@@ -6,6 +6,7 @@ const { resolve, dirname, relative } = require("node:path");
 
 const REQUIRED_FILES = [
   "index.html",
+  "campaign.html",
   "version.json",
   "sprite-2-5d.html",
   "sprite-2-5d.css",

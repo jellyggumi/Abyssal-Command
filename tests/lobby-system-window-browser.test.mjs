@@ -63,7 +63,7 @@ test("the lobby system window reports the real warden/legion state", async () =>
     const page = await context.newPage();
     page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
     page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
-    await page.goto("/index.html", { waitUntil: "networkidle" });
+    await page.goto("/campaign.html", { waitUntil: "networkidle" });
     await assertDeckMountedWithoutInteraction(page);
 
     const observed = await page.evaluate(() => {
@@ -150,7 +150,7 @@ test("the lobby system window keeps phone viewports free of horizontal overflow"
     const context = await browser.newContext({ baseURL: hosting.url, reducedMotion: "reduce", viewport });
     try {
       const page = await context.newPage();
-      await page.goto("/index.html", { waitUntil: "networkidle" });
+      await page.goto("/campaign.html", { waitUntil: "networkidle" });
       await assertDeckMountedWithoutInteraction(page);
       const measured = await page.evaluate(() => {
         const panel = document.querySelector("#monarch-status").getBoundingClientRect();

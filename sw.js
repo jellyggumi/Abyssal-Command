@@ -21,6 +21,10 @@ const IS_RELEASE_BUILD = /^[0-9a-f]{7,40}$/i.test(CACHE_NAME.slice(CACHE_PREFIX.
 const CORE_ASSETS = [
   "./",
   "./index.html",
+  "./sprite-2-5d.css",
+  "./sprite-2-5d.js",
+  "./campaign.html",
+  "./abyssal-oneline.html",
   "./app.js",
   "./rpg-catalog.js",
   "./defense-viewport.js",

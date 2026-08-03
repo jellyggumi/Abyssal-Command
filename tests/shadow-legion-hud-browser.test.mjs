@@ -57,7 +57,7 @@ test("the legion HUD panel is populated from the live run snapshot", async () =>
     const page = await context.newPage();
     page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
     page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
-    await page.goto("/index.html", { waitUntil: "networkidle" });
+    await page.goto("/campaign.html", { waitUntil: "networkidle" });
     await page.locator("#start-defense").click();
     await page.locator('#defense-battle-surface[data-defense-ready="true"]').waitFor({ state: "visible" });
     for (let index = 0; index < 4; index += 1) {

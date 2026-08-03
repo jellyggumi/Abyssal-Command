@@ -202,6 +202,8 @@
     text-transform: uppercase;
   }
 
+  .skills-card,
+  .lore-card,
   .hud-card,
   .controls-card {
     border: 1px solid var(--line);
@@ -275,7 +277,8 @@
 
   .telemetry-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(3.6rem, 1fr));
+
     gap: 1px;
     margin: 0.82rem 0 0;
     overflow: hidden;
@@ -560,6 +563,173 @@
     background: linear-gradient(180deg, #61301b, #30170d);
   }
 
+
+  .game-over-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .continue-button {
+    min-height: 2.8rem;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.65rem 1.1rem;
+    border: 1px solid rgba(88, 227, 242, 0.5);
+    border-radius: 0.5rem;
+    color: #cdf6ff;
+    background: linear-gradient(180deg, #10323c, #081820);
+    box-shadow: 0 0.35rem 1.2rem rgba(0, 0, 0, 0.35);
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .continue-button:hover {
+    border-color: var(--lantern);
+    background: linear-gradient(180deg, #164351, #0a2029);
+  }
+
+  .game-over-panel .countdown {
+    min-height: 1.1rem;
+    color: var(--lantern);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+  }
+
+  .charge-meter {
+    height: 0.42rem;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    background: #05080b;
+  }
+
+  .charge-meter span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #b06a24, #ffb161);
+    box-shadow: 0 0 0.8rem rgba(255, 122, 44, 0.42);
+    transition: width 160ms linear;
+  }
+
+  .charge-meter.is-low span {
+    background: linear-gradient(90deg, #5c3a1c, #a86a2c);
+    box-shadow: none;
+  }
+
+
+  .skills-card,
+  .lore-card {
+    padding: 0.95rem;
+    border: 1px solid var(--line);
+    border-radius: 0.82rem;
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.035), transparent 48%),
+      var(--panel);
+    box-shadow: 0 0.8rem 2.5rem rgba(0, 0, 0, 0.18);
+  }
+
+  .skill-row {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .skill-button {
+    display: grid;
+    grid-template-columns: 1.7rem 1fr auto;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 0.55rem 0.62rem;
+    border: 1px solid rgba(255, 177, 97, 0.28);
+    border-radius: 0.6rem;
+    background: rgba(8, 13, 19, 0.85);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .skill-button[disabled] {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .skill-button.is-cooling {
+    border-color: rgba(151, 184, 196, 0.2);
+  }
+
+  .skill-button.is-ready:not([disabled]) {
+    border-color: rgba(255, 177, 97, 0.62);
+    box-shadow: 0 0 0.9rem rgba(255, 122, 44, 0.18);
+  }
+
+  .skill-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 0.35rem;
+    color: var(--ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.72rem;
+  }
+
+  .skill-body {
+    display: grid;
+    gap: 0.12rem;
+    min-width: 0;
+  }
+
+  .skill-body strong {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 0.86rem;
+    font-weight: 500;
+  }
+
+  .skill-body span {
+    color: var(--dim);
+    font-size: 0.58rem;
+  }
+
+  .skill-cooldown {
+    color: var(--muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.62rem;
+    white-space: nowrap;
+  }
+
+  .audio-toggle {
+    width: 100%;
+    min-height: 2.1rem;
+    margin-top: 0.6rem;
+    border: 1px solid rgba(151, 184, 196, 0.24);
+    border-radius: 0.5rem;
+    background: rgba(6, 10, 15, 0.8);
+    color: var(--muted);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .lore-text {
+    margin: 0;
+    color: #8fa0ad;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 0.76rem;
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  .run-summary {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
   .noscript {
     position: fixed;
     inset: auto 1rem 1rem;
@@ -604,6 +774,8 @@
       grid-template-columns: 1fr;
     }
 
+    .skills-card,
+    .lore-card,
     .hud-card,
     .controls-card {
       padding: 0.82rem;
@@ -705,6 +877,8 @@
       gap: 0.45rem;
     }
 
+    .skills-card,
+    .lore-card,
     .hud-card,
     .controls-card {
       padding: 0.55rem;

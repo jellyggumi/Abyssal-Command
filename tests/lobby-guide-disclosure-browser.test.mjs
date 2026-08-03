@@ -114,7 +114,7 @@ async function openLobby(viewport = VIEWPORTS[0], { campaign = unlockedCampaign,
     Date.now = () => now;
     localStorage.setItem(storageKey, campaign);
   }, { campaign, now: NOW, storageKey: STORAGE_KEY });
-  await page.goto("/index.html", { waitUntil: "networkidle" });
+  await page.goto("/campaign.html", { waitUntil: "networkidle" });
   await page.locator('#defense-battle-surface[data-defense-ready="true"]').waitFor();
   await assertOpsDeckMountedWithoutInteraction(page);
   return { context, errors, page };

@@ -405,7 +405,7 @@ async function run() {
       });
     });
 
-    await page.goto("/index.html", { waitUntil: "networkidle" });
+    await page.goto("/campaign.html", { waitUntil: "networkidle" });
     if (!await clickVisible(page.locator("#start-defense"))) throw new Error("lobby did not expose #start-defense");
     actions.departures += 1;
     await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });

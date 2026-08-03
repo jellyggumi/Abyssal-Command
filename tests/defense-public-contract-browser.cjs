@@ -82,7 +82,7 @@ async function run() {
     // runs #17 and #18 in progression-mobile-ui-browser.cjs -- see its goto for the full
     // reasoning. `load` is a strict superset of DCL, so it cannot regress a passing test
     // except by timeout, and setDefaultTimeout(90_000) covers that.
-    await page.goto("/index.html", { waitUntil: "load" });
+    await page.goto("/campaign.html", { waitUntil: "load" });
     const idleSummary = page.locator("#idle-return-toast");
     await idleSummary.waitFor({ state: "visible" });
     assert.equal(await idleSummary.getAttribute("data-idle-return-outcome"), "SETTLED", "initialization must visibly settle a due offline return");

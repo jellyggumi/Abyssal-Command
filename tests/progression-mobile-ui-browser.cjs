@@ -175,7 +175,7 @@ async function openPage({
     //                     the service-worker revalidation loop cannot stall it.
     //
     // Keep in sync with the reload below; both need the CSS guarantee.
-    await page.goto("/index.html", { waitUntil: "load" });
+    await page.goto("/campaign.html", { waitUntil: "load" });
     const surface = page.locator('#defense-battle-surface[data-defense-ready="true"]');
     await surface.waitFor({ state: "visible" });
     if (rendererProbe) {

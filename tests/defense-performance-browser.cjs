@@ -33,7 +33,7 @@ function serve() {
 
 async function sample(page) {
   await page.bringToFront().catch(() => {});
-  await page.goto("/index.html", { waitUntil: "networkidle" });
+  await page.goto("/campaign.html", { waitUntil: "networkidle" });
   await page.locator("#start-defense").click();
   await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
   const probe = page.evaluate(async () => {

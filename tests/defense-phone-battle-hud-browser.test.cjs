@@ -119,7 +119,7 @@ async function openUi(viewport, { forceCanvasMotionProbe = false, reducedMotion 
     // runs #17 and #18 in progression-mobile-ui-browser.cjs -- see its goto for the full
     // reasoning. `load` is a strict superset of DCL, so it cannot regress a passing test
     // except by timeout, and setDefaultTimeout(90_000) covers that.
-    await page.goto("/index.html", { waitUntil: "load" });
+    await page.goto("/campaign.html", { waitUntil: "load" });
     const surface = page.locator('#defense-battle-surface[data-defense-ready="true"]');
     await surface.waitFor({ state: "visible" });
     assert.equal(await surface.getAttribute("data-stage-id"), "cinder-span", "a fresh browser must select Cinder Span");

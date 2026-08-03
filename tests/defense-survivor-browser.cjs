@@ -403,7 +403,7 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
         return syntheticNow;
       };
     });
-    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/campaign.html", { waitUntil: "domcontentloaded" });
     await page.locator("#start-defense").waitFor();
     assert.equal(await page.locator("#start-defense").isVisible(), true, "lobby must expose a live departure action");
     report.events.push("lobby-visible");
@@ -817,7 +817,7 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
         return syntheticNow;
       };
     });
-    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/campaign.html", { waitUntil: "domcontentloaded" });
     await page.locator("#start-defense").waitFor();
     await page.locator("#start-defense").click();
     await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
@@ -1330,7 +1330,7 @@ async function verifyBossMeshRegression(browser, hosting) {
   page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
   page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
   try {
-    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/campaign.html", { waitUntil: "domcontentloaded" });
     const result = await page.evaluate(async () => {
       const sim = await import("/defense-run-simulation.js");
       const { ARENA, DIRECT_COMBAT, OCTANT_VECTORS } = await import("/defense-catalog.js");
@@ -1583,7 +1583,7 @@ async function verifyStanceSwitchFeedback(browser, hosting, campaign) {
         return syntheticNow;
       };
     });
-    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/campaign.html", { waitUntil: "domcontentloaded" });
     await page.locator("#start-defense").waitFor();
     await page.locator("#start-defense").click();
     await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
@@ -1706,7 +1706,7 @@ async function verifyXpProgressBar(browser, hosting, campaign) {
         return syntheticNow;
       };
     });
-    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/campaign.html", { waitUntil: "domcontentloaded" });
     await page.locator("#start-defense").waitFor();
     await page.locator("#start-defense").click();
     await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
@@ -1808,7 +1808,7 @@ async function verifyPassiveBadges(browser, hosting, campaign) {
         return syntheticNow;
       };
     });
-    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/campaign.html", { waitUntil: "domcontentloaded" });
     await page.locator("#start-defense").waitFor();
     await page.locator("#start-defense").click();
     await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });

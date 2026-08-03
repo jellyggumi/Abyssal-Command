@@ -3,32 +3,220 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#050812" />
+    <meta name="theme-color" content="#070b12" />
     <meta name="color-scheme" content="dark" />
-    <meta name="description" content="마지막 등불을 들고 심연의 세 구역을 내려가는 액션 캠페인" />
-    <title>Abyssal Lantern — Main Campaign</title>
-    <link rel="stylesheet" href="styles.css" />
-    <link rel="stylesheet" href="react-game-ui.css" />
-    <link rel="manifest" href="manifest.json" />
+    <meta
+      name="description"
+      content="스프라이트 기반 어비스 랜턴 아레나에서 잿불 법정을 사수하라."
+    />
+    <title>어비스 랜턴 — 잿불 법정</title>
+    <link rel="stylesheet" href="sprite-2-5d.css" />
   </head>
-  <body>
-    <div class="page-atmosphere" aria-hidden="true"></div>
-    <noscript>
-      <section class="noscript" aria-labelledby="noscript-title">
-        <p class="noscript-kicker">ABYSSAL LANTERN</p>
-        <h1 id="noscript-title">심연의 등불을 밝히려면 JavaScript가 필요합니다.</h1>
-        <p>이 게임은 전장 시뮬레이션과 로컬 저장을 브라우저에서 실행합니다. JavaScript를 켠 뒤 새로고침하세요.</p>
+  <body data-game-state="loading">
+    <main class="game-page" aria-labelledby="game-title">
+      <header class="game-header">
+        <div>
+          <p class="eyebrow">어비스 랜턴 · 야전기록 07</p>
+          <h1 id="game-title">잿불 법정을 사수하라</h1>
+        </div>
+        <p id="sprite-2-5d-status" class="status" role="status" aria-live="polite">
+          전투원을 불러오는 중…
+        </p>
+      </header>
+
+      <section class="game-layout" aria-label="잿불 법정 방어 아레나">
+        <div class="arena-column">
+          <div class="arena-frame" id="sprite-2-5d-game" data-runtime="loading">
+            <canvas
+              id="sprite-2-5d-canvas"
+              width="1536"
+              height="1024"
+              aria-label="잿불 법정 방어 아레나. 황혼의 파수꾼을 움직여 잿불 군단을 베고 거세지는 웨이브를 견뎌라."
+              role="img"
+            ></canvas>
+
+            <div class="load-panel" id="sprite-2-5d-loading" aria-live="polite">
+              <span class="load-sigil" aria-hidden="true"></span>
+              <strong>법정을 여는 중</strong>
+              <span>스프라이트 매니페스트와 시트를 검증하는 중…</span>
+            </div>
+
+            <section class="game-over-panel" id="sprite-2-5d-game-over" aria-labelledby="game-over-title" hidden>
+              <p class="eyebrow">랜턴이 꺼져간다</p>
+              <h2 id="game-over-title">법정이 함락되었다</h2>
+              <p id="sprite-2-5d-final-score">점수 0 · 웨이브 1</p>
+              <p id="sprite-2-5d-run-summary" class="run-summary">유물 0 · 처치 0</p>
+              <div class="game-over-actions">
+                <button class="restart-button" id="sprite-2-5d-restart" type="button">
+                  재점화 <kbd>R</kbd>
+                </button>
+                <a class="continue-button" id="sprite-2-5d-continue" href="abyssal-oneline.html">
+                  어비스 기록으로 돌아가기
+                </a>
+              </div>
+              <p id="sprite-2-5d-countdown" class="countdown" role="status" aria-live="polite"></p>
+
+            </section>
+          </div>
+
+          <div class="arena-caption" aria-hidden="true">
+            <span>잿불 법정 · 하층 성유물고</span>
+            <span>고정 시뮬레이션 · 60Hz</span>
+          </div>
+        </div>
+
+        <aside class="command-panel" aria-label="전투 상태 및 조작">
+          <section class="hud-card" aria-labelledby="battle-status-title">
+            <div class="section-heading">
+              <p class="eyebrow">실시간 계측</p>
+              <h2 id="battle-status-title">파수꾼 상태</h2>
+            </div>
+
+            <div class="health-row">
+              <span>랜턴 내구도</span>
+              <output id="sprite-2-5d-health-value" for="sprite-2-5d-health">100 / 100</output>
+            </div>
+            <div
+              class="health-meter"
+              id="sprite-2-5d-health"
+              role="meter"
+              aria-label="플레이어 체력"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="100"
+            >
+              <span id="sprite-2-5d-health-fill"></span>
+            </div>
+
+            <div class="health-row">
+              <span>랜턴 기름</span>
+              <output id="sprite-2-5d-charge-value" for="sprite-2-5d-charge">100 / 100</output>
+            </div>
+            <div
+              class="charge-meter"
+              id="sprite-2-5d-charge"
+              role="meter"
+              aria-label="랜턴 기름"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="100"
+            >
+              <span id="sprite-2-5d-charge-fill"></span>
+            </div>
+
+            <dl class="telemetry-grid">
+              <div>
+                <dt>웨이브</dt>
+                <dd id="sprite-2-5d-wave">1</dd>
+              </div>
+              <div>
+                <dt>점수</dt>
+                <dd id="sprite-2-5d-score">0</dd>
+              </div>
+              <div>
+                <dt>적</dt>
+                <dd id="sprite-2-5d-enemies">0</dd>
+              </div>
+              <div>
+                <dt>유물</dt>
+                <dd id="sprite-2-5d-relics">0</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="skills-card" aria-labelledby="skills-title">
+            <div class="section-heading">
+              <p class="eyebrow">랜턴 의식</p>
+              <h2 id="skills-title">스킬</h2>
+            </div>
+
+            <div class="skill-row">
+              <button type="button" class="skill-button" data-skill="nova" id="sprite-2-5d-skill-nova" disabled>
+                <span class="skill-key" aria-hidden="true">Q</span>
+                <span class="skill-body">
+                  <strong>잿불 노바</strong>
+                  <span>고리 안의 모든 적 · 기름 45</span>
+                </span>
+                <span class="skill-cooldown" id="sprite-2-5d-skill-nova-cooldown">준비됨</span>
+              </button>
+              <button type="button" class="skill-button" data-skill="ward" id="sprite-2-5d-skill-ward" disabled>
+                <span class="skill-key" aria-hidden="true">E</span>
+                <span class="skill-body">
+                  <strong>랜턴 결계</strong>
+                  <span>3초간 봉인된 빛 · 기름 30</span>
+                </span>
+                <span class="skill-cooldown" id="sprite-2-5d-skill-ward-cooldown">준비됨</span>
+              </button>
+            </div>
+
+            <button type="button" class="audio-toggle" id="sprite-2-5d-audio-toggle" aria-pressed="false">
+              소리: 켜짐
+            </button>
+          </section>
+
+          <section class="lore-card" aria-labelledby="lore-title">
+            <div class="section-heading">
+              <p class="eyebrow">야전기록</p>
+              <h2 id="lore-title">잿불 법정 기록보관소</h2>
+            </div>
+            <p class="lore-text" id="sprite-2-5d-lore" role="status" aria-live="polite">
+              잿불 군단은 랜턴이 봉인하지 못한 것을 태운다.
+            </p>
+          </section>
+
+
+          <section class="controls-card" aria-labelledby="controls-title">
+            <div class="section-heading controls-heading">
+              <div>
+                <p class="eyebrow">터치 조작</p>
+                <h2 id="controls-title">전투 조작</h2>
+              </div>
+              <span class="ready-dot" aria-hidden="true"></span>
+            </div>
+
+            <div class="touch-controls" id="sprite-2-5d-touch-controls" aria-label="화면 조작 버튼">
+              <div class="direction-pad" aria-label="방향 패드">
+                <button type="button" class="control-button direction up" data-control="up" aria-label="위로 이동" disabled>
+                  <span aria-hidden="true">▲</span>
+                </button>
+                <button type="button" class="control-button direction left" data-control="left" aria-label="왼쪽으로 이동" disabled>
+                  <span aria-hidden="true">◀</span>
+                </button>
+                <span class="pad-core" aria-hidden="true"></span>
+                <button type="button" class="control-button direction right" data-control="right" aria-label="오른쪽으로 이동" disabled>
+                  <span aria-hidden="true">▶</span>
+                </button>
+                <button type="button" class="control-button direction down" data-control="down" aria-label="아래로 이동" disabled>
+                  <span aria-hidden="true">▼</span>
+                </button>
+              </div>
+
+              <button type="button" class="control-button attack-control" data-control="attack" aria-label="공격" disabled>
+                <span class="attack-glyph" aria-hidden="true"></span>
+                <span>타격</span>
+              </button>
+            </div>
+
+            <div class="control-legend" aria-label="키보드 조작">
+              <span><kbd>WASD</kbd> / <kbd>방향키</kbd> 이동</span>
+              <span><kbd>Space</kbd> 타격</span>
+              <span><kbd>Q</kbd> 잿불 노바</span>
+              <span><kbd>E</kbd> 랜턴 결계</span>
+              <span><kbd>R</kbd> 재시작</span>
+
+            </div>
+          </section>
+
+          <p class="mission-note">
+            랜턴이 포위되기 전에 잿불 군단을 무너뜨려라. 웨이브를 넘길수록 더 강한 무리가 몰려온다.
+          </p>
+        </aside>
       </section>
+    </main>
+
+    <noscript>
+      <p class="noscript">잿불 법정에 들어가려면 JavaScript가 필요합니다.</p>
     </noscript>
-    <main id="defense-app" aria-live="polite"></main>
-    <script type="module" src="app.js"></script>
-    <script>
-      if (new URLSearchParams(window.location.search).has("agentation")) {
-        const agentationScript = document.createElement("script");
-        agentationScript.type = "module";
-        agentationScript.src = "agentation-toolbar.js";
-        document.head.appendChild(agentationScript);
-      }
-    </script>
+    <script type="module" src="sprite-2-5d.js"></script>
   </body>
 </html>

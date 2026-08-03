@@ -1,6 +1,6 @@
 advisors: 
   - name: default
-    model: anthropic/claude-opus-5:xhigh
+    model: anthropic/claude-fable-5:xhigh
     tools: 
       - read
       - bash

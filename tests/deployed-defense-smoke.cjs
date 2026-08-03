@@ -56,7 +56,7 @@ async function run() {
     results.version = version;
 
     results.spriteRequests = {};
-    for (const pathname of ["sprite-2-5d.html", ...SPRITE_RUNTIME_ASSETS]) {
+    for (const pathname of ["index.html", ...SPRITE_RUNTIME_ASSETS]) {
       const assetResponse = await fetch(absolute(pathname), {
         cache: "no-store",
         headers: { "Cache-Control": "no-cache" },
@@ -75,7 +75,7 @@ async function run() {
         if (message.type() === "error") errors.push(`console: ${message.text()}`);
       });
 
-      const response = await page.goto(absolute("index.html"), { waitUntil: "networkidle" });
+      const response = await page.goto(absolute("campaign.html"), { waitUntil: "networkidle" });
       assert(response?.ok(), `${width}x${height} app response must succeed`);
       await page.locator("#start-defense").click();
       const surface = page.locator('#defense-battle-surface[data-defense-started="true"]');
@@ -134,7 +134,7 @@ async function run() {
       assert.equal(invariant.surface, true, "battle surface must exist");
       assert.equal(invariant.canvas, true, "battle canvas must exist");
       assert.equal(invariant.overflow, true, "battle must not overflow viewport");
-      const spriteResponse = await page.goto(absolute("sprite-2-5d.html"), { waitUntil: "load" });
+      const spriteResponse = await page.goto(absolute("index.html"), { waitUntil: "load" });
       assert(spriteResponse?.ok(), `${width}x${height} sprite route response must succeed`);
       await page.locator('body[data-game-state="running"]').waitFor({ state: "attached", timeout: 15_000 });
       const spriteInvariant = await page.evaluate(() => ({

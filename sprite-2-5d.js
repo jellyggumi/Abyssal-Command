@@ -19,6 +19,45 @@ const ENEMY_BASE_HEALTH = 58;
 const ENEMY_ATTACK_RANGE = 76;
 const ENEMY_ATTACK_COOLDOWN = 1.22;
 const ENEMY_CAP = 20;
+const LANTERN_MAX_CHARGE = 100;
+const LANTERN_REGEN_PER_SECOND = 7;
+const LANTERN_CHARGE_PER_KILL = 6;
+const NOVA_COST = 45;
+const NOVA_COOLDOWN = 6.5;
+const NOVA_RADIUS = 250;
+const NOVA_DAMAGE = 96;
+const WARD_COST = 30;
+const WARD_COOLDOWN = 9;
+const WARD_DURATION = 3;
+const PICKUP_LIFETIME = 12;
+const PICKUP_MAGNET_RADIUS = 78;
+const RELIC_SCORE = 250;
+const EMBER_SHARD_HEAL = 18;
+const OIL_FLASK_CHARGE = 35;
+const RUN_DIGEST_KEY = "abyssal-lantern:cinder-court:last-run";
+const CONTINUE_URL = "abyssal-oneline.html";
+const CONTINUE_DELAY_SECONDS = 9;
+const AUDIO_MUTE_KEY = "abyssal-lantern:cinder-court:muted";
+
+// World record beats: the Cinder Court is the lower reliquary of the Abyssal
+// Lantern campaign, so every wave reveals one line of why the Ember Cohort
+// keeps climbing toward the last flame.
+const LORE_BEATS = [
+  "잿불 법정은 군단이 그 기름을 용광로로 바꾸기 전까지 성유물고였다.",
+  "잿불 군단의 몸은 비어 있다. 그 안에서 타는 것은 훔쳐온 랜턴 기름이다.",
+  "당신이 줍는 유물 조각 하나하나가 심연이 지우려 한 이름이다.",
+  "파수꾼의 결계는 갑옷이 아니다. 어둠이 읽지 못하도록 봉인된 기억이다.",
+  "더 깊은 군단은 이미 타오르며 온다. 보내지기 전에 불붙여진 것이다.",
+  "랜턴은 심연을 죽이지 않는다. 다만 심연이 셈을 끝내지 못하게 막을 뿐이다.",
+];
+
+const ITEM_KINDS = Object.freeze({
+  "ember-shard": Object.freeze({ label: "잿불 파편", color: "#ff9a52" }),
+  "oil-flask": Object.freeze({ label: "기름 플라스크", color: "#ffd489" }),
+  "relic-mote": Object.freeze({ label: "유물 조각", color: "#8fe9ff" }),
+});
+const ITEM_DROP_ORDER = Object.freeze(["ember-shard", "oil-flask", "relic-mote"]);
+
 
 const ASSET_URLS = {
   backdrop: new URL("./assets/images/sprite-2-5d/cinder-court-backdrop.png", import.meta.url),
@@ -45,6 +84,19 @@ const scoreValue = document.querySelector("#sprite-2-5d-score");
 const enemiesValue = document.querySelector("#sprite-2-5d-enemies");
 const touchControls = document.querySelector("#sprite-2-5d-touch-controls");
 const controlButtons = Array.from(document.querySelectorAll("[data-control]"));
+const skillButtons = Array.from(document.querySelectorAll("[data-skill]"));
+const runSummaryNode = document.querySelector("#sprite-2-5d-run-summary");
+const countdownNode = document.querySelector("#sprite-2-5d-countdown");
+const continueLink = document.querySelector("#sprite-2-5d-continue");
+const chargeMeter = document.querySelector("#sprite-2-5d-charge");
+const chargeFill = document.querySelector("#sprite-2-5d-charge-fill");
+const chargeValue = document.querySelector("#sprite-2-5d-charge-value");
+const relicsValue = document.querySelector("#sprite-2-5d-relics");
+const loreNode = document.querySelector("#sprite-2-5d-lore");
+const audioToggle = document.querySelector("#sprite-2-5d-audio-toggle");
+const novaCooldownNode = document.querySelector("#sprite-2-5d-skill-nova-cooldown");
+const wardCooldownNode = document.querySelector("#sprite-2-5d-skill-ward-cooldown");
+
 const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 if (!context) {
@@ -134,6 +186,7 @@ const player = {
   attackId: 0,
   moving: false,
   hitFlash: 0,
+  wardTime: 0,
 };
 
 const state = {
@@ -151,7 +204,19 @@ const state = {
   hudDirty: true,
   reducedMotion: reducedMotionQuery.matches,
   waveSeed: 0,
+  charge: LANTERN_MAX_CHARGE,
+  kills: 0,
+  relics: 0,
+  pickups: [],
+  nextPickupId: 1,
+  novaCooldown: 0,
+  wardCooldown: 0,
+  novaFlash: 0,
+  muted: false,
+  continueTimerId: 0,
+  continueRemaining: 0,
 };
+
 
 const keyboard = {
   up: false,
@@ -411,6 +476,285 @@ function clearInput() {
   }
 }
 
+// --- Procedural battle audio -------------------------------------------------
+// The Cinder Court route ships no audio files: every cue is synthesised from a
+// short oscillator envelope so the arena stays a single-page, asset-free route.
+let audioContext = null;
+
+function readStoredMute() {
+  try {
+    return window.localStorage.getItem(AUDIO_MUTE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function persistMute(muted) {
+  try {
+    window.localStorage.setItem(AUDIO_MUTE_KEY, muted ? "1" : "0");
+  } catch {
+    // Storage is optional; muting still applies for the current run.
+  }
+}
+
+const AUDIO_CUES = Object.freeze({
+  strike: { type: "square", from: 320, to: 140, duration: 0.12, gain: 0.05 },
+  hit: { type: "sawtooth", from: 210, to: 90, duration: 0.14, gain: 0.05 },
+  kill: { type: "triangle", from: 420, to: 120, duration: 0.24, gain: 0.06 },
+  nova: { type: "sawtooth", from: 620, to: 70, duration: 0.55, gain: 0.09 },
+  ward: { type: "sine", from: 180, to: 720, duration: 0.42, gain: 0.07 },
+  pickup: { type: "sine", from: 640, to: 1180, duration: 0.16, gain: 0.05 },
+  wave: { type: "triangle", from: 240, to: 480, duration: 0.42, gain: 0.06 },
+  gameover: { type: "sine", from: 300, to: 60, duration: 0.9, gain: 0.09 },
+});
+
+function ensureAudioContext() {
+  if (state.muted) {
+    return null;
+  }
+  const AudioContextClass = window.AudioContext ?? window.webkitAudioContext;
+  if (!AudioContextClass) {
+    return null;
+  }
+  if (!audioContext) {
+    try {
+      audioContext = new AudioContextClass();
+    } catch {
+      audioContext = null;
+      return null;
+    }
+  }
+  if (audioContext.state === "suspended") {
+    audioContext.resume().catch(() => {});
+  }
+  return audioContext;
+}
+
+function playCue(cueName) {
+  const cue = AUDIO_CUES[cueName];
+  if (!cue) {
+    return false;
+  }
+  const audio = ensureAudioContext();
+  if (!audio) {
+    return false;
+  }
+
+  const now = audio.currentTime;
+  const oscillator = audio.createOscillator();
+  const gain = audio.createGain();
+  oscillator.type = cue.type;
+  oscillator.frequency.setValueAtTime(cue.from, now);
+  oscillator.frequency.exponentialRampToValueAtTime(Math.max(20, cue.to), now + cue.duration);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(cue.gain, now + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + cue.duration);
+  oscillator.connect(gain).connect(audio.destination);
+  oscillator.start(now);
+  oscillator.stop(now + cue.duration + 0.02);
+  return true;
+}
+
+function setMuted(muted) {
+  state.muted = muted;
+  persistMute(muted);
+  audioToggle.textContent = muted ? "소리: 꺼짐" : "소리: 켜짐";
+  audioToggle.setAttribute("aria-pressed", muted ? "true" : "false");
+  if (muted && audioContext) {
+    audioContext.suspend().catch(() => {});
+  }
+}
+
+// --- Items -------------------------------------------------------------------
+function itemKindForEnemy(enemy) {
+  return ITEM_DROP_ORDER[enemy.id % ITEM_DROP_ORDER.length];
+}
+
+function spawnPickup(enemy) {
+  state.pickups.push({
+    id: state.nextPickupId,
+    kind: itemKindForEnemy(enemy),
+    x: enemy.x,
+    y: enemy.y,
+    life: PICKUP_LIFETIME,
+    bob: 0,
+  });
+  state.nextPickupId += 1;
+}
+
+function collectPickup(pickup) {
+  if (pickup.kind === "ember-shard") {
+    player.health = Math.min(PLAYER_MAX_HEALTH, player.health + EMBER_SHARD_HEAL);
+  } else if (pickup.kind === "oil-flask") {
+    state.charge = Math.min(LANTERN_MAX_CHARGE, state.charge + OIL_FLASK_CHARGE);
+  } else {
+    state.relics += 1;
+    state.score += RELIC_SCORE;
+  }
+  playCue("pickup");
+  state.hudDirty = true;
+}
+
+function updatePickups(deltaTime) {
+  for (let index = state.pickups.length - 1; index >= 0; index -= 1) {
+    const pickup = state.pickups[index];
+    pickup.life -= deltaTime;
+    pickup.bob += deltaTime;
+
+    const deltaX = player.x - pickup.x;
+    const deltaY = (player.y - pickup.y) * 1.42;
+    if (deltaX * deltaX + deltaY * deltaY <= PICKUP_MAGNET_RADIUS * PICKUP_MAGNET_RADIUS) {
+      collectPickup(pickup);
+      state.pickups.splice(index, 1);
+      continue;
+    }
+    if (pickup.life <= 0) {
+      state.pickups.splice(index, 1);
+    }
+  }
+}
+
+// --- Skills ------------------------------------------------------------------
+function castNova() {
+  state.charge -= NOVA_COST;
+  state.novaCooldown = NOVA_COOLDOWN;
+  state.novaFlash = state.reducedMotion ? 0.08 : 0.42;
+  let struck = 0;
+  for (let index = 0; index < state.enemies.length; index += 1) {
+    const enemy = state.enemies[index];
+    if (enemy.dead) {
+      continue;
+    }
+    const deltaX = enemy.x - player.x;
+    const deltaY = (enemy.y - player.y) * 1.42;
+    if (deltaX * deltaX + deltaY * deltaY <= NOVA_RADIUS * NOVA_RADIUS) {
+      damageEnemy(enemy, NOVA_DAMAGE);
+      struck += 1;
+    }
+  }
+  playCue("nova");
+  announce(`잿불 노바 작렬. 고리 안의 적 ${struck}기가 휩쓸렸다.`);
+  return struck;
+}
+
+function castWard() {
+  state.charge -= WARD_COST;
+  state.wardCooldown = WARD_COOLDOWN;
+  player.wardTime = WARD_DURATION;
+  playCue("ward");
+  announce("랜턴 결계 봉인. 3초간 모든 피해를 거부한다.");
+  return true;
+}
+
+function skillCost(skillName) {
+  return skillName === "nova" ? NOVA_COST : WARD_COST;
+}
+
+function skillCooldownRemaining(skillName) {
+  return skillName === "nova" ? state.novaCooldown : state.wardCooldown;
+}
+
+function canUseSkill(skillName) {
+  if (skillName !== "nova" && skillName !== "ward") {
+    return false;
+  }
+  if (state.mode !== "running" && state.mode !== "wave-clear") {
+    return false;
+  }
+  return skillCooldownRemaining(skillName) <= 0 && state.charge >= skillCost(skillName);
+}
+
+function useSkill(skillName) {
+  if (!canUseSkill(skillName)) {
+    return false;
+  }
+  if (skillName === "nova") {
+    castNova();
+  } else {
+    castWard();
+  }
+  state.hudDirty = true;
+  return true;
+}
+
+function updateSkills(deltaTime) {
+  if (state.novaCooldown > 0 || state.wardCooldown > 0) {
+    state.hudDirty = true;
+  }
+  state.novaCooldown = Math.max(0, state.novaCooldown - deltaTime);
+  state.wardCooldown = Math.max(0, state.wardCooldown - deltaTime);
+  state.novaFlash = Math.max(0, state.novaFlash - deltaTime);
+  player.wardTime = Math.max(0, player.wardTime - deltaTime);
+
+
+  const regenerated = Math.min(LANTERN_MAX_CHARGE, state.charge + LANTERN_REGEN_PER_SECOND * deltaTime);
+  if (regenerated !== state.charge) {
+    state.charge = regenerated;
+    state.hudDirty = true;
+  }
+}
+
+// --- Run closure -------------------------------------------------------------
+function writeRunDigest(reason) {
+  const digest = {
+    route: "cinder-court",
+    reason,
+    wave: state.wave,
+    score: state.score,
+    kills: state.kills,
+    relics: state.relics,
+    endedAt: new Date().toISOString(),
+  };
+  try {
+    window.localStorage.setItem(RUN_DIGEST_KEY, JSON.stringify(digest));
+  } catch {
+    // A blocked storage quota must never stop the run from closing.
+  }
+  return digest;
+}
+
+function cancelContinueCountdown() {
+  if (state.continueTimerId !== 0) {
+    window.clearInterval(state.continueTimerId);
+    state.continueTimerId = 0;
+  }
+  state.continueRemaining = 0;
+  countdownNode.textContent = "";
+}
+
+function startContinueCountdown() {
+  cancelContinueCountdown();
+  state.continueRemaining = CONTINUE_DELAY_SECONDS;
+  countdownNode.textContent = `${state.continueRemaining}초 후 어비스 기록으로 이동 · 재점화하면 남는다`;
+  state.continueTimerId = window.setInterval(() => {
+    state.continueRemaining -= 1;
+    if (state.continueRemaining <= 0) {
+      cancelContinueCountdown();
+      window.location.assign(CONTINUE_URL);
+      return;
+    }
+    countdownNode.textContent = `${state.continueRemaining}초 후 어비스 기록으로 이동 · 재점화하면 남는다`;
+  }, 1000);
+}
+
+function endRun(reason) {
+  setMode("gameover");
+  clearInput();
+  const digest = writeRunDigest(reason);
+  finalScoreNode.textContent = `점수 ${state.score.toLocaleString()} · 웨이브 ${state.wave}`;
+  runSummaryNode.textContent = `유물 ${state.relics} · 처치 ${state.kills}`;
+  gameOverPanel.hidden = false;
+  playCue("gameover");
+  startContinueCountdown();
+  restartButton.focus({ preventScroll: true });
+  return digest;
+}
+
+
+function loreForWave(waveNumber) {
+  return LORE_BEATS[(waveNumber - 1) % LORE_BEATS.length];
+}
+
 function startWave(waveNumber) {
   state.wave = waveNumber;
   state.waveSeed = (waveNumber * 3) % SPAWN_POINTS.length;
@@ -418,15 +762,28 @@ function startWave(waveNumber) {
   state.spawnTimer = 0.18;
   state.intermission = 0;
   state.hudDirty = true;
+  loreNode.textContent = loreForWave(waveNumber);
   setMode("running");
-  announce(`Wave ${waveNumber}. ${state.pendingSpawns} Ember Cohort signatures entering the court.`);
+  if (waveNumber > 1) {
+    playCue("wave");
+  }
+  announce(`웨이브 ${waveNumber}. 잿불 군단 반응 ${state.pendingSpawns}기가 법정에 진입한다.`);
 }
 
 function restartGame() {
+  cancelContinueCountdown();
   state.enemies.length = 0;
+  state.pickups.length = 0;
   state.livingEnemies = 0;
   state.score = 0;
+  state.kills = 0;
+  state.relics = 0;
+  state.charge = LANTERN_MAX_CHARGE;
+  state.novaCooldown = 0;
+  state.wardCooldown = 0;
+  state.novaFlash = 0;
   state.nextEnemyId = 1;
+  state.nextPickupId = 1;
   state.accumulator = 0;
   player.x = ARENA_X;
   player.y = ARENA_Y + 42;
@@ -436,6 +793,7 @@ function restartGame() {
   player.damageCooldown = 0;
   player.attackId = 0;
   player.hitFlash = 0;
+  player.wardTime = 0;
   player.moving = false;
   setClip(player, "idle", true);
   clearInput();
@@ -444,6 +802,7 @@ function restartGame() {
   updateHud();
   startLoop();
 }
+
 
 function spawnEnemy() {
   const pointIndex = (state.waveSeed + state.nextEnemyId * 3) % SPAWN_POINTS.length;
@@ -483,6 +842,7 @@ function damageEnemy(enemy, amount) {
   enemy.health = Math.max(0, enemy.health - amount);
   enemy.hitFlash = state.reducedMotion ? 0.04 : 0.13;
   state.hudDirty = true;
+  playCue("hit");
 
   if (enemy.health === 0) {
     enemy.dead = true;
@@ -490,12 +850,23 @@ function damageEnemy(enemy, amount) {
     setClip(enemy, "idle", true);
     state.livingEnemies -= 1;
     state.score += 100 * state.wave;
+    state.kills += 1;
+    state.charge = Math.min(LANTERN_MAX_CHARGE, state.charge + LANTERN_CHARGE_PER_KILL);
+    spawnPickup(enemy);
     state.hudDirty = true;
+    playCue("kill");
   }
 }
 
 function damagePlayer(amount) {
   if (state.mode === "gameover" || state.mode === "error" || player.damageCooldown > 0) {
+    return;
+  }
+
+  if (player.wardTime > 0) {
+    // Lantern Ward refuses the hit outright, but still consumes the contact so
+    // a warded player is not chain-hit by the same swing.
+    player.damageCooldown = PLAYER_HIT_GRACE;
     return;
   }
 
@@ -505,16 +876,13 @@ function damagePlayer(amount) {
   state.hudDirty = true;
 
   if (player.health === 0) {
-    setMode("gameover");
-    clearInput();
-    finalScoreNode.textContent = `Score ${state.score.toLocaleString()} · Wave ${state.wave}`;
-    gameOverPanel.hidden = false;
-    announce(`The Cinder Court fell on wave ${state.wave}. Final score ${state.score}. Press R or choose Rekindle.`);
-    restartButton.focus({ preventScroll: true });
+    endRun("overrun");
+    announce(`웨이브 ${state.wave}에서 잿불 법정이 함락됐다. 최종 점수 ${state.score}. R을 누르거나 재점화를 선택하라.`);
   } else if (player.health <= 30) {
-    announce(`Lantern integrity critical: ${player.health}. Keep moving.`);
+    announce(`랜턴 내구도 위험: ${player.health}. 멈추지 마라.`);
   }
 }
+
 
 function updatePlayer(deltaTime) {
   player.attackCooldown = Math.max(0, player.attackCooldown - deltaTime);
@@ -558,6 +926,8 @@ function updatePlayer(deltaTime) {
     player.attackId += 1;
     player.attackCooldown = PLAYER_ATTACK_COOLDOWN;
     setClip(player, "attack", true);
+    playCue("strike");
+
   }
   attackQueued = false;
 
@@ -703,7 +1073,7 @@ function updateWave(deltaTime) {
     state.intermission = 2.15;
     setMode("wave-clear");
     state.hudDirty = true;
-    announce(`Wave ${state.wave} secured. The next cohort is gathering.`);
+    announce(`웨이브 ${state.wave} 확보. 다음 군단이 모이고 있다.`);
   }
 }
 
@@ -711,16 +1081,18 @@ function fixedUpdate(deltaTime) {
   if (state.mode !== "running" && state.mode !== "wave-clear") {
     return;
   }
-
   updatePlayer(deltaTime);
   updateEnemies(deltaTime);
   if (state.mode !== "gameover") {
+    updateSkills(deltaTime);
+    updatePickups(deltaTime);
     updateWave(deltaTime);
   }
 
   if (state.hudDirty) {
     updateHud();
   }
+
 }
 
 function depthScaleForY(y) {
@@ -935,10 +1307,81 @@ function drawWaveMarker() {
   context.textAlign = "center";
   context.fillStyle = "#78e9f1";
   context.font = "700 20px ui-monospace, monospace";
-  context.fillText(`WAVE ${state.wave} SECURED`, 768, 496);
+  context.fillText(`웨이브 ${state.wave} 확보`, 768, 496);
   context.fillStyle = "#c7d2d5";
   context.font = "24px Georgia, serif";
-  context.fillText("Hold the lantern line", 768, 535);
+  context.fillText("랜턴의 전선을 지켜라", 768, 535);
+  context.restore();
+}
+
+
+function drawPickups() {
+  for (let index = 0; index < state.pickups.length; index += 1) {
+    const pickup = state.pickups[index];
+    const depthScale = depthScaleForY(pickup.y);
+    const bob = state.reducedMotion ? 0 : Math.sin(pickup.bob * 4) * 4;
+    const centerX = Math.round(pickup.x);
+    const centerY = Math.round(pickup.y - 26 * depthScale + bob);
+    const radius = 11 * depthScale;
+    const expiring = pickup.life <= 3;
+
+    context.save();
+    context.globalAlpha = expiring && !state.reducedMotion
+      ? 0.35 + Math.abs(Math.sin(pickup.life * 6)) * 0.65
+      : 0.92;
+    context.fillStyle = ITEM_KINDS[pickup.kind].color;
+    context.beginPath();
+    context.moveTo(centerX, centerY - radius);
+    context.lineTo(centerX + radius * 0.72, centerY);
+    context.lineTo(centerX, centerY + radius);
+    context.lineTo(centerX - radius * 0.72, centerY);
+    context.closePath();
+    context.fill();
+    context.globalAlpha = 0.28;
+    context.strokeStyle = "#04070b";
+    context.lineWidth = 2 * depthScale;
+    context.stroke();
+    context.restore();
+  }
+}
+
+function drawWardAura() {
+  if (player.wardTime <= 0) {
+    return;
+  }
+  const depthScale = depthScaleForY(player.y);
+  const anchor = spriteAnchorForActor(player, renderScratch.anchor);
+  context.save();
+  context.globalAlpha = Math.min(0.55, 0.2 + (player.wardTime / WARD_DURATION) * 0.4);
+  context.strokeStyle = "#9af4ef";
+  context.lineWidth = 4 * depthScale;
+  context.beginPath();
+  context.ellipse(anchor.x, anchor.y - 74 * depthScale, 62 * depthScale, 96 * depthScale, 0, 0, Math.PI * 2);
+  context.stroke();
+  context.restore();
+}
+
+function drawNovaBurst() {
+  if (state.novaFlash <= 0) {
+    return;
+  }
+  const progress = 1 - state.novaFlash / (state.reducedMotion ? 0.08 : 0.42);
+  const anchor = spriteAnchorForActor(player, renderScratch.anchor);
+  context.save();
+  context.globalAlpha = Math.max(0, 0.55 * (1 - progress));
+  context.strokeStyle = "#ffb161";
+  context.lineWidth = 10;
+  context.beginPath();
+  context.ellipse(
+    anchor.x,
+    anchor.y - 40,
+    NOVA_RADIUS * (0.35 + progress * 0.65),
+    NOVA_RADIUS * 0.7 * (0.35 + progress * 0.65),
+    0,
+    0,
+    Math.PI * 2,
+  );
+  context.stroke();
   context.restore();
 }
 
@@ -1054,6 +1497,9 @@ function render() {
   context.stroke();
   context.restore();
 
+  drawPickups();
+
+
   renderActors.length = 0;
   renderActors.push(player);
   for (let enemyIndex = 0; enemyIndex < state.enemies.length; enemyIndex += 1) {
@@ -1066,7 +1512,10 @@ function render() {
   }
 
   drawCombatFeedback();
+  drawWardAura();
+  drawNovaBurst();
   drawWaveMarker();
+
 }
 
 function updateHud() {
@@ -1082,7 +1531,36 @@ function updateHud() {
   canvas.dataset.score = String(state.score);
   canvas.dataset.playerHealth = String(player.health);
   canvas.dataset.enemies = String(state.livingEnemies + state.pendingSpawns);
+
+  const chargeRounded = Math.round(state.charge);
+  const chargeRatio = chargeRounded / LANTERN_MAX_CHARGE;
+  chargeValue.textContent = `${chargeRounded} / ${LANTERN_MAX_CHARGE}`;
+  chargeFill.style.width = `${chargeRatio * 100}%`;
+  chargeMeter.setAttribute("aria-valuenow", String(chargeRounded));
+  chargeMeter.classList.toggle("is-low", chargeRatio <= 0.3);
+  relicsValue.textContent = String(state.relics);
+  canvas.dataset.charge = String(chargeRounded);
+  canvas.dataset.relics = String(state.relics);
+  canvas.dataset.kills = String(state.kills);
+
+  for (let index = 0; index < skillButtons.length; index += 1) {
+    const button = skillButtons[index];
+    const skillName = button.dataset.skill;
+    const remaining = skillCooldownRemaining(skillName);
+    const ready = canUseSkill(skillName);
+    const label = remaining > 0 ? `${remaining.toFixed(1)}s` : ready ? "준비됨" : `기름 ${skillCost(skillName)} 필요`;
+    const node = skillName === "nova" ? novaCooldownNode : wardCooldownNode;
+    if (node && node.textContent !== label) {
+      node.textContent = label;
+    }
+    button.disabled = !ready;
+    button.classList.toggle("is-cooling", remaining > 0);
+    button.classList.toggle("is-ready", ready);
+    button.dataset.ready = ready ? "true" : "false";
+  }
+
   state.hudDirty = false;
+
 }
 
 function queueSemanticNudge(controlName) {
@@ -1153,6 +1631,14 @@ function handleKeyDown(event) {
     return;
   }
 
+  if (event.code === "KeyQ" || event.code === "KeyE") {
+    if (!event.repeat && isActiveMode()) {
+      useSkill(event.code === "KeyQ" ? "nova" : "ward");
+    }
+    event.preventDefault();
+    return;
+  }
+
   if (event.code === "KeyR" && !event.repeat && state.mode !== "loading" && state.mode !== "error") {
     event.preventDefault();
     restartGame();
@@ -1215,6 +1701,14 @@ for (let buttonIndex = 0; buttonIndex < controlButtons.length; buttonIndex += 1)
   });
 }
 
+for (let skillIndex = 0; skillIndex < skillButtons.length; skillIndex += 1) {
+  const button = skillButtons[skillIndex];
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    useSkill(button.dataset.skill);
+  });
+}
+
 touchControls.addEventListener("touchmove", (event) => {
   if (pointerBindings.size > 0 && event.cancelable) {
     event.preventDefault();
@@ -1249,11 +1743,11 @@ async function boot() {
   } catch (error) {
     setMode("error");
     loadingPanel.classList.add("is-error");
-    loadingPanel.querySelector("strong").textContent = "The court could not open";
+    loadingPanel.querySelector("strong").textContent = "법정을 열 수 없었다";
     loadingPanel.querySelector("span:last-child").textContent = error instanceof Error
       ? error.message
-      : "An unknown asset loading error occurred.";
-    announce("Game assets failed validation. Reload after checking the sprite bundle files.");
+      : "알 수 없는 자산 로딩 오류가 발생했다.";
+    announce("게임 자산 검증에 실패했다. 스프라이트 번들 파일을 확인한 뒤 새로고침하라.");
     console.error("[sprite-2-5d] Asset initialization failed:", error);
     stopLoop();
     render();

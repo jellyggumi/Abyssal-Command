@@ -61,7 +61,7 @@ async function openLobby(browser, hosting, campaign, reducedMotion = "no-prefere
     Date.now = () => now;
     localStorage.setItem("abyssal-command-defense", campaign);
   }, { campaign, now: NOW });
-  await page.goto("/index.html", { waitUntil: "networkidle" });
+  await page.goto("/campaign.html", { waitUntil: "networkidle" });
   return { context, errors, page };
 }
 

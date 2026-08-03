@@ -16,7 +16,7 @@ const VIEWPORTS = Object.freeze([
   Object.freeze({ width: 844, height: 390 }),
 ]);
 const EXPECTED_REQUESTS = Object.freeze([
-  "/sprite-2-5d.html",
+  "/index.html",
   "/sprite-2-5d.css",
   "/sprite-2-5d.js",
   "/assets/images/sprite-2-5d/cinder-court-backdrop.png",
@@ -370,7 +370,7 @@ async function verifyViewport(browser, hosting, viewport) {
   await page.addInitScript(installCanvas2DRenderProbe);
 
   try {
-    const routeResponse = await page.goto("/sprite-2-5d.html", { waitUntil: "load" });
+    const routeResponse = await page.goto("/index.html", { waitUntil: "load" });
     assert(routeResponse?.ok(), `${viewport.width}x${viewport.height} sprite route response must succeed`);
     const body = page.locator("body:not([data-game-state=\"loading\"])");
     await body.waitFor({ state: "attached" });
@@ -406,7 +406,7 @@ async function verifyViewport(browser, hosting, viewport) {
       };
     });
     assert.equal(contract.runtime, "running", "the public game root must expose the running runtime state");
-    const statusMatch = /^Wave (\d+)\. (\d+) Ember Cohort signatures entering the court\.$/.exec(contract.status ?? "");
+    const statusMatch = /^웨이브 (\d+)\. 잿불 군단 반응 (\d+)기가 법정에 진입한다\.$/.exec(contract.status ?? "");
     assert.ok(statusMatch, "the live status must announce the started wave and hostile count");
     assert.deepEqual(
       {
@@ -434,7 +434,7 @@ async function verifyViewport(browser, hosting, viewport) {
       { name: "down", disabled: false },
       { name: "attack", disabled: false },
     ], "the five public controls must be enabled when the route is running");
-    assert.match(contract.restartLabel ?? "", /^Rekindle R$/, "the restart hook must retain its player-facing action");
+    assert.match(contract.restartLabel ?? "", /^재점화 R$/, "the restart hook must retain its player-facing action");
     assert.equal(contract.horizontalOverflow, false, `${viewport.width}x${viewport.height} must not overflow horizontally`);
 
     await stepFrames(page, 1);
@@ -589,7 +589,7 @@ async function openRunningPage(context) {
   });
   await page.addInitScript(installDeterministicAnimationClock);
   await page.addInitScript(installCanvas2DRenderProbe);
-  const response = await page.goto("/sprite-2-5d.html", { waitUntil: "load" });
+  const response = await page.goto("/index.html", { waitUntil: "load" });
   assert(response?.ok(), "instrumented sprite route response must succeed");
   const body = page.locator("body:not([data-game-state=\"loading\"])");
   await body.waitFor({ state: "attached" });
@@ -1036,7 +1036,7 @@ async function verifyLiveDprMediaQueryRebind(browser, hosting) {
     await page.addInitScript(installLiveDprMediaQueryFake);
     await page.addInitScript(installDeterministicAnimationClock);
     await page.addInitScript(installCanvas2DRenderProbe);
-    const response = await page.goto("/sprite-2-5d.html", { waitUntil: "load" });
+    const response = await page.goto("/index.html", { waitUntil: "load" });
     assert(response?.ok(), "live-DPR sprite route response must succeed");
     const body = page.locator("body:not([data-game-state=\"loading\"])");
     await body.waitFor({ state: "attached" });
@@ -1199,7 +1199,7 @@ async function verifyAssetErrorStopsLoop(browser) {
       if (message.type() === "error") consoleErrors.push(message.text());
     });
     await page.addInitScript(installDeterministicAnimationClock);
-    const response = await page.goto("/sprite-2-5d.html", { waitUntil: "load" });
+    const response = await page.goto("/index.html", { waitUntil: "load" });
     assert(response?.ok(), "the error fixture route document must still load");
     const body = page.locator('body[data-game-state="error"]');
     await body.waitFor({ state: "attached" });

@@ -250,7 +250,7 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
     const cdp = await context.newCDPSession(page);
     await cdp.send("Network.setCacheDisabled", { cacheDisabled: true });
     await page.addInitScript(INSTALL_RUNTIME_PROBE, { campaign, fixedNow: FIXED_NOW, storageKey: STORAGE_KEY });
-    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/campaign.html", { waitUntil: "domcontentloaded" });
     // The persistent command decks mount the battle surface AND every deck section from
     // first paint (20260729-ui-dock-removal): the stage progression control lives in the
     // right-hand 전황 시트 deck, which has no open/close state, so it is reachable with
