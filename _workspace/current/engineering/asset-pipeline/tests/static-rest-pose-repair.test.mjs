@@ -36,14 +36,19 @@ const EVIDENCE_MANIFEST_PATH =
 
 // The repair has landed AND been committed, so neither the shipped tree nor
 // HEAD is a source of unrepaired input any more. The pre-repair blobs stay
-// exactly recoverable from the commit that precedes the repair, via the same
-// `git cat-file blob <rev>:<path>` idiom the target-rig provenance artifacts
-// use. `UNREPAIRED_REV` names that commit by its parent relationship rather
-// than by a bare hash, so it survives a rebase of the repair commit itself.
+// exactly recoverable via the same `git cat-file blob <rev>:<path>` idiom the
+// target-rig provenance artifacts use.
+//
+// The revision is an annotated-free lightweight TAG, not `<hash>^`: a `^`
+// parent reference only resolves while the child commit stays reachable, so a
+// squash- or rebase-merge of this branch would make it unreachable and this
+// suite would fail at `git cat-file` -- 13 tests unrunnable rather than red.
+// A tag is a ref in its own right and survives either merge strategy.
+//
 // Both digests are pinned, so any revision that stops yielding pre-repair
 // bytes fails this suite loudly instead of silently re-feeding it repaired
 // bytes and making every assertion below vacuous.
-const UNREPAIRED_REV = "8753280c^";
+const UNREPAIRED_REV = "motion-prerepair-baseline";
 const PRE_REPAIR_SHA256 = {
   "ember-cohort":
     "4b59c24d94c9eb827ad3ff82e2450802250297d562d4ee4acd7d5411a249c5af",
