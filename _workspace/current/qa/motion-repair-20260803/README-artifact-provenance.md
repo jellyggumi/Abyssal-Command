@@ -57,36 +57,42 @@ Blender bind-pose import defect was fixed (commit `53293208`), so its four
 `KG_POSE_METRIC` failures on the repaired feet are that defect, not an asset
 fault. Re-render if those sheets are needed as evidence.
 
-### KNOWN GAP — the v3 evidence corpus is not reproducible from this tree
+### CLOSED — the v3 evidence corpus is reproducible again
 
 `pose-pairs-semantic-v3/render-manifest.json` is committed and its digest
 `dea668cc…` is pinned in `scripts/repair-static-rest-pose.py` as
 `APPROVED_EVIDENCE_MANIFEST_SHA256`, so the repair tool refuses to run without
-it. **But the renderer that produced it no longer exists in this tree.** The
+it. For a stretch the renderer that produced it did not exist in this tree: the
 concurrent revert took the hardened
-`tools/render-character-motion-contact-sheet-blender.py` with it, and only the
-Blender bind-pose fix was restored afterwards.
+`tools/render-character-motion-contact-sheet-blender.py` with it and only the
+Blender bind-pose fix came back, leaving a pinned hash no tool could regenerate.
 
-The manifest declares fields the committed renderer cannot emit:
+**The renderer was rebuilt from this manifest as its specification** (commit
+`7511bf84`). All five reverted capabilities are back: target-SHA self-reference
+exclusion, zero-residual no-op provenance, the fail-closed complete-render gate,
+`worstN` recording, and `--camera-direction` validation. Eleven gating tests now
+hold the contract, derived from this manifest rather than from the
+implementation.
 
-| manifest field | value in the corpus | committed renderer |
-|---|---|---|
-| `worstN` | `5` | absent |
-| `zeroNoOpCandidateRows` | `[]` | absent |
-| `excludedReferences` | `human-command-boss`, self-target reference | absent |
-| `derivation.kind` | `actor-exclusion` | absent |
-| `--camera-direction` | default `[0.48,-1,0.12]` | flag absent |
+Reproduction was verified against this corpus, not asserted:
 
-So the reverted renderer capabilities were: target-SHA self-reference exclusion,
-zero-residual no-op provenance, the fail-closed complete-render gate, `worstN`
-recording, and camera-direction validation. All were reviewed and test-covered
-at the time; the tests went with the same revert.
+| check | result |
+|---|---|
+| top-level and per-pair key sets | identical |
+| `excludedReferences`, `derivation.selection` | identical |
+| `passThreshold` / `worstN` / `zeroNoOpCandidateRows` | `1.0` / `5` / `[]` both |
+| `guard` rank, `selectionReasons`, `visualizationMetric` | 7/7 bones match |
+| rendered PRE/POST quaternions and `appliedDeltaDeg` | agree to ≤1.3e-4° |
 
-Consequence: the corpus is readable evidence and the numbers in it are
-trustworthy — 73/73 pairs, 10 candidate actors, independently audited — but
-**regenerating or extending it requires restoring that renderer first.** Asset
-determinism (documented above) does not extend to the evidence renderer.
+**`ember-cohort` and `possessed` legitimately do not reproduce.** This corpus was
+rendered before their rest-pose repair, so re-rendering them now yields different
+bytes — reproducing them would mean the repair never landed. Their difference is
+evidence, not drift. The other eight actors' model bytes are unchanged and are
+the value-equality set.
 
-Restoring it is a separate decision for the human owner. Nothing currently
-depends on re-rendering: the repair's own gate is numeric and passes from this
-tree (`repair-static-rest-pose.py --check` exit 0, 13/13 suite).
+Two defects surfaced during the rebuild and were fixed before it landed: POST was
+being composed in the wrong basis (up to 9.05° off, with a recorded
+`appliedDeltaDeg` that described neither rendered panel), and
+`postWorldResidualDeg` was asserted rather than measured. A `KG_POSE_APPLY` gate
+now compares the rendered post-over-pre rotation against the requested delta and
+fails the pair past 0.05°; that gate is what caught the first defect.
