@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="abyss">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workspace Editor — Abyssal Lantern Studio</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ══════════════ TOP BAR ══════════════ -->
+<header class="topbar">
+  <div class="topbar__brand">
+    <button type="button" id="btn-drawer" class="drawer-toggle"
+            aria-label="문서 트리 열기" aria-expanded="false" title="문서 트리 (좁은 화면)">☰</button>
+    <span class="brand__lantern" aria-hidden="true"></span>
+    <span class="brand__name">Workspace<em>Editor</em></span>
+  </div>
+
+  <div class="topbar__run">
+    <label class="run__label" for="run-select">RUN</label>
+    <select id="run-select" class="run__select" title="run-id 전환"></select>
+    <span id="run-meta" class="run__meta"></span>
+  </div>
+
+  <div class="topbar__path">
+    <nav id="crumbs" class="crumbs" aria-label="현재 문서 경로"></nav>
+  </div>
+
+  <div class="topbar__actions">
+    <div class="viewmode" role="group" aria-label="보기 모드">
+      <button type="button" class="viewmode__btn" data-view="edit"  title="편집만 (⌘1)">편집</button>
+      <button type="button" class="viewmode__btn is-active" data-view="split" title="분할 (⌘2)">분할</button>
+      <button type="button" class="viewmode__btn" data-view="preview" title="프리뷰만 (⌘3)">프리뷰</button>
+    </div>
+    <button type="button" id="btn-sync"  class="btn btn--ghost is-active" title="스크롤 동기화">⇅ 동기</button>
+    <button type="button" id="btn-reload" class="btn btn--ghost" title="디스크에서 다시 읽기">↻</button>
+    <button type="button" id="btn-save"  class="btn btn--primary" disabled title="저장 (⌘S)">저장</button>
+  </div>
+</header>
+
+<!-- ══════════════ BODY ══════════════ -->
+<div class="shell">
+
+  <!-- ─────── SIDEBAR ─────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__search">
+      <input type="search" id="filter-input" class="search__input"
+             placeholder="파일 필터…  (⌘P)" autocomplete="off" spellcheck="false">
+      <button type="button" id="btn-grep" class="search__grep" title="문서 전문 검색 (⌘⇧F)">전문</button>
+    </div>
+
+    <div class="sidebar__toolbar">
+      <button type="button" id="btn-new-file"   class="tool" title="새 문서">＋ 문서</button>
+      <button type="button" id="btn-new-folder" class="tool" title="새 폴더">＋ 폴더</button>
+      <button type="button" id="btn-collapse"   class="tool tool--end" title="전체 접기">⤡</button>
+    </div>
+
+    <div class="sidebar__legend" id="legend"></div>
+
+    <nav class="tree" id="tree" aria-label="워크스페이스 문서 트리"></nav>
+
+    <div class="sidebar__foot">
+      <span id="tree-stat" class="foot__stat"></span>
+      <label class="foot__toggle" title="아티팩트 계약이 요구하지만 아직 없는 문서를 표시">
+        <input type="checkbox" id="toggle-missing" checked>
+        <span>계약 누락 표시</span>
+      </label>
+    </div>
+  </aside>
+
+  <div class="gutter" id="gutter-sidebar" role="separator" aria-orientation="vertical"></div>
+
+  <!-- ─────── MAIN ─────── -->
+  <main class="main" id="main" data-view="split">
+
+    <!-- EDITOR PANE -->
+    <section class="pane pane--edit" id="pane-edit" aria-label="편집">
+      <div class="pane__head">
+        <span class="pane__title">편집</span>
+        <div class="mdtools" id="mdtools">
+          <button type="button" class="mdtool" data-md="h2"     title="제목 (##)">H2</button>
+          <button type="button" class="mdtool" data-md="bold"   title="굵게 (⌘B)"><b>B</b></button>
+          <button type="button" class="mdtool" data-md="code"   title="인라인 코드">`</button>
+          <button type="button" class="mdtool" data-md="link"   title="링크 (⌘K)">↗</button>
+          <button type="button" class="mdtool" data-md="table"  title="표 삽입">▦</button>
+          <button type="button" class="mdtool" data-md="yaml"   title="YAML 계약 블록">{ }</button>
+          <button type="button" class="mdtool" data-md="gate"   title="게이트 표 삽입">G</button>
+          <button type="button" class="mdtool" data-md="fmt"    title="표 정렬 (⌘⇧L)">⇥</button>
+        </div>
+        <span class="pane__spacer"></span>
+        <span id="conflict-flag" class="flag flag--warn" hidden>디스크 변경됨</span>
+      </div>
+      <div class="editor" id="editor-wrap">
+        <div class="editor__lines" id="line-numbers" aria-hidden="true"></div>
+        <textarea id="editor" class="editor__area" spellcheck="false"
+                  autocomplete="off" autocapitalize="off" wrap="off"
+                  placeholder="왼쪽 트리에서 문서를 선택하세요."></textarea>
+      </div>
+    </section>
+
+    <div class="gutter" id="gutter-panes" role="separator" aria-orientation="vertical"></div>
+
+    <!-- PREVIEW PANE -->
+    <section class="pane pane--preview" id="pane-preview" aria-label="프리뷰">
+      <div class="pane__head">
+        <span class="pane__title">프리뷰</span>
+        <div class="mdtools">
+          <button type="button" class="mdtool" id="btn-outline" title="문서 목차 토글">≡ 목차</button>
+          <button type="button" class="mdtool" id="btn-wide" title="넓은 표 모드 토글">▭</button>
+        </div>
+        <span class="pane__spacer"></span>
+        <span id="preview-stat" class="pane__stat"></span>
+      </div>
+      <div class="preview__body">
+        <nav class="outline" id="outline" aria-label="문서 목차"></nav>
+        <article class="preview markdown" id="preview" tabindex="0"></article>
+        <div class="viewer" id="viewer" hidden></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ══════════════ STATUS BAR ══════════════ -->
+<footer class="statusbar">
+  <span id="st-path"  class="st st--path">문서 없음</span>
+  <span id="st-dirty" class="st st--dirty"></span>
+  <span class="st__spacer"></span>
+  <span id="st-cursor" class="st"></span>
+  <span id="st-counts" class="st"></span>
+  <span id="st-mtime"  class="st st--dim"></span>
+  <span id="st-server" class="st st--dim">서버 확인 중…</span>
+</footer>
+
+<!-- ══════════════ OVERLAYS ══════════════ -->
+<div class="modal" id="modal" hidden>
+  <div class="modal__box" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <h2 class="modal__title" id="modal-title"></h2>
+    <p class="modal__desc" id="modal-desc"></p>
+    <div class="modal__field">
+      <input type="text" id="modal-input" class="modal__input" spellcheck="false" autocomplete="off">
+    </div>
+    <div class="modal__list" id="modal-list"></div>
+    <div class="modal__actions">
+      <button type="button" id="modal-cancel" class="btn btn--ghost">취소</button>
+      <button type="button" id="modal-ok" class="btn btn--primary">확인</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

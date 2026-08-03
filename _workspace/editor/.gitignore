@@ -1,0 +1,9 @@
+# Overwrite backups. Each entry is a verbatim copy of a run artifact -- the
+# copy that restored a 47KB task-manifest.md during this tool's own testing.
+# Useful on disk, never in history: committing them would duplicate every
+# contract document once per save.
+.backups/
+
+# Atomic-write temp files. writeAtomic() unlinks these on failure, so one
+# surviving here means the process died mid-write.
+.*.tmp
