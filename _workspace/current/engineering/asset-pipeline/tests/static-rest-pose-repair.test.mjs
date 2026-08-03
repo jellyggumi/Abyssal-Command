@@ -34,14 +34,16 @@ const ACTORS_ROOT = "assets/motion/ingame/characters";
 const EVIDENCE_MANIFEST_PATH =
   "_workspace/current/qa/motion-repair-20260803/pose-pairs-semantic-v3/render-manifest.json";
 
-// The repair has landed: both production lanes now carry the repaired bytes,
-// so the shipped tree is no longer a source of unrepaired input. The
-// pre-repair blobs remain exactly recoverable from HEAD because the repair is
-// uncommitted, via the same `git cat-file blob <rev>:<path>` idiom the
-// target-rig provenance artifacts use. Both digests are pinned so a commit,
-// amend or rebase that moves HEAD fails this suite loudly instead of silently
-// re-feeding it repaired bytes and making every assertion below vacuous.
-const UNREPAIRED_REV = "HEAD";
+// The repair has landed AND been committed, so neither the shipped tree nor
+// HEAD is a source of unrepaired input any more. The pre-repair blobs stay
+// exactly recoverable from the commit that precedes the repair, via the same
+// `git cat-file blob <rev>:<path>` idiom the target-rig provenance artifacts
+// use. `UNREPAIRED_REV` names that commit by its parent relationship rather
+// than by a bare hash, so it survives a rebase of the repair commit itself.
+// Both digests are pinned, so any revision that stops yielding pre-repair
+// bytes fails this suite loudly instead of silently re-feeding it repaired
+// bytes and making every assertion below vacuous.
+const UNREPAIRED_REV = "8753280c^";
 const PRE_REPAIR_SHA256 = {
   "ember-cohort":
     "4b59c24d94c9eb827ad3ff82e2450802250297d562d4ee4acd7d5411a249c5af",
