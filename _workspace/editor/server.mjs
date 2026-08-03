@@ -605,6 +605,42 @@ async function writeAsset({ path, base64, force }) {
 }
 
 /**
+ * Where a new asset of a given kind belongs, and what must name it before the
+ * game can load it.
+ *
+ * Creating a resource is only half the job: `assets/` is not a runtime index.
+ * This returns the conventional directory (derived from where the existing
+ * referenced assets of that kind actually live, not from a guess) plus the
+ * registration surface, so the create UI can state the whole path to in-game
+ * rather than implying the file is enough.
+ */
+async function assetPlacement(kind) {
+  const index = await assetReferenceIndex();
+  const dirs = new Map();
+  for (const [path] of index.byAsset) {
+    if (!path.startsWith('assets/')) continue;
+    if (assetKind(path) !== kind) continue;
+    const dir = path.slice(0, path.lastIndexOf('/'));
+    dirs.set(dir, (dirs.get(dir) || 0) + 1);
+  }
+  const ranked = [...dirs.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  const REGISTER = {
+    audio: { surface: 'assets/audio/elevenlabs/index.json', how: 'cue', automatic: true },
+    image: { surface: 'styles.css', how: '[data-ui-icon] 규칙', automatic: false },
+    mesh:  { surface: 'battle-realtime-three.js', how: 'MOTION_MODELS / VFX_MODELS', automatic: false },
+    video: { surface: '런타임 소스', how: '경로 지명', automatic: false },
+  };
+
+  return {
+    kind,
+    // Most-used referenced directory first -- convention as observed, not invented.
+    suggestedDirs: ranked.map(([dir, n]) => ({ dir, referencedAssets: n })),
+    register: REGISTER[kind] || { surface: '런타임 소스', how: '경로 지명', automatic: false },
+  };
+}
+
+/**
  * Delete an asset. Deliberately NOT available for `_workspace/`: the artifact
  * contract makes those documents studio memory. Assets are different -- the
  * manifest already carries `historicalDeletionRows`, so this project treats
@@ -700,12 +736,33 @@ async function readBody(req, limit = 32 * 1024 * 1024) {
   catch { throw httpError(400, 'invalid JSON body'); }
 }
 
+/**
+ * Static host for the editor's own files, plus read-only access to the repo's
+ * vendored three.js under `/vendor/`.
+ *
+ * The 3D viewer needs three plus its GLTF/OBJ/FBX loaders. The repo already
+ * vendors them for the game (`vendor/three.module.js`), so the viewer reuses
+ * those exact modules instead of adding a CDN or a second copy -- and the
+ * viewer therefore renders with the same three build the game does. GET only:
+ * this path is never writable, unlike `assets/`.
+ */
 async function serveStatic(res, urlPath) {
-  const name = urlPath === '/' || urlPath === '' ? 'index.html' : urlPath.replace(/^\/+/, '');
-  const abs = resolve(EDITOR_DIR, name);
-  if (!abs.startsWith(EDITOR_DIR + sep) && abs !== join(EDITOR_DIR, 'index.html')) {
-    return sendJSON(res, 403, { error: 'forbidden' });
+  const clean = urlPath.replace(/^\/+/, '');
+
+  let abs;
+  if (clean === 'vendor' || clean.startsWith('vendor/')) {
+    abs = resolve(REPO, clean);
+    if (!abs.startsWith(join(REPO, 'vendor') + sep)) {
+      return sendJSON(res, 403, { error: 'forbidden' });
+    }
+  } else {
+    const name = urlPath === '/' || urlPath === '' ? 'index.html' : clean;
+    abs = resolve(EDITOR_DIR, name);
+    if (!abs.startsWith(EDITOR_DIR + sep) && abs !== join(EDITOR_DIR, 'index.html')) {
+      return sendJSON(res, 403, { error: 'forbidden' });
+    }
   }
+
   try {
     const body = await readFile(abs);
     res.writeHead(200, {
@@ -715,7 +772,7 @@ async function serveStatic(res, urlPath) {
     });
     res.end(body);
   } catch {
-    sendJSON(res, 404, { error: 'not found', path: name });
+    sendJSON(res, 404, { error: 'not found', path: clean });
   }
 }
 
@@ -802,6 +859,7 @@ const ROUTES = {
   'PUT /api/asset':      async (_url, body) => writeAsset(body),
   'POST /api/asset/del': async (_url, body) => deleteAsset(body),
   'POST /api/audio/cue': async (_url, body) => registerAudioCue(body),
+  'GET /api/asset/placement': async (url) => assetPlacement(url.searchParams.get('kind') || 'image'),
   'PUT /api/file': async (_url, body) => saveFile(body),
   'POST /api/file': async (_url, body) => createFile(body),
   'POST /api/dir': async (_url, body) => createDir(body),

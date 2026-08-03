@@ -3112,3 +3112,80 @@ li.md-task.is-done > .md-check {
   font-size: 10.5px;
   line-height: 1.7;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   3D viewer
+
+   GLB/GLTF, OBJ, FBX rendered with the repo's own vendored three build --
+   the same one the game uses, so what shows here is what the game can
+   load. The canvas needs a real height or the renderer sizes to zero.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.inspect__three {
+  position: relative;
+  width: 100%;
+  height: 340px;
+  min-height: 200px;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--bg-input);
+}
+
+.inspect__three canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Orbit drag should not select the surrounding text. */
+  touch-action: none;
+  cursor: grab;
+}
+
+.inspect__three canvas:active { cursor: grabbing; }
+
+.inspect__threestatus {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  color: var(--fg-faint);
+  font-size: 12px;
+  text-align: center;
+}
+
+.inspect__threestatus.is-err {
+  color: var(--red);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.inspect__mesh {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.mesh__sel {
+  max-width: 220px;
+  padding: 2px 4px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg-input);
+  color: var(--fg-dim);
+  font: 10.5px/1.5 var(--font-mono);
+}
+
+.mesh__sel:focus-visible { outline: 2px solid var(--amber); outline-offset: 1px; }
+
+.mesh__stat {
+  flex: 1;
+  min-width: 0;
+  color: var(--fg-faint);
+  font: 10.5px/1.6 var(--font-mono);
+}
+
+/* Untextured geometry is worth flagging: an OBJ without its .mtl looks
+   "loaded" while carrying none of its authored surface. */
+.mesh__stat.is-warn { color: var(--yellow); }

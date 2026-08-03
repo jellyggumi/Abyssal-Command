@@ -81,6 +81,8 @@
     <div class="sidebar__toolbar">
       <button type="button" id="btn-new-file"   class="tool" title="새 문서">＋ 문서</button>
       <button type="button" id="btn-new-folder" class="tool" title="새 폴더">＋ 폴더</button>
+      <button type="button" id="btn-new-asset"  class="tool" hidden
+              title="파일에서 새 리소스 생성 — 배치 위치와 등록 경로를 함께 안내">＋ 리소스</button>
       <button type="button" id="btn-collapse"   class="tool tool--end" title="전체 접기">⤡</button>
     </div>
 
@@ -156,6 +158,15 @@
           </div>
 
           <div class="inspect__stage" id="inspect-stage"></div>
+
+          <!-- 3D-only controls; hidden for every other kind. -->
+          <div class="inspect__mesh" id="inspect-mesh" hidden>
+            <select id="mesh-clip" class="mesh__sel" title="애니메이션 클립"></select>
+            <button type="button" id="mesh-play" class="mdtool" title="클립 재생">▶</button>
+            <button type="button" id="mesh-stop" class="mdtool" title="정지">■</button>
+            <button type="button" id="mesh-wire" class="mdtool" title="와이어프레임 토글">◫</button>
+            <span class="mesh__stat" id="mesh-stat"></span>
+          </div>
 
           <div class="inspect__reflect" id="inspect-reflect"></div>
 

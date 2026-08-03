@@ -135,6 +135,7 @@ const state = {
   asset: null,             // inspected asset row
   assetKind: '',           // kind filter
   assetRefs: '',           // '' | 'referenced' | 'orphan'
+  meshToken: null,         // guards against a slow 3D load landing after a click
 };
 
 const DRAFTS = 'ws-editor:drafts';
@@ -157,6 +158,9 @@ const el = {
   inspectRefs: $('inspect-refs'), inspectFile: $('inspect-file'),
   inspectRegister: $('inspect-register'), inspectDelete: $('inspect-delete'),
   inspectNote: $('inspect-note'),
+  inspectMesh: $('inspect-mesh'), meshClip: $('mesh-clip'), meshPlay: $('mesh-play'),
+  meshStop: $('mesh-stop'), meshWire: $('mesh-wire'), meshStat: $('mesh-stat'),
+  btnNewAsset: $('btn-new-asset'),
   treeStat: $('tree-stat'), toggleMissing: $('toggle-missing'),
   gutterSidebar: $('gutter-sidebar'), gutterPanes: $('gutter-panes'),
   main: $('main'), sidebar: $('sidebar'),
@@ -612,6 +616,7 @@ function setSideMode(mode) {
     btn.classList.toggle('is-active', btn.dataset.mode === mode);
   }
   el.assetFilter.hidden = mode !== 'asset';
+  el.btnNewAsset.hidden = mode !== 'asset';
   if (mode === 'gate') {
     renderGates();
     if (!state.gateScan) loadGates();
@@ -620,8 +625,11 @@ function setSideMode(mode) {
     if (!state.assetScan) loadAssets();
   } else {
     renderTree();
-    // Leaving the asset lane closes the inspector so the document comes back.
+    // Leaving the asset lane closes the inspector so the document comes back,
+    // and drops the WebGL context with it.
     if (!el.inspect.hidden) {
+      disposeMeshViewer();
+      state.meshToken = null;
       el.inspect.hidden = true;
       el.preview.hidden = false;
       state.asset = null;
@@ -754,7 +762,81 @@ function renderAssets() {
 
 /* ── inspector ───────────────────────────────────────────────────────── */
 
+/* ── 3D viewer ───────────────────────────────────────────────────────── */
+
+const MESH_VIEWABLE = new Set(['.glb', '.gltf', '.obj', '.fbx']);
+const extOf = (name) => name.slice(name.lastIndexOf('.')).toLowerCase();
+
+/** Live viewer, if any. WebGL contexts are limited, so only one at a time. */
+let meshView = null;
+
+function disposeMeshViewer() {
+  if (!meshView) return;
+  meshView.dispose();
+  meshView = null;
+  el.inspectMesh.hidden = true;
+  el.meshClip.innerHTML = '';
+  el.meshStat.textContent = '';
+}
+
+/**
+ * Mount the 3D viewer. three + loaders are ~3 MB, so the module is imported on
+ * first use rather than at boot -- reading a markdown document must not pay for
+ * a renderer it never shows.
+ */
+async function mountMeshViewer(row, url) {
+  const stage = document.createElement('div');
+  stage.className = 'inspect__three';
+  const status = document.createElement('div');
+  status.className = 'inspect__threestatus';
+  status.textContent = '3D 뷰어 로드 중…';
+  stage.append(status);
+  el.inspectStage.append(stage);
+
+  const token = Symbol('mesh-load');
+  state.meshToken = token;
+
+  try {
+    const mod = await import('./mesh-viewer.js');
+    // The user may have clicked another asset while three was loading.
+    if (state.meshToken !== token) return;
+    const { view, info } = await mod.loadMesh(stage, url, extOf(row.name), { base: API_BASE });
+    if (state.meshToken !== token) { view.dispose(); return; }
+
+    status.remove();
+    meshView = view;
+    el.inspectMesh.hidden = false;
+
+    el.meshClip.innerHTML = '';
+    for (const [i, c] of info.clips.entries()) {
+      const opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = `${c.name} (${c.duration}s)`;
+      el.meshClip.append(opt);
+    }
+    el.meshClip.hidden = info.clips.length === 0;
+    el.meshPlay.disabled = info.clips.length === 0;
+    el.meshStop.disabled = info.clips.length === 0;
+
+    const dim = info.size ? `${info.size.x}×${info.size.y}×${info.size.z}` : '치수 없음';
+    el.meshStat.textContent = `삼각형 ${info.triangles.toLocaleString('en')} · 메시 ${info.meshes}`
+      + ` · 재질 ${info.materials} · 텍스처 ${info.textures}`
+      + (info.bones ? ` · 본 ${info.bones}` : '')
+      + ` · ${dim}`;
+    el.meshStat.title = `클립 ${info.clips.length}개`
+      + (info.untextured ? '\n텍스처 없음 — OBJ는 .mtl 없이 재질을 담지 않습니다' : '');
+    if (info.untextured) el.meshStat.classList.add('is-warn');
+    else el.meshStat.classList.remove('is-warn');
+  } catch (err) {
+    if (state.meshToken !== token) return;
+    status.className = 'inspect__threestatus is-err';
+    status.textContent = `3D 로드 실패: ${err.message}`;
+    status.title = `${url}\n${err.stack?.split('\n')[0] ?? ''}`;
+  }
+}
+
 function inspectAsset(row) {
+  disposeMeshViewer();        // one WebGL context at a time; never leak the old
   state.asset = row;
   el.preview.hidden = true;
   el.viewer.hidden = true;
@@ -786,8 +868,11 @@ function inspectAsset(row) {
     vid.preload = 'metadata';
     vid.className = 'inspect__video';
     el.inspectStage.append(vid);
+  } else if (row.kind === 'mesh' && MESH_VIEWABLE.has(extOf(row.name))) {
+    mountMeshViewer(row, url);
   } else {
-    // Mesh/binary: no in-browser viewer, so report what is verifiable.
+    // Anything with no in-browser representation: report what is verifiable
+    // instead of an empty box.
     const box = document.createElement('div');
     box.className = 'inspect__binary';
     box.innerHTML = `<b>${escapeHTML(row.name)}</b>`
@@ -833,13 +918,7 @@ function inspectAsset(row) {
 
 async function replaceAsset(file) {
   if (!state.asset || !file) return;
-  const buf = await file.arrayBuffer();
-  let bin = '';
-  const bytes = new Uint8Array(buf);
-  for (let i = 0; i < bytes.length; i += 0x8000) {
-    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-  }
-  const base64 = btoa(bin);
+  const base64 = await fileToBase64(file);
 
   const go = await modal({
     title: '에셋 교체',
@@ -921,6 +1000,108 @@ async function registerCue() {
   } catch (err) {
     toast(`등록 실패: ${err.message}`, 'err', 5000);
   }
+}
+
+/**
+ * Create a new runtime resource from a local file.
+ *
+ * This is the step the asset lane was missing: replace and delete only worked
+ * on assets that already existed. Creation has to answer two questions the
+ * file picker cannot -- where does this kind of asset belong, and what must
+ * name it before the game loads it -- so the server's placement endpoint
+ * supplies both from observed convention rather than a guess.
+ */
+async function createAsset(file) {
+  if (!file) return;
+
+  const ext = extOf(file.name);
+  const kind = /\.(mp3|wav|ogg|m4a)$/i.test(ext) ? 'audio'
+    : /\.(png|jpe?g|webp|gif|avif|svg)$/i.test(ext) ? 'image'
+    : /\.(glb|gltf|obj|fbx)$/i.test(ext) ? 'mesh'
+    : /\.(mp4|webm|mov)$/i.test(ext) ? 'video' : 'other';
+
+  let placement = null;
+  try {
+    placement = await api(`/api/asset/placement?kind=${encodeURIComponent(kind)}`);
+  } catch { /* fall through with no suggestion */ }
+
+  const suggestedDir = placement?.suggestedDirs?.[0]?.dir || `assets/${kind}`;
+  const reg = placement?.register;
+
+  const dirs = (placement?.suggestedDirs || [])
+    .map((d) => `  ${d.dir}  (참조 에셋 ${d.referencedAssets})`).join('\n');
+
+  const path = await modal({
+    title: `새 ${ASSET_KIND_LABEL[kind] || kind} 리소스`,
+    desc: `${file.name} · ${fmtBytes(file.size)}\n\n`
+        + `대상 경로 (assets/ 아래)${dirs ? `\n\n런타임이 참조하는 이 종류의 위치:\n${dirs}` : ''}`
+        + (reg ? `\n\n생성 후 등록: ${reg.surface} — ${reg.how}`
+            + `${reg.automatic ? ' (에디터에서 가능)' : ' (소스 편집 필요)'}` : ''),
+    value: `${suggestedDir}/${file.name}`,
+  });
+  if (!path) return;
+  if (!path.startsWith('assets/')) {
+    toast('경로는 assets/ 로 시작해야 합니다', 'warn', 4000);
+    return;
+  }
+
+  const base64 = await fileToBase64(file);
+  try {
+    const res = await api('/api/asset', jsonInit('PUT', { path, base64 }));
+    toast(res.inGame
+      ? `생성 — 즉시 인게임 반영 (${res.path.split('/').pop()})`
+      : `생성 — 아직 인게임 참조 없음 (${res.path.split('/').pop()})`,
+      res.inGame ? 'ok' : 'warn', 5000);
+
+    // The active filter can exclude what was just created -- creating a PNG
+    // while filtered to `video` left the inspector on the previous asset and
+    // gave no confirmation at all. Point the filters at the new asset so it is
+    // guaranteed to be in the reloaded rows.
+    state.assetKind = kind;
+    state.assetRefs = '';
+    state.filter = '';
+    el.assetKind.value = kind;
+    el.assetRefs.value = '';
+    el.filter.value = '';
+    await loadAssets();
+
+    const fresh = state.assetScan?.rows.find((r) => r.path === res.path);
+    if (fresh) {
+      inspectAsset(fresh);
+      // Audio is the one kind the editor can carry all the way to in-game, so
+      // offer that next step instead of leaving the user to find it.
+      if (kind === 'audio' && !res.inGame) {
+        const go = await modal({
+          title: '큐로 등록할까요?',
+          desc: `${res.path}\n\n`
+              + 'DefenseAudio 는 index.json 의 cues/loops 만 읽습니다. '
+              + '등록하지 않으면 파일은 있어도 재생되지 않습니다.',
+          value: null, ok: '등록',
+        });
+        if (go === true) await registerCue();
+      }
+    } else {
+      // The write succeeded (the server returned a path), so say so rather
+      // than leaving the inspector on whatever was open before.
+      toast(`생성됨 — 목록에서 찾지 못했습니다: ${res.path}`, 'warn', 6000);
+    }
+  } catch (err) {
+    if (err.status === 409) {
+      toast('그 경로에 이미 파일이 있습니다 — 교체는 인스펙터에서 하세요', 'warn', 5000);
+    } else {
+      toast(`생성 실패: ${err.message}`, 'err', 5000);
+    }
+  }
+}
+
+/** Chunked so a large mesh does not blow the call stack in String.fromCharCode. */
+async function fileToBase64(file) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(bin);
 }
 
 const matches = (node) => !state.filter
@@ -1170,7 +1351,8 @@ async function openFile(path, { line } = {}) {
   }
 
   el.viewer.hidden = true;
-  el.inspect.hidden = true;      // a document supersedes the asset inspector
+  disposeMeshViewer();           // a document supersedes the asset inspector
+  el.inspect.hidden = true;
   el.preview.hidden = false;
 
   state.baseline = data.content;
@@ -1206,6 +1388,7 @@ async function openFile(path, { line } = {}) {
 
 function showViewer(data) {
   el.preview.hidden = true;
+  disposeMeshViewer();
   el.inspect.hidden = true;
   el.viewer.hidden = false;
   el.editor.value = '';
@@ -1776,6 +1959,39 @@ el.inspectFile.addEventListener('change', () => {
 });
 el.inspectDelete.addEventListener('click', deleteAsset);
 el.inspectRegister.addEventListener('click', registerCue);
+
+/* ── 3D viewer controls ──────────────────────────────────────────────── */
+
+el.meshPlay.addEventListener('click', () => {
+  if (!meshView) return;
+  const name = meshView.play(Number(el.meshClip.value) || 0);
+  if (name) toast(`재생 — ${name}`, 'ok', 1600);
+});
+el.meshStop.addEventListener('click', () => meshView?.stop());
+el.meshWire.addEventListener('click', () => {
+  if (!meshView) return;
+  const on = !el.meshWire.classList.contains('is-active');
+  meshView.setWireframe(on);
+  el.meshWire.classList.toggle('is-active', on);
+});
+el.meshClip.addEventListener('change', () => {
+  if (meshView) meshView.play(Number(el.meshClip.value) || 0);
+});
+
+/* ── resource creation ───────────────────────────────────────────────── */
+
+// A hidden input rather than markup: the create flow is a file pick, and this
+// keeps the button a plain button.
+const newAssetInput = document.createElement('input');
+newAssetInput.type = 'file';
+newAssetInput.hidden = true;
+document.body.append(newAssetInput);
+newAssetInput.addEventListener('change', () => {
+  const f = newAssetInput.files?.[0];
+  newAssetInput.value = '';
+  if (f) createAsset(f);
+});
+el.btnNewAsset.addEventListener('click', () => newAssetInput.click());
 
 /* Narrow-screen drawer. Below 1100px the sidebar is an overlay, so without a
    toggle the document tree is unreachable. */
