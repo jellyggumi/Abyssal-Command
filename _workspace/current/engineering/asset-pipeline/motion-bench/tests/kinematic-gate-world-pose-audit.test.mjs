@@ -7,14 +7,19 @@
 //   _workspace/current/engineering/asset-pipeline/tools/kinematic_gate.py
 //   _workspace/current/engineering/asset-pipeline/tools/derive-kinematic-bounds-blender.py
 //
-// This file never writes inside the repository: synthetic GLB containers and
-// the Blender stub harness live in an OS temp directory that is removed after
-// the run.  The audit CLI is only exercised on refusal paths that abort before
-// any output file is produced.
+// Synthetic GLB containers and the Blender stub harness live in an OS temp
+// directory that is removed after the run.  The audit CLI is only exercised on
+// refusal paths that abort before any output file is produced.
+//
+// The one exception is the pose-pair render probe at the end of this file: the
+// renderer refuses any path outside the repository root, so its scratch
+// residuals and output must live under `<repo>/tmp/` (gitignored).  That
+// directory is created per-run and removed in `after()`.  Nothing is ever
+// written into the approved evidence corpus under `_workspace/current/qa/`.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { createRequire, syncBuiltinESMExports } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -1746,5 +1751,806 @@ describe("Blender-side tools import glTF without re-deriving armature rest", () 
           + "inverse bind matrices instead of the authored node.rotation chain",
       );
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Semantic pose-pair render contract.
+//
+// The contract below is derived from the APPROVED evidence corpus
+// `pose-pairs-semantic-v3/render-manifest.json`, whose digest is pinned in
+// `scripts/repair-static-rest-pose.py` as APPROVED_EVIDENCE_MANIFEST_SHA256.
+// That manifest is the specification: it was produced by the renderer these
+// tests gate, so every field it carries must be reproducible.  It is read-only
+// here and never regenerated -- rewriting it would break the pinned digest.
+//
+// The evidence shape these tests forbid is the schema-v1 one: rendering two
+// DIFFERENT whole GLBs (target rig + actor) framed on the whole body, with the
+// selected bone appearing only as a text caption.  A caption is not evidence.
+// The semantic shape renders ONE actor twice -- PRE at its own rest, POST with
+// the selected bone world-aligned to the certified target -- cropped to that
+// bone, with each panel recording the orientation it actually rendered under.
+// ---------------------------------------------------------------------------
+
+const RENDER_TOOL = `${TOOLS_DIR}/render-character-motion-contact-sheet-blender.py`;
+const SEMANTIC_V3 = "_workspace/current/qa/motion-repair-20260803/pose-pairs-semantic-v3";
+const POSE_PAIR_TARGET_RIG = `${PIPELINE}/motion-bench/target-rig/human-command-boss-def-humanoid-v1.glb`;
+const ACTORS_ROOT = "assets/motion/ingame/characters";
+const RESIDUALS = "_workspace/current/qa/motion-repair-20260803/static-rest-residuals.json";
+
+// Importer tolerance: every pass/fail and no-op decision in the manifest is
+// governed by this bound, and it is recorded on every row.
+const IMPORTER_TOLERANCE_DEG = 0.001;
+const DEFAULT_CAMERA_DIRECTION = [0.48, -1.0, 0.12];
+const BONE_LOCAL_CROP = "selected-bone-head-tail-and-direct-influence-vertices-pre-post";
+
+const BLENDER_BIN = process.env.BLENDER_BIN ?? "/Applications/Blender.app/Contents/MacOS/Blender";
+const BLENDER_SKIP = existsSync(BLENDER_BIN) ? false : `Blender is unavailable at ${BLENDER_BIN}`;
+
+/**
+ * The renderer refuses any path outside the repository root, so scratch input
+ * and output cannot live in the OS temp directory.  `<repo>/tmp/` is gitignored;
+ * this run's subtree is removed in `after()`.
+ */
+let posePairScratch;
+function posePairScratchDir() {
+  if (posePairScratch === undefined) {
+    const parent = repositoryPath("tmp");
+    mkdirSync(parent, { recursive: true });
+    posePairScratch = mkdtempSync(join(parent, "pose-pairs-gate-"));
+  }
+  return posePairScratch;
+}
+after(() => {
+  if (posePairScratch !== undefined) rmSync(posePairScratch, { recursive: true, force: true });
+});
+
+/** Repository-relative path of a file inside this run's scratch subtree. */
+function scratchRelative(...parts) {
+  return join(posePairScratchDir(), ...parts).slice(`${REPOSITORY_ROOT}/`.length);
+}
+
+/**
+ * A residuals document carrying `rows`, reusing the real schema envelope.  The
+ * `targetRigSha256` must match the real rig or the renderer's pre-flight hash
+ * check rejects the run before anything is selected.
+ */
+function writeScratchResiduals(name, rows) {
+  const real = readJson(RESIDUALS);
+  const relative = scratchRelative(name);
+  writeFileSync(
+    repositoryPath(relative),
+    JSON.stringify({
+      schemaVersion: real.schemaVersion,
+      kind: real.kind,
+      blender: real.blender,
+      orientationSpace: real.orientationSpace,
+      localOrientationSpace: real.localOrientationSpace,
+      renderRankingMetric: real.renderRankingMetric,
+      numericGateMetric: real.numericGateMetric,
+      targetRig: real.targetRig,
+      targetRigSha256: real.targetRigSha256,
+      rows,
+    }, null, 2),
+  );
+  return relative;
+}
+
+function residualRow(actorId, bone, restResidualDeg, localRestResidualDeg) {
+  return {
+    actorId,
+    bone,
+    orientationSpace: "world",
+    localOrientationSpace: "local",
+    restResidualDeg,
+    localRestResidualDeg,
+  };
+}
+
+function runRenderTool(args) {
+  return spawnSync(
+    BLENDER_BIN,
+    ["--background", "--factory-startup", "--python", repositoryPath(RENDER_TOOL), "--", ...args],
+    { encoding: "utf8", cwd: REPOSITORY_ROOT },
+  );
+}
+
+/**
+ * Shortest-arc angle between two quaternions in degrees.  `abs(dot)` folds the
+ * double cover; `rotation_difference().angle` does NOT take the shortest arc
+ * and disagrees with the recorded evidence by up to 356 degrees.
+ */
+function quaternionAngleDeg(a, b) {
+  const norm = (q) => Math.hypot(...q);
+  const dot = Math.abs(a.reduce((sum, value, index) => sum + value * b[index], 0)) / (norm(a) * norm(b));
+  return (2 * Math.acos(Math.min(1, dot)) * 180) / Math.PI;
+}
+
+/**
+ * Canonical key order, read from the approved evidence so there is one source
+ * of truth for it.
+ *
+ * Key ORDER is load-bearing, not cosmetic: the manifest is serialised with
+ * `json.dumps`, which preserves insertion order, and its digest is pinned in
+ * `scripts/repair-static-rest-pose.py` as APPROVED_EVIDENCE_MANIFEST_SHA256.
+ * Emitting the same fields in a different order yields the same parsed object
+ * but a different digest -- moving one key flips dea668cc to d0301dcf, which
+ * trips SPR_POLICY_HASH.  Field-presence assertions cannot see this, because
+ * re-inserting an existing dict key keeps its ORIGINAL position, so a late
+ * `entry["k"] = v` fix silently lands the key in the wrong slot.
+ */
+function canonicalKeyOrder(sample) {
+  return {
+    pair: Object.keys(sample),
+    transformProvenance: Object.keys(sample.transformProvenance),
+    boneLocalFraming: Object.keys(sample.boneLocalFraming),
+    panel: Object.keys(sample.panels[0]),
+  };
+}
+
+/**
+ * Assert `actual` emits its keys in `canonical` relative order.  Keys absent
+ * from `actual` are skipped (a failed row carries no measured provenance), and
+ * keys outside `canonical` must trail rather than interleave.
+ */
+function assertKeyOrder(actual, canonical, label) {
+  const keys = Object.keys(actual);
+  const known = keys.filter((key) => canonical.includes(key));
+  assert.deepEqual(
+    known,
+    canonical.filter((key) => keys.includes(key)),
+    `${label}: keys must be emitted in the approved order; the manifest digest is byte-sensitive, so a `
+      + "reordered key changes the hash pinned as APPROVED_EVIDENCE_MANIFEST_SHA256",
+  );
+  const firstUnknown = keys.findIndex((key) => !canonical.includes(key));
+  if (firstUnknown !== -1) {
+    assert.deepEqual(
+      keys.slice(firstUnknown).filter((key) => canonical.includes(key)),
+      [],
+      `${label}: keys outside the approved set must trail, not interleave`,
+    );
+  }
+}
+
+/**
+ * Exercise the renderer's argument validation without paying a Blender launch.
+ * `bpy` is stubbed only so the module imports; every case below is refused
+ * before any Blender call, so the stub is never actually driven.
+ */
+const ARG_VALIDATION_HARNESS = `
+import contextlib
+import importlib.util
+import io
+import json
+import sys
+import types
+from pathlib import Path
+
+TOOL = Path(sys.argv[1])
+PROBES = json.loads(sys.argv[2])
+
+
+def install_stub_bpy():
+    bpy = types.ModuleType("bpy")
+    bpy.ops = types.SimpleNamespace()
+    bpy.context = types.SimpleNamespace()
+    bpy.data = types.SimpleNamespace()
+    bpy.app = types.SimpleNamespace(version_string="5.1.2", binary_path="/stub/Blender")
+    bpy.types = types.SimpleNamespace(Scene=object, Object=object)
+    sys.modules["bpy"] = bpy
+    mathutils = types.ModuleType("mathutils")
+    mathutils.Vector = tuple
+    mathutils.Quaternion = tuple
+    mathutils.Matrix = object
+    sys.modules["mathutils"] = mathutils
+
+
+install_stub_bpy()
+spec = importlib.util.spec_from_file_location("render_contact_sheet", TOOL)
+tool = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(tool)
+
+results = {}
+for label, argv in PROBES.items():
+    saved = sys.argv
+    sys.argv = ["blender", "--"] + argv
+    # argparse writes its own refusals to stderr; capture them so a genuine
+    # validation refusal can be told apart from "unrecognized arguments".
+    captured = io.StringIO()
+    try:
+        with contextlib.redirect_stderr(captured):
+            results[label] = {"outcome": "returned", "code": tool.main()}
+    except SystemExit as exit_request:
+        results[label] = {"outcome": "SystemExit", "code": exit_request.code}
+    except BaseException as error:  # noqa: BLE001 - the probe records any refusal
+        results[label] = {"outcome": type(error).__name__, "message": str(error)}
+    finally:
+        sys.argv = saved
+        results[label]["stderr"] = captured.getvalue()
+
+print(json.dumps(results))
+`;
+
+describe("--camera-direction is validated and scoped to pose-pairs mode", () => {
+  test("a camera direction outside pose-pairs mode is refused with a non-zero exit", { skip: BLENDER_SKIP }, () => {
+    const rejected = runRenderTool([
+      "--model", repositoryPath(`${ACTORS_ROOT}/guard/model.glb`),
+      "--asset-id", "guard",
+      "--out-dir", scratchRelative("camera-direction-contact-sheet"),
+      "--camera-direction", "0.48,-1.0,0.12",
+    ]);
+
+    // Blender only propagates SystemExit: a bare `raise RuntimeError` from the
+    // tool leaves the process status at 0, so the refusal would fail open.
+    assert.notEqual(
+      rejected.status,
+      0,
+      "--camera-direction outside --pose-pairs must exit non-zero; under Blender only a "
+        + "non-zero SystemExit propagates, so a bare RuntimeError silently reports success",
+    );
+    // argparse's own "unrecognized arguments" also exits 2, which would pass a
+    // naive status check while the flag does not exist at all.  The flag must be
+    // registered and refused by an explicit mode check.
+    assert.doesNotMatch(
+      rejected.stderr,
+      /unrecognized argument/,
+      "--camera-direction must be a registered flag refused by an explicit mode check, "
+        + "not an unknown argument rejected by argparse",
+    );
+    assert.match(
+      rejected.stderr,
+      /camera-direction/,
+      `the refusal must name the offending flag on stderr, got: ${rejected.stderr}`,
+    );
+    assert.equal(
+      existsSync(repositoryPath(scratchRelative("camera-direction-contact-sheet"))),
+      false,
+      "a refused run must not create its output directory",
+    );
+  });
+
+  test("non-finite, mis-sized, non-numeric, and zero camera directions are refused", { skip: PYTHON_SKIP }, () => {
+    const residuals = writeScratchResiduals("camera-direction-residuals.json", [
+      residualRow("guard", "DEF-foot.L", 15.05661874166174, 15.056618741661838),
+    ]);
+    const baseArgs = [
+      "--pose-pairs", residuals,
+      "--target-rig", POSE_PAIR_TARGET_RIG,
+      "--actors-root", ACTORS_ROOT,
+      "--worst-n", "1",
+      "--out", scratchRelative("camera-direction-refused"),
+    ];
+    const malformed = {
+      twoComponents: "0.48,-1.0",
+      fourComponents: "0.48,-1.0,0.12,0.0",
+      notANumber: "0.48,nan,0.12",
+      infinite: "0.48,inf,0.12",
+      zeroVector: "0,0,0",
+      nonNumeric: "a,b,c",
+      empty: "",
+    };
+    const probes = Object.fromEntries(
+      Object.entries(malformed).map(([label, value]) => [label, [...baseArgs, "--camera-direction", value]]),
+    );
+    const results = runPython(ARG_VALIDATION_HARNESS, [repositoryPath(RENDER_TOOL), JSON.stringify(probes)]);
+
+    for (const label of Object.keys(malformed)) {
+      const result = results[label];
+      const detail = `${result.message ?? ""}\n${result.stderr ?? ""}`;
+      const refused = result.outcome !== "returned" || result.code !== 0;
+      assert.ok(
+        refused,
+        `--camera-direction "${malformed[label]}" must be refused, got ${JSON.stringify(result)}`,
+      );
+      // argparse rejects an UNREGISTERED flag with SystemExit(2) for every
+      // value alike, which would satisfy the check above while no validation
+      // exists at all.  The refusal has to come from the tool's own check.
+      assert.doesNotMatch(
+        detail,
+        /unrecognized argument/,
+        `the ${label} refusal must come from an explicit camera-direction check, not from argparse `
+          + `rejecting an unregistered flag: ${JSON.stringify(result)}`,
+      );
+      assert.match(
+        detail,
+        /camera-direction/,
+        `the ${label} refusal must name the offending flag, got ${JSON.stringify(result)}`,
+      );
+    }
+    assert.equal(
+      existsSync(repositoryPath(scratchRelative("camera-direction-refused"))),
+      false,
+      "camera-direction validation must run before any output directory is created",
+    );
+  });
+});
+
+// A single real-Blender run shared by the semantic assertions below.  Each
+// Blender launch costs seconds, so one bounded run (one selected pair, two
+// panels) is reused rather than re-rendered per test.
+let semanticRunCache;
+function semanticPairRun() {
+  if (semanticRunCache === undefined) {
+    const residuals = writeScratchResiduals("semantic-residuals.json", [
+      // A real bone with a real 15.06-degree world residual: large enough that
+      // PRE and POST cannot be confused for one another.
+      residualRow("guard", "DEF-foot.L", 15.05661874166174, 15.056618741661838),
+      // The self-target reference: its model SHA equals the target rig's, so it
+      // must be excluded before selection rather than rendered against itself.
+      residualRow("human-command-boss", "DEF-foot.L", 0, 0),
+    ]);
+    const outputRoot = scratchRelative("semantic-out");
+    const cameraDirection = [0.5, -1.0, 0.25];
+    const result = runRenderTool([
+      "--pose-pairs", residuals,
+      "--target-rig", POSE_PAIR_TARGET_RIG,
+      "--actors-root", ACTORS_ROOT,
+      "--worst-n", "1",
+      "--out", outputRoot,
+      "--camera-direction", cameraDirection.join(","),
+    ]);
+    const manifestPath = repositoryPath(join(outputRoot, "render-manifest.json"));
+    semanticRunCache = {
+      result,
+      outputRoot,
+      cameraDirection,
+      manifest: existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, "utf8")) : undefined,
+    };
+  }
+  return semanticRunCache;
+}
+
+describe("a pose pair renders one actor twice, PRE and POST, cropped to the selected bone", () => {
+  test("the run succeeds and records the semantic pair schema", { skip: BLENDER_SKIP }, () => {
+    const { result, manifest, cameraDirection } = semanticPairRun();
+    assert.equal(result.status, 0, `pose-pair render failed: ${result.stderr || result.stdout}`);
+    assert.ok(manifest, "a successful run must write render-manifest.json");
+
+    assert.equal(manifest.schemaVersion, 2, "the semantic pair evidence is schema 2");
+    assert.equal(manifest.kind, "pose-pairs");
+    assert.equal(manifest.passThreshold, 1.0, "pose-pair evidence is fail-closed: every selected pair must render");
+    assert.equal(manifest.camera.boneLocalCrop, BONE_LOCAL_CROP);
+    // The camera direction round-trips verbatim; it is normalised only for
+    // camera placement, never rewritten in the evidence.
+    assert.deepEqual(manifest.camera.direction, cameraDirection);
+
+    // The self-target actor is excluded, so exactly one pair is selected.
+    assert.equal(manifest.pairs.length, 1, "only the non-self-target candidate is selected");
+    const [pair] = manifest.pairs;
+    assert.equal(pair.actorId, "guard");
+    assert.equal(pair.bone, "DEF-foot.L");
+    assert.equal(pair.status, "passed");
+    assert.deepEqual(
+      pair.selectionReasons.slice().sort(),
+      ["localRestResidualDeg", "restResidualDeg"],
+      "a bone worst on both metrics records both selection reasons",
+    );
+  });
+
+  test("PRE and POST are the same actor under two different pose states", { skip: BLENDER_SKIP }, () => {
+    const { manifest } = semanticPairRun();
+    assert.ok(manifest, "a successful run must write render-manifest.json");
+    const [pair] = manifest.pairs;
+    const provenance = pair.transformProvenance;
+
+    assert.equal(pair.panels.length, 2, "a semantic pair is exactly two panels");
+    const [pre, post] = pair.panels;
+    assert.equal(pre.state, "pre");
+    assert.equal(post.state, "post");
+
+    // One actor rendered twice.  The schema-v1 shape rendered the target rig as
+    // the left panel, which would show a different model hash here.
+    assert.equal(pre.actorModelSha256, pair.actorModelSha256);
+    assert.equal(post.actorModelSha256, pair.actorModelSha256);
+    assert.notEqual(
+      pair.actorModelSha256,
+      manifest.targetRigSha256,
+      "both panels must render the ACTOR, never the target rig",
+    );
+
+    // Each panel records the orientation it actually rendered under, and the
+    // two differ: that is what proves the bone was transformed between renders
+    // rather than captioned.
+    assert.deepEqual(pre.renderedSelectedWorldQuaternion, provenance.actorPreWorldQuaternion);
+    assert.deepEqual(post.renderedSelectedWorldQuaternion, provenance.actorPostWorldQuaternion);
+    const renderedDeltaDeg = quaternionAngleDeg(
+      pre.renderedSelectedWorldQuaternion,
+      post.renderedSelectedWorldQuaternion,
+    );
+    assert.ok(
+      renderedDeltaDeg > 1,
+      `PRE and POST must render under different orientations, got ${renderedDeltaDeg} degrees apart`,
+    );
+    // The load-bearing check.  `postWorldResidualDeg` is definitionally zero
+    // after alignment and is not re-derived from the rendered quaternions --
+    // 2*acos(|dot|) is ill-conditioned near identity and cannot resolve a
+    // near-zero angle in float32 -- so it cannot, on its own, prove the pose
+    // was applied.  Comparing the ACTUALLY RENDERED PRE->POST rotation against
+    // the recorded delta can, and does: applying the delta in the bone's
+    // parent-relative frame instead of world space leaves the recorded delta
+    // describing a rotation the panels never underwent, which reads here as a
+    // 2.7-degree disagreement (17.73 rendered vs 15.06 recorded).
+    assert.ok(
+      Math.abs(renderedDeltaDeg - pair.appliedDeltaDeg) < 1e-3,
+      `the rendered PRE->POST rotation must equal the recorded applied delta, got ${renderedDeltaDeg} `
+        + `vs ${pair.appliedDeltaDeg}`,
+    );
+
+    // Residuals stay in the rest-chain frame they are defined in -- the frame
+    // `scripts/repair-static-rest-pose.py` gates on -- so POST resolves the
+    // selected metric exactly, not merely to within tolerance.
+    const postSelected = pair.visualizationMetric === "local" ? pair.postLocalResidualDeg : pair.postWorldResidualDeg;
+    assert.equal(
+      postSelected,
+      0,
+      `POST must resolve the ${pair.visualizationMetric} metric to zero, got ${postSelected}`,
+    );
+    assert.equal(provenance.importerMetricToleranceDeg, IMPORTER_TOLERANCE_DEG);
+    assert.equal(provenance.parentTransformUntouched, true);
+    assert.equal(provenance.descendantsInheritSelectedBoneTransform, true);
+    assert.equal(provenance.originalMatrixUsedForBothPanels, false, "a non-zero residual row must apply a pose");
+    assert.equal(pair.zeroResidualNoOp, false);
+
+    // A freshly rendered row must be byte-compatible with the approved
+    // evidence, not merely field-compatible: the digest is order-sensitive.
+    const canonical = canonicalKeyOrder(readJson(`${SEMANTIC_V3}/render-manifest.json`).pairs[0]);
+    assertKeyOrder(pair, canonical.pair, "rendered pair row");
+    assertKeyOrder(provenance, canonical.transformProvenance, "rendered transformProvenance");
+    assertKeyOrder(pair.boneLocalFraming, canonical.boneLocalFraming, "rendered boneLocalFraming");
+    for (const panel of pair.panels) {
+      assertKeyOrder(panel, canonical.panel, `rendered ${panel.state} panel`);
+    }
+
+    // Two distinct PNGs on disk, inside the supplied output root.
+    const outputDirectory = repositoryPath(semanticPairRun().outputRoot);
+    const bytes = pair.panels.map((panel) => {
+      const resolved = resolve(REPOSITORY_ROOT, panel.path);
+      assert.ok(
+        resolved.startsWith(`${outputDirectory}/`),
+        `${panel.state} panel must resolve inside the supplied output root, got ${panel.path}`,
+      );
+      assert.ok(statSync(resolved).isFile(), `${panel.state} panel must exist: ${panel.path}`);
+      return readFileSync(resolved);
+    });
+    assert.ok(
+      !bytes[0].equals(bytes[1]),
+      "PRE and POST panels must differ: identical bytes mean the pose was never applied",
+    );
+  });
+
+  test("the camera crops to the selected bone rather than framing the whole body", { skip: BLENDER_SKIP }, () => {
+    const { manifest } = semanticPairRun();
+    assert.ok(manifest, "a successful run must write render-manifest.json");
+    const [pair] = manifest.pairs;
+    const framing = pair.boneLocalFraming;
+
+    assert.equal(framing.bone, pair.bone);
+    assert.equal(framing.crop, BONE_LOCAL_CROP);
+    assert.ok(framing.directInfluenceCount > 0, "the crop must include the bone's direct-influence vertices");
+    // Head and tail in both states, plus every direct-influence vertex in both
+    // states: the crop spans PRE and POST so neither state is clipped.
+    assert.equal(
+      framing.pointCount,
+      2 * framing.directInfluenceCount + 4,
+      "the crop must span head/tail and direct-influence vertices across BOTH pose states",
+    );
+    for (const axis of [0, 1, 2]) {
+      assert.ok(
+        framing.worldMinimum[axis] <= framing.worldMaximum[axis],
+        `bone-local bounds must be ordered on axis ${axis}`,
+      );
+    }
+    assert.ok(framing.cameraOrthoScale > 0);
+    // A whole-body frame on this rig spans over a metre; a foot crop is far
+    // tighter.  This is the numeric difference between the two evidence shapes.
+    assert.ok(
+      framing.cameraOrthoScale < 1,
+      `a bone-local crop must be tighter than a whole-body frame, got ortho scale ${framing.cameraOrthoScale}`,
+    );
+  });
+});
+
+// A second bounded run: every selected bone is absent from the rigs, so each
+// pair fails without paying a render.  This exercises selection, exclusion and
+// the fail-closed exit in one launch.
+let selectionRunCache;
+function selectionRun() {
+  if (selectionRunCache === undefined) {
+    const residuals = writeScratchResiduals("selection-residuals.json", [
+      residualRow("guard", "DEF-probe-world", 9.0, 0.0),
+      residualRow("guard", "DEF-probe-local", 0.0, 8.0),
+      residualRow("guard", "DEF-probe-mid", 5.0, 5.0),
+      // Outside the top two on BOTH metrics, so union selection must drop it.
+      residualRow("guard", "DEF-probe-tiny", 0.5, 0.5),
+      // This actor's only row is below tolerance on both metrics, so it is
+      // selected regardless and must take the zero-residual no-op path.
+      residualRow("scout", "DEF-probe-zero", 0.0, 0.0),
+      // Self-target reference: excluded by SHA before selection.
+      residualRow("human-command-boss", "DEF-probe-self", 7.0, 7.0),
+    ]);
+    const outputRoot = scratchRelative("selection-out");
+    const result = runRenderTool([
+      "--pose-pairs", residuals,
+      "--target-rig", POSE_PAIR_TARGET_RIG,
+      "--actors-root", ACTORS_ROOT,
+      "--worst-n", "2",
+      "--out", outputRoot,
+    ]);
+    const manifestPath = repositoryPath(join(outputRoot, "render-manifest.json"));
+    selectionRunCache = {
+      result,
+      manifest: existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, "utf8")) : undefined,
+    };
+  }
+  return selectionRunCache;
+}
+
+describe("pose-pair selection unions both residual metrics and excludes the self-target", () => {
+  test("each actor contributes the union of its worst-N world and worst-N local bones", { skip: BLENDER_SKIP }, () => {
+    const { manifest } = selectionRun();
+    assert.ok(manifest, "a failed run must still write render-manifest.json before exiting non-zero");
+
+    const guard = manifest.pairs
+      .filter((pair) => pair.actorId === "guard")
+      .sort((left, right) => left.rank - right.rank);
+    assert.deepEqual(
+      guard.map((pair) => pair.bone),
+      ["DEF-probe-world", "DEF-probe-local", "DEF-probe-mid"],
+      "selection is the union of both worst-N lists, ranked by the larger of the two metrics",
+    );
+    assert.deepEqual(guard.map((pair) => pair.rank), [1, 2, 3], "ranks are contiguous and 1-based");
+
+    // Each row names which list(s) selected it -- a world-only bone, a
+    // local-only bone, and one worst on both.
+    assert.deepEqual(
+      Object.fromEntries(guard.map((pair) => [pair.bone, pair.selectionReasons.slice().sort()])),
+      {
+        "DEF-probe-world": ["restResidualDeg"],
+        "DEF-probe-local": ["localRestResidualDeg"],
+        "DEF-probe-mid": ["localRestResidualDeg", "restResidualDeg"],
+      },
+    );
+    // A local-only worst bone is invisible to a world-only ranking: this is the
+    // row the pre-union selection silently dropped.
+    assert.ok(
+      guard.some((pair) => pair.bone === "DEF-probe-local"),
+      "a bone worst only on the local metric must still be selected",
+    );
+    assert.equal(
+      guard.some((pair) => pair.bone === "DEF-probe-tiny"),
+      false,
+      "worst-N truncation still applies to the union",
+    );
+  });
+
+  test("the self-target reference is excluded by SHA and recorded with its derivation", { skip: BLENDER_SKIP }, () => {
+    const { manifest } = selectionRun();
+    assert.ok(manifest, "a failed run must still write render-manifest.json before exiting non-zero");
+
+    assert.equal(
+      manifest.pairs.some((pair) => pair.actorId === "human-command-boss"),
+      false,
+      "an actor whose model SHA equals the target rig's cannot be posed against itself",
+    );
+    assert.deepEqual(manifest.excludedReferences, [{
+      actorId: "human-command-boss",
+      actorModelSha256: manifest.targetRigSha256,
+      reason: "self-target reference",
+    }]);
+
+    const derivation = manifest.derivation;
+    assert.equal(derivation.kind, "actor-exclusion");
+    assert.equal(derivation.sourceRowCount, 6, "the derivation counts every source row");
+    assert.equal(derivation.candidateRowCount, 5, "one self-target row is excluded");
+    assert.equal(derivation.candidateActorCount, 2);
+    assert.equal(derivation.exclusionSelection, "existing actor model SHA-256 equals targetRigSha256");
+    assert.deepEqual(derivation.excludedReferences, manifest.excludedReferences);
+
+    assert.equal(manifest.residualActorCount, 3, "the residual count covers every actor in the source");
+    assert.equal(manifest.candidateActorCount, 2, "the candidate count excludes the self-target");
+    // Coverage is a candidate-only roster: an excluded actor must not appear at
+    // all, rather than appearing as an unmet `false`.
+    assert.deepEqual(
+      Object.keys(manifest.actorCoverage).sort(),
+      ["guard", "scout"],
+      "actorCoverage is keyed over candidates only",
+    );
+  });
+
+  test("one failed selected render fails the whole run closed", { skip: BLENDER_SKIP }, () => {
+    const { result, manifest } = selectionRun();
+    assert.ok(manifest, "a failed run must still write render-manifest.json before exiting non-zero");
+
+    assert.equal(manifest.passThreshold, 1.0, "pose-pair evidence admits no partial credit");
+    assert.ok(manifest.passedPairs < manifest.totalPairs, "this probe selects bones no rig carries");
+    assert.equal(manifest.totalPairs, manifest.pairs.length);
+    assert.notEqual(
+      result.status,
+      0,
+      `an incomplete pose-pair run must exit non-zero, got ${result.status}: ${result.stdout}`,
+    );
+    // A failed row still has to emit its known keys in the approved order,
+    // with `error` trailing rather than interleaved: the fill order of a
+    // failure branch must not be able to perturb the layout.
+    const canonical = canonicalKeyOrder(readJson(`${SEMANTIC_V3}/render-manifest.json`).pairs[0]);
+    const failed = manifest.pairs.filter((row) => row.status !== "passed");
+    assert.ok(failed.length > 0, "this probe selects bones no rig carries");
+    for (const pair of failed) {
+      assert.ok(pair.error, `${pair.actorId}/${pair.bone} must record why it failed`);
+      assertKeyOrder(pair, canonical.pair, `failed row ${pair.actorId}/${pair.bone}`);
+    }
+  });
+
+  test("worst-N and the zero-residual no-op rows are recorded", { skip: BLENDER_SKIP }, () => {
+    const { manifest } = selectionRun();
+    assert.ok(manifest, "a failed run must still write render-manifest.json before exiting non-zero");
+
+    assert.equal(manifest.worstN, 2, "the manifest records the worst-N it was run with");
+
+    // `scout` carries a single row that is below tolerance on both metrics, so
+    // it is selected anyway and must take the no-op path: no pose assignment,
+    // the original matrix reused for both panels, recorded truthfully.
+    assert.ok(Array.isArray(manifest.zeroNoOpCandidateRows));
+    assert.deepEqual(
+      manifest.zeroNoOpCandidateRows.map((row) => [row.actorId, row.bone, row.rank]),
+      [["scout", "DEF-probe-zero", 1]],
+      "a selected row below tolerance on both metrics is listed as a zero-residual no-op candidate",
+    );
+    for (const row of manifest.zeroNoOpCandidateRows) {
+      assert.ok(row.restResidualDeg <= IMPORTER_TOLERANCE_DEG);
+      assert.ok(row.localRestResidualDeg <= IMPORTER_TOLERANCE_DEG);
+      const selected = manifest.pairs.find((pair) => pair.actorId === row.actorId && pair.bone === row.bone);
+      assert.ok(selected, "every no-op candidate must be a selected row");
+      // Decided from the source metrics before any import, so it is recorded
+      // even on a row whose render later failed.
+      assert.equal(selected.zeroResidualNoOp, true);
+      // The provenance block records measured orientations, so it exists only
+      // once the actor imported.  Assert its no-op shape only when present.
+      if (selected.transformProvenance) {
+        assert.equal(
+          selected.transformProvenance.originalMatrixUsedForBothPanels,
+          true,
+          "a zero-residual row reuses the original matrix instead of assigning a pose",
+        );
+        assert.match(
+          selected.transformProvenance.poseAssignment,
+          /^skipped/,
+          "a zero-residual row must record that pose assignment was skipped",
+        );
+      }
+    }
+  });
+});
+
+describe("the approved pose-pair evidence satisfies the semantic contract", () => {
+  const manifest = readJson(`${SEMANTIC_V3}/render-manifest.json`);
+
+  test("every row renders one actor twice and records both rendered orientations", () => {
+    assert.equal(manifest.schemaVersion, 2);
+    assert.equal(manifest.passThreshold, 1.0);
+    assert.equal(manifest.passedPairs, manifest.totalPairs, "fail-closed evidence has no unrendered selected pair");
+    assert.equal(manifest.totalPairs, manifest.pairs.length);
+    assert.deepEqual(manifest.camera.direction, DEFAULT_CAMERA_DIRECTION);
+    assert.equal(manifest.camera.boneLocalCrop, BONE_LOCAL_CROP);
+
+    for (const pair of manifest.pairs) {
+      const label = `${pair.actorId}/${pair.bone}`;
+      const provenance = pair.transformProvenance;
+      assert.deepEqual(pair.panels.map((panel) => panel.state), ["pre", "post"], `${label} panels`);
+      assert.deepEqual(pair.panels[0].renderedSelectedWorldQuaternion, provenance.actorPreWorldQuaternion, label);
+      assert.deepEqual(pair.panels[1].renderedSelectedWorldQuaternion, provenance.actorPostWorldQuaternion, label);
+      for (const panel of pair.panels) {
+        assert.equal(panel.actorModelSha256, pair.actorModelSha256, `${label} renders one actor twice`);
+      }
+      assert.notEqual(pair.actorModelSha256, manifest.targetRigSha256, `${label} never renders the target rig`);
+
+      // The rendered rotation is the recorded applied delta.
+      const rendered = quaternionAngleDeg(provenance.actorPreWorldQuaternion, provenance.actorPostWorldQuaternion);
+      assert.ok(Math.abs(rendered - pair.appliedDeltaDeg) < 1e-3, `${label} rendered delta ${rendered}`);
+      assert.ok(pair.appliedDeltaQuaternion[3] >= 0, `${label} applied delta is canonicalised to w >= 0`);
+
+      // `local` is chosen only when a world delta would be degenerate.
+      const expected = pair.restResidualDeg <= IMPORTER_TOLERANCE_DEG
+        && pair.localRestResidualDeg > IMPORTER_TOLERANCE_DEG
+        ? "local"
+        : "world";
+      assert.equal(pair.visualizationMetric, expected, `${label} visualization metric`);
+      assert.equal(pair.encoding, `${pair.visualizationMetric}-quaternion-delta`, label);
+      const postSelected = pair.visualizationMetric === "local"
+        ? pair.postLocalResidualDeg
+        : pair.postWorldResidualDeg;
+      assert.equal(postSelected, 0, `${label} POST must resolve the selected metric to zero`);
+
+      assert.equal(
+        pair.boneLocalFraming.pointCount,
+        2 * pair.boneLocalFraming.directInfluenceCount + 4,
+        `${label} crop spans both pose states`,
+      );
+    }
+  });
+
+  test("every row emits the approved key order, which the pinned digest depends on", () => {
+    const canonical = canonicalKeyOrder(manifest.pairs[0]);
+    // The digest covers bytes, not parsed structure, so the order has to be
+    // uniform across every row -- one row out of step rewrites the hash.
+    for (const pair of manifest.pairs) {
+      const label = `${pair.actorId}/${pair.bone}`;
+      assert.deepEqual(Object.keys(pair), canonical.pair, `${label} pair row key order`);
+      assert.deepEqual(
+        Object.keys(pair.transformProvenance),
+        canonical.transformProvenance,
+        `${label} transformProvenance key order`,
+      );
+      assert.deepEqual(
+        Object.keys(pair.boneLocalFraming),
+        canonical.boneLocalFraming,
+        `${label} boneLocalFraming key order`,
+      );
+      for (const panel of pair.panels) {
+        assert.deepEqual(Object.keys(panel), canonical.panel, `${label} ${panel.state} panel key order`);
+      }
+    }
+    // `zeroResidualNoOp` is the row this pins hardest: it is seeded from the
+    // source metrics before the render is attempted, and re-assigning an
+    // existing dict key keeps its first position, so a late fix lands it in
+    // the wrong slot while every field-presence check still passes.
+    assert.equal(
+      canonical.pair.indexOf("zeroResidualNoOp"),
+      canonical.pair.indexOf("encoding") + 1,
+      "zeroResidualNoOp follows encoding in the approved evidence",
+    );
+  });
+
+  test("the recorded selection is exactly the union of both worst-N residual metrics", () => {
+    const residuals = readJson(RESIDUALS);
+    const excluded = new Set(manifest.excludedReferences.map((reference) => reference.actorId));
+    assert.ok(excluded.size > 0, "the self-target reference is excluded");
+
+    const byActor = new Map();
+    for (const row of residuals.rows) {
+      if (excluded.has(row.actorId)) continue;
+      if (!byActor.has(row.actorId)) byActor.set(row.actorId, []);
+      byActor.get(row.actorId).push(row);
+    }
+    assert.equal(byActor.size, manifest.candidateActorCount);
+
+    const worst = (rows, key) => rows
+      .slice()
+      .sort((left, right) => right[key] - left[key] || left.bone.localeCompare(right.bone))
+      .slice(0, manifest.worstN);
+
+    const expected = [];
+    for (const [actorId, rows] of [...byActor].sort((left, right) => left[0].localeCompare(right[0]))) {
+      const reasons = new Map();
+      for (const row of worst(rows, "restResidualDeg")) reasons.set(row.bone, ["restResidualDeg"]);
+      for (const row of worst(rows, "localRestResidualDeg")) {
+        const existing = reasons.get(row.bone);
+        if (existing) existing.push("localRestResidualDeg");
+        else reasons.set(row.bone, ["localRestResidualDeg"]);
+      }
+      const larger = (bone) => {
+        const row = rows.find((candidate) => candidate.bone === bone);
+        return Math.max(row.restResidualDeg, row.localRestResidualDeg);
+      };
+      [...reasons.keys()]
+        .sort((left, right) => larger(right) - larger(left) || left.localeCompare(right))
+        .forEach((bone, index) => expected.push({ actorId, bone, rank: index + 1, reasons: reasons.get(bone) }));
+    }
+
+    const actual = manifest.pairs
+      .map((pair) => ({
+        actorId: pair.actorId,
+        bone: pair.bone,
+        rank: pair.rank,
+        reasons: pair.selectionReasons,
+      }))
+      .sort((left, right) => left.actorId.localeCompare(right.actorId) || left.rank - right.rank);
+
+    assert.deepEqual(actual, expected, "the approved evidence is reproduced by the union selection rule");
+    assert.deepEqual(
+      manifest.zeroNoOpCandidateRows,
+      [],
+      "no selected row in the approved corpus is below tolerance on both metrics",
+    );
   });
 });
