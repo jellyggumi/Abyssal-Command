@@ -86,6 +86,7 @@ env:
 jobs:
   resolve_revision:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     outputs:
       sha: ${{ steps.revision.outputs.sha }}
     steps:
@@ -121,6 +122,7 @@ jobs:
   engine_contract:
     needs: resolve_revision
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -152,6 +154,7 @@ jobs:
   release_closure:
     needs: resolve_revision
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -180,6 +183,7 @@ jobs:
   browser_contract:
     needs: resolve_revision
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -223,6 +227,7 @@ jobs:
   package_pages:
     needs: [resolve_revision, engine_contract, release_closure, browser_contract]
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -278,6 +283,7 @@ jobs:
   artifact_smoke:
     needs: [resolve_revision, package_pages]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -296,9 +302,9 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$RESOLVED_SHA"
-          node -e 'const { createServer } = require("node:http"); const { readFile } = require("node:fs"); const { join, normalize } = require("node:path"); const root = process.argv[1]; createServer((request, response) => { const file = normalize(join(root, request.url === "/" ? "index.html" : request.url)); if (!file.startsWith(root)) return response.writeHead(403).end(); readFile(file, (error, body) => response.writeHead(error ? 404 : 200).end(error ? "not found" : body)); }).listen(4173);' "$PWD/.pages-artifact" &
+          node -e 'const { createServer } = require("node:http"); const { readFile } = require("node:fs"); const { join, normalize } = require("node:path"); const root = process.argv[1]; createServer((request, response) => { const file = normalize(join(root, request.url === "/" ? "index.html" : request.url)); if (!file.startsWith(root)) return response.writeHead(403).end(); readFile(file, (error, body) => response.writeHead(error ? 404 : 200).end(error ? "not found" : body)); }).listen(4173);' "$PWD/.pages-artifact" >/dev/null 2>&1 &
           server_pid=$!
-          trap 'kill "$server_pid"' EXIT
+          trap 'kill "$server_pid" 2>/dev/null || true; kill -9 "$server_pid" 2>/dev/null || true' EXIT
           sleep 1
           node -e 'require("node:http").get("http://127.0.0.1:4173/", (response) => { if (response.statusCode !== 200) process.exitCode = 1; response.resume(); });'
           node tests/pages-artifact-smoke.cjs --dir .pages-artifact
@@ -315,6 +321,7 @@ jobs:
   deploy_pages:
     needs: [resolve_revision, artifact_smoke]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -352,6 +359,7 @@ jobs:
     if: needs.deploy_pages.result == 'success'
     needs: [resolve_revision, deploy_pages]
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -407,6 +415,7 @@ jobs:
     if: always()
     needs: [resolve_revision, engine_contract, release_closure, browser_contract, package_pages, artifact_smoke, deploy_pages, deployed_smoke]
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:

@@ -183,6 +183,16 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
     "artifact_smoke", "deploy_pages", "deployed_smoke", "release_receipt",
   ];
   for (const name of order) assert.ok(job(workflow, name), `workflow must include ${name}`);
+  for (const name of order) {
+    const timeout = job(workflow, name).match(/^    timeout-minutes: (?<minutes>\d+)$/m);
+    assert.ok(timeout, `${name} must define a finite timeout-minutes value`);
+    const minutes = Number(timeout.groups.minutes);
+    assert.ok(
+      Number.isSafeInteger(minutes) && minutes > 0 && minutes <= 360,
+      `${name} timeout-minutes must be a positive GitHub Actions-bounded value`,
+    );
+  }
+
 
   for (const name of ["engine_contract", "release_closure", "browser_contract"]) {
     assert.match(job(workflow, name), /needs: resolve_revision/);
@@ -194,6 +204,13 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
   assert.match(job(workflow, "deployed_smoke"), /if: needs\.deploy_pages\.result == 'success'/);
   assert.match(job(workflow, "release_receipt"), /if: always\(\)/);
   assert.match(job(workflow, "release_receipt"), /needs: \[resolve_revision, engine_contract, release_closure, browser_contract, package_pages, artifact_smoke, deploy_pages, deployed_smoke\]/);
+  const artifactSmoke = job(workflow, "artifact_smoke");
+  assert.match(
+    artifactSmoke,
+    /node -e '[^']*createServer[^']*' "\$PWD\/\.pages-artifact" >\/dev\/null 2>&1 &\n\s*server_pid=\$!\n\s*trap 'kill "\$server_pid" 2>\/dev\/null \|\| true; kill -9 "\$server_pid" 2>\/dev\/null \|\| true' EXIT/,
+    "artifact_smoke must detach static-server output, retain its PID, and idempotently terminate it with a hard-kill fallback",
+  );
+
 
   const deployedSmoke = job(workflow, "deployed_smoke");
   const retryClassifier = deployedSmoke.match(
