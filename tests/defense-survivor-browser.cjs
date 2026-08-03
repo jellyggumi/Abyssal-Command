@@ -410,13 +410,73 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
     await page.locator("#start-defense").click();
     const surface = page.locator('#defense-battle-surface[data-defense-started="true"]');
     await surface.waitFor({ state: "attached" });
+    // LORE FEEDBACK IS A SINGLE-SHOT PUBLICATION ON A SYNTHETIC CLOCK, REVOKED ON A REAL ONE.
+    // `LORE_SURPRISE_RESOLVED` is emitted once, at run creation (defense-run-simulation.js:5484,
+    // tick 0), so renderEventFeedback() publishes data-defense-feedback="lore" on the FIRST frame
+    // that renders tick-0 events and never again -- its per-tick key dedupe (app.js:3110-3115)
+    // swallows every repeat. That publication is then revoked by a real-time setTimeout(..., 1800)
+    // (app.js:3124-3130) which the synthetic rAF clock installed above does NOT control: page
+    // frames advance only when __pumpFrame() is called, but the revoke runs on wall time.
+    // A bare `waitForFunction` here hung for the full 90 s on CI run 30801125333, two ways. Its
+    // polling is alive -- measured: Playwright polls off a pristine rAF, not this page's hijacked
+    // one -- but (1) if the single pumped frame rendered nothing (e.g. the session had not
+    // registered its loop rAF callback yet, so the pump drained an empty queue), no later frame
+    // ever runs and the predicate polls forever against a frozen page; and (2) if the attribute
+    // WAS set, the 1800 ms revoke deletes it and nothing can set it again -- no frames advance and
+    // the tick-0 event is already deduped -- so the poll spins on state that will never return.
+    // #battle-event-feedback had the same exposure, being read AFTER the wait.
+    // So: latch the observation the instant it happens (an attribute observer, whose callback is a
+    // microtask and therefore always ahead of the 1800 ms macrotask revoke) and drive the wait by
+    // pumping it forward instead of assuming one frame was enough.
+    await page.evaluate(() => {
+      const captureLoreFeedback = () => {
+        if (window.__loreFeedbackLatch) return;
+        const surfaceNode = document.querySelector("#defense-battle-surface");
+        if (surfaceNode?.dataset.defenseFeedback !== "lore") return;
+        const feedbackNode = document.querySelector("#battle-event-feedback");
+        window.__loreFeedbackLatch = {
+          surfaceFeedback: surfaceNode.dataset.defenseFeedback,
+          feedback: feedbackNode?.dataset.feedback ?? null,
+          text: feedbackNode?.textContent ?? "",
+        };
+      };
+      window.__loreFeedbackLatch = null;
+      window.__captureLoreFeedback = captureLoreFeedback;
+      // #defense-battle-surface and #battle-event-feedback are mounted exactly once for the whole
+      // page lifetime (app.js:1183-1187, 1868-1881), so this observer can never be orphaned.
+      new MutationObserver(captureLoreFeedback).observe(document.querySelector("#defense-battle-surface"), {
+        attributes: true,
+        attributeFilter: ["data-defense-feedback"],
+      });
+      captureLoreFeedback();
+    });
     await page.evaluate(() => window.__pumpFrame(100));
     report.events.push("battle-visible");
-    await page.waitForFunction(() => document.querySelector("#defense-battle-surface")?.dataset.defenseFeedback === "lore");
-    const loreFeedback = page.locator("#battle-event-feedback");
-    assert.equal(await loreFeedback.getAttribute("data-feedback"), "lore");
+    // Bounded by construction: at most LORE_FEEDBACK_MAX_PUMPS synthetic frames (100 ms of game
+    // time each), one evaluate round trip apiece, checking before every pump so the common case
+    // where the frame above already published costs zero extra frames. This cannot hang -- it
+    // latches or it fails with the pump count -- and it is not a wait that cannot fail: a run that
+    // never publishes lore feedback still fails, just promptly and with a diagnosis.
+    const LORE_FEEDBACK_MAX_PUMPS = 240;
+    let loreFeedback = null;
+    let loreFeedbackPumps = 0;
+    while (!loreFeedback) {
+      loreFeedback = await page.evaluate(() => {
+        window.__captureLoreFeedback();
+        return window.__loreFeedbackLatch;
+      });
+      if (loreFeedback || loreFeedbackPumps >= LORE_FEEDBACK_MAX_PUMPS) break;
+      await page.evaluate(() => window.__pumpFrame(100));
+      loreFeedbackPumps += 1;
+    }
+    assert.ok(
+      loreFeedback,
+      `lore feedback never reached #defense-battle-surface within ${LORE_FEEDBACK_MAX_PUMPS} pumped frames`,
+    );
+    report.events.push({ event: "lore-feedback-latched", pumps: loreFeedbackPumps });
+    assert.equal(loreFeedback.feedback, "lore");
     assert.match(
-      await loreFeedback.textContent() ?? "",
+      loreFeedback.text,
       /\S/,
       "lore feedback must render safe snapshot-derived text through the live status region",
     );
