@@ -764,6 +764,9 @@ async function serveRaw(res, relPath, range) {
 const ROUTES = {
   'GET /api/health': async () => ({
     ok: true, workspace: WORKSPACE, repo: REPO, pid: process.pid, node: process.version,
+    // The client caches this so a later session finds the API even when the
+    // page is served from another origin and the port has drifted.
+    port: server.address()?.port ?? null,
   }),
   'GET /api/runs': async () => ({ runs: await listRuns() }),
   'GET /api/tree': async (url) => {
@@ -805,11 +808,47 @@ const ROUTES = {
   'POST /api/move': async (_url, body) => movePath(body),
 };
 
+/**
+ * Loopback-only CORS.
+ *
+ * The editor is often served by a different local server than this one -- the
+ * repo's game dev server (`python -m http.server` on :8000) hands out
+ * `_workspace/editor/index.html`, and then the page's API calls are
+ * cross-origin. Allowing that is necessary, but a blanket `*` would let any
+ * page the user happens to visit read and DELETE through this API.
+ *
+ * So the origin must be loopback. A remote page sends its own origin, which
+ * fails this test, and browsers will not let it forge the header. That also
+ * closes DNS rebinding: a hostname resolving to 127.0.0.1 still carries its
+ * real origin.
+ */
+const LOOPBACK_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i;
+
+function applyCors(req, res) {
+  const origin = req.headers.origin;
+  if (!origin) return true;                    // same-origin or a non-browser client
+  if (!LOOPBACK_ORIGIN.test(origin)) return false;
+  res.setHeader('access-control-allow-origin', origin);
+  res.setHeader('vary', 'origin');
+  res.setHeader('access-control-allow-methods', 'GET, PUT, POST, OPTIONS');
+  res.setHeader('access-control-allow-headers', 'content-type');
+  res.setHeader('access-control-max-age', '600');
+  return true;
+}
+
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   const key = `${req.method} ${url.pathname}`;
 
   res.setHeader('x-content-type-options', 'nosniff');
+
+  if (!applyCors(req, res)) {
+    return sendJSON(res, 403, { error: 'cross-origin request from a non-loopback origin' });
+  }
+  if (req.method === 'OPTIONS') {          // preflight for PUT/POST + content-type
+    res.writeHead(204);
+    return res.end();
+  }
 
   try {
     if (url.pathname === '/api/raw' && req.method === 'GET') {

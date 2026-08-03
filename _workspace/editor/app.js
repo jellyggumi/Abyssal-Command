@@ -175,10 +175,90 @@ const el = {
 
 /* ══════════════════════════════════════════════════════════════════════
    API
+
+   The page is not always served by the API server. The repo's game dev server
+   (`python -m http.server` on :8000) also hands out this file, and then every
+   relative `/api/...` call lands on the static host as a 404. So the base is
+   resolved once at boot instead of assumed:
+
+     1. same origin        -- the normal case, editor served by server.mjs
+     2. remembered port    -- whatever answered last time, from localStorage
+     3. the default range  -- 4488..4495, matching the server's own fallback
+
+   Resolution is by probing `/api/health`, so a wrong guess costs one failed
+   fetch rather than a broken editor.
    ══════════════════════════════════════════════════════════════════════ */
 
+const API_PORT_KEY = 'ws-editor:api-port';
+const DEFAULT_PORTS = [4488, 4489, 4490, 4491, 4492, 4493, 4494, 4495];
+
+/** '' means same-origin; otherwise an absolute origin like http://127.0.0.1:4488 */
+let API_BASE = '';
+
+const probeHealth = async (base) => {
+  try {
+    const res = await fetch(`${base}/api/health`, { signal: AbortSignal.timeout(1500) });
+    if (!res.ok) return null;
+    const body = await res.json();
+    return body?.ok ? body : null;
+  } catch { return null; }
+};
+
+/**
+ * Find the API and return its health payload, or null when nothing answers.
+ * Sets API_BASE as a side effect.
+ *
+ * Same-origin is tried first only when this page's own port could plausibly be
+ * the API -- otherwise the probe is a guaranteed 404 in the user's console
+ * every load, which invites the question "what is failing?" when nothing is.
+ * It still runs as a last resort, so an API on an unlisted port keeps working.
+ */
+async function resolveApiBase() {
+  let remembered = null;
+  try { remembered = Number(localStorage.getItem(API_PORT_KEY)) || null; } catch { /* private mode */ }
+
+  const ports = [];
+  if (remembered) ports.push(remembered);
+  for (const p of DEFAULT_PORTS) if (!ports.includes(p)) ports.push(p);
+
+  const myPort = Number(location.port) || (location.protocol === 'https:' ? 443 : 80);
+  const sameOriginPlausible = ports.includes(myPort);
+
+  const tryBase = async (base) => {
+    const health = await probeHealth(base);
+    if (!health) return null;
+    API_BASE = base;
+    try {
+      localStorage.setItem(API_PORT_KEY, String(health.port ?? myPort));
+    } catch { /* ignore */ }
+    return health;
+  };
+
+  if (sameOriginPlausible) {
+    const hit = await tryBase('');
+    if (hit) return hit;
+  }
+
+  for (const port of ports) {
+    if (!Number.isFinite(port)) continue;
+    if (sameOriginPlausible && port === myPort) continue;   // already tried
+    const hit = await tryBase(`http://127.0.0.1:${port}`);
+    if (hit) return hit;
+  }
+
+  // Last resort: the API may be on this origin at a port we do not list.
+  if (!sameOriginPlausible) {
+    const hit = await tryBase('');
+    if (hit) return hit;
+  }
+  return null;
+}
+
+/** Absolute URL for an API path — also used for <img>/<audio> src attributes. */
+const apiUrl = (path) => `${API_BASE}${path}`;
+
 async function api(path, init) {
-  const res = await fetch(path, init);
+  const res = await fetch(apiUrl(path), init);
   const body = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
   if (!res.ok) throw Object.assign(new Error(body.error || `HTTP ${res.status}`),
     { status: res.status, detail: body.detail });
@@ -683,7 +763,7 @@ function inspectAsset(row) {
   el.inspectPath.textContent = row.path;
   el.inspectKind.textContent = ASSET_KIND_LABEL[row.kind] || row.kind;
 
-  const url = `/api/raw?path=${encodeURIComponent(row.path)}`;
+  const url = apiUrl(`/api/raw?path=${encodeURIComponent(row.path)}`);
   el.inspectStage.innerHTML = '';
 
   if (row.kind === 'image') {
@@ -1134,7 +1214,7 @@ function showViewer(data) {
   setDirty(false);
   el.lineNumbers.textContent = '';
 
-  const url = `/api/raw?path=${encodeURIComponent(data.path)}`;
+  const url = apiUrl(`/api/raw?path=${encodeURIComponent(data.path)}`);
   const kb = (data.size / 1024).toFixed(1);
   el.viewer.innerHTML = '';
   if (data.kind === 'image') {
@@ -1871,15 +1951,22 @@ window.addEventListener('beforeunload', (e) => {
 async function boot() {
   renderLegend();
   loadPrefs();
-  try {
-    const health = await api('/api/health');
-    el.stServer.textContent = `node ${health.node} · pid ${health.pid}`;
-  } catch {
+  const health = await resolveApiBase();
+  if (!health) {
     el.stServer.textContent = '서버 연결 실패';
     document.body.classList.add('is-offline');
-    toast('서버에 연결할 수 없습니다. `node _workspace/editor/server.mjs` 로 실행하세요.', 'err', 9000);
+    toast('API 서버를 찾지 못했습니다. `node _workspace/editor/server.mjs` 로 실행하세요. '
+      + `(같은 출처와 127.0.0.1:${DEFAULT_PORTS[0]}–${DEFAULT_PORTS.at(-1)} 를 확인했습니다)`,
+      'err', 12000);
     return;
   }
+  // Naming the base matters when the page came from another origin: it tells
+  // you which server you are actually editing through.
+  const via = API_BASE ? API_BASE.replace(/^https?:\/\//, '') : '같은 출처';
+  el.stServer.textContent = `node ${health.node} · pid ${health.pid} · ${via}`;
+  el.stServer.title = `API: ${API_BASE || location.origin}\n`
+    + `workspace: ${health.workspace}\n`
+    + `이 페이지 출처: ${location.origin}`;
   await loadRuns();
   await loadTree();
   setDirty(false);
