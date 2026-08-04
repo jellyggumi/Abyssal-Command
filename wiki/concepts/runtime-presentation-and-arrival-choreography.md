@@ -224,3 +224,4 @@ Step 18 is the only step that can call the work correct. `CLAUDE.md` §6.
 - [[wiki/concepts/motion-generation-for-runtime-rigs]] — the retarget pipeline steps 13 depends on
 - [[wiki/concepts/attack-pattern-presets-and-ai-response]] — the three-phase step timing steps 11–12 present
 - [[wiki/concepts/stage-map-composition-pipeline]] — the map track (`prompts/approved/00`–`07`)
+- [[wiki/reports/2026-08-04-post-merge-system-state]] — the entry-routing pivot to the 2.5D sprite arena and the narration-to-speech-bubble swap that changed how this presentation contract reaches the player
