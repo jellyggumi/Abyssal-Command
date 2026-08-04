@@ -20,6 +20,7 @@ _workspace/
     production/task-manifest.md
     messages/ retrospectives/
   archive/<run-id>/        <- frozen prior cycles, READ-ONLY
+  editor/                  <- artifact editor tool, NOT a run artifact lane
 ```
 
 Rules:
@@ -44,6 +45,18 @@ Rules:
   candidate lanes, `__pycache__`) is not shared source of truth. Do not promote
   it without an explicit provenance/rights/runtime receipt. Never commit
   secrets or machine-local state (`.env.game-audio`, `.omc/`, `.studio-loop/`).
+- `_workspace/editor/` is **tooling, not artifacts**. It is the local editor
+  that reads and writes the lanes above (`node _workspace/editor/server.mjs`,
+  <http://127.0.0.1:4488/>). Three consequences:
+  - It is exempt from "write only under `current/`" — it is durable tooling and
+    is never archived, never carries a `run-id`, and never holds evidence.
+    Never cite a path under `editor/` as a measurement.
+  - Its own `.gitignore` owns `.backups/` (verbatim pre-overwrite copies) and
+    `.*.tmp` (atomic-write temp files). A surviving `.*.tmp` means a write died
+    mid-flight — investigate, do not commit it.
+  - The server refuses writes that escape `_workspace/` and writes into
+    `editor/` itself (403). Do not add a route that relaxes either, and do not
+    add a delete route: overwrite-with-backup and rename are the only removals.
 
 ## 2. Engine perspective: Three.js / browser only
 
@@ -71,7 +84,7 @@ Do not improvise a generator. Each class has exactly one owner:
 
 | Asset class | Tool | Invocation |
 |---|---|---|
-| Concept art, textures, UV atlases, terrain/character/prop plates | **god-tibo-imagen** | `gti --prompt "..." --input <ref> --output <path> --size <WxH>` |
+| Concept art, textures, UV atlases, terrain/character/prop plates | **god-tibo-imagen** | `gti --prompt "..." --image <ref> --output <path> --size <WxH>` |
 | 2D animated sprites, sprite sheets, 8-direction sets | **perfectpixel** | `ppgen -provider god-tibo-imagen -desc "..." -states "idle,walk,attack" -out <dir> -key dummy -json` |
 | Story, scenario, episode script, narrative beats | **webtoon-harness** | phase-rebuilt agent teams; artifacts under `_workspace/current/design/` |
 | 3D mesh from concept | **Blender + Rodin bridge** | `scripts/rodin-tpose-regen.py` (see `docs/concept-to-web-game-3d-pipeline.md`) |
