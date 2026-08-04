@@ -69,6 +69,42 @@ button:focus-visible {
   margin-bottom: clamp(0.65rem, 1.5vw, 1.1rem);
 }
 
+/* Header aside + route link. Sealbound had no way back to the front picker; this is the
+   always-visible one, sharing the lantern palette used by the front selector below. */
+.header-aside {
+  display: grid;
+  min-width: 0;
+  justify-items: end;
+  gap: 0.4rem;
+}
+
+.header-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.header-nav-link {
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid rgba(255, 210, 137, 0.4);
+  border-radius: 0.5rem;
+  color: #ffe6bd;
+  background: linear-gradient(180deg, rgba(58, 40, 22, 0.9), rgba(24, 16, 10, 0.9));
+  font-size: 0.82rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.header-nav-link:hover,
+.header-nav-link:focus-visible {
+  border-color: rgba(255, 210, 137, 0.85);
+  background: linear-gradient(180deg, rgba(76, 53, 29, 0.95), rgba(33, 22, 13, 0.95));
+}
+
 .brand-lockup {
   display: flex;
   min-width: 0;
@@ -742,6 +778,9 @@ kbd {
 
 .text-restart {
   width: 100%;
+  /* Padding alone left this at 34px, under the 44px floor the ability buttons above it
+     meet. It is the only way to restart a protocol, so it gets a real target. */
+  min-height: 44px;
   margin-top: 0.72rem;
   padding: 0.58rem;
   border-radius: 0.25rem;
@@ -782,8 +821,20 @@ kbd {
     align-items: start;
   }
 
+  /* The status keeps its narrow measure, but it is a grid item now, so the width applies
+     to the cell content rather than the header row. */
+  .header-aside {
+    justify-items: end;
+  }
+
   .live-status {
-    width: 44%;
+    width: 100%;
+    text-align: right;
+  }
+
+  .header-nav-link {
+    font-size: 0.76rem;
+    padding: 0.45rem 0.7rem;
   }
 
   .front-tab {
@@ -829,6 +880,22 @@ kbd {
   .sealbound-header {
     align-items: center;
     margin-bottom: 0.2rem;
+  }
+
+  /* Vertical space is the scarce axis: status and route link share one line so the aside
+     does not steal a row from the battle column below. */
+  .header-aside {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .header-nav-link {
+    /* Copy shrinks, the target does not: 2.1rem measured 34px, and this is the only route
+       off the page. Same reasoning as .text-restart above. */
+    min-height: 44px;
+    padding: 0.28rem 0.55rem;
+    font-size: 0.7rem;
   }
 
   .brand-mark {

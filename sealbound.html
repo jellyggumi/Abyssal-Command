@@ -28,9 +28,17 @@
             <h1 id="sealbound-title">Sealbound</h1>
           </div>
         </div>
-        <p id="sealbound-status" class="live-status" role="status" aria-live="polite">
-          The three fronts are opening.
-        </p>
+        <div class="header-aside">
+          <p id="sealbound-status" class="live-status" role="status" aria-live="polite">
+            The three fronts are opening.
+          </p>
+          <!-- Sealbound shipped with no outbound links at all: reaching it meant the browser
+               back button was the only way out. The hub is where this front, the main campaign
+               and Cinder Court are chosen between. -->
+          <nav class="header-nav" aria-label="Leave this front">
+            <a class="header-nav-link" href="abyssal-oneline.html">전선 선택으로<span aria-hidden="true"> →</span></a>
+          </nav>
+        </div>
       </header>
 
       <section class="sealbound-layout" aria-label="Sealbound battle command">

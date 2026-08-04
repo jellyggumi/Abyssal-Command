@@ -9636,6 +9636,15 @@
     },
     {
       "disposition": "delete",
+      "currentPath": "assets/video/abyssal-lantern-journey.mp4",
+      "replacementPath": null,
+      "extension": ".mp4",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
       "currentPath": "assets/video/abyssal-surge-defense-survivor-smoke.mp4",
       "replacementPath": null,
       "extension": ".mp4",

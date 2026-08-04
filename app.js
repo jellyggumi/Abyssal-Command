@@ -1494,7 +1494,8 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
             <ul class="guide-list">
               <li><b>지휘관 이동:</b> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 또는 <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> (화살표 키)</li>
               <li><b>직접 전투:</b> <kbd>Space</kbd>/<kbd>J</kbd> 연속 베기, <kbd>F</kbd> 강공격, <kbd>Shift</kbd>/<kbd>K</kbd> 대시</li>
-              <li><b>스킬 / 정예 추출:</b> <kbd>Tab</kbd> 키로 해당 버튼 포커스 후 <kbd>Space</kbd> 또는 <kbd>Enter</kbd></li>
+              <li><b>스킬:</b> <kbd>1</kbd>–<kbd>5</kbd> 숫자 키 (보유한 스킬 순서, 숫자패드도 동작)</li>
+              <li><b>정예 추출:</b> <kbd>Tab</kbd> 키로 해당 버튼 포커스 후 <kbd>Space</kbd> 또는 <kbd>Enter</kbd></li>
               <li><b>전투 일시 정지:</b> <kbd>P</kbd> 또는 <kbd>Escape</kbd> 키</li>
               <li><b>카메라 제어:</b> 키보드 포커스 조작 지원</li>
             </ul>
@@ -1745,6 +1746,27 @@ function renderSortieFab() {
   root.append(button);
 }
 
+/** HubReturnLink: the campaign shell's only route back out. campaign.html shipped with ZERO
+ * outbound navigation -- once a player reached the lobby, `abyssal-oneline.html` (where the
+ * campaign, Cinder Court and Sealbound are chosen between) was unreachable without the
+ * browser's own back button, and a visitor arriving by direct link had no back entry at all.
+ * Same lifecycle as the FAB above: created once, removed the instant a run starts, so it
+ * cannot add a rectangle to the in-run HUD the responsive zone gate measures. Anchored in
+ * the TOP-left deck region, far from the bottom band. */
+function renderHubReturnLink() {
+  const existing = root.querySelector("#hub-return");
+  if (session?.started) { existing?.remove(); return; }
+  if (existing) return;
+  const link = document.createElement("a");
+  link.id = "hub-return";
+  link.className = "hub-return";
+  link.href = "abyssal-oneline.html";
+  // `nav-stronghold`, not a legion glyph: this returns to the front PICKER, not to a
+  // roster screen. The ← keeps the affordance readable if the plate fails to load.
+  link.innerHTML = `<b data-ui-icon="nav-stronghold" aria-hidden="true">←</b><span>전선 선택으로</span>`;
+  root.append(link);
+}
+
 /** AbyssDepthControl (wiki 2026-07-30 GAP-A/C): run-scoped difficulty-ladder selector, a fixed
  * sibling just above the SortieFab so the chosen depth is set right at 전투개시. Always mounted
  * pre-run (visible immediately); depths above the cleared-stage count render as LOCKED options
@@ -1870,6 +1892,7 @@ function renderShell() {
     renderCommandDeckRight();
   }
   renderSortieFab();
+  renderHubReturnLink();
   renderAbyssDepthControl();
   renderLobbyCinematic();
   session?.syncAppearanceLoadout?.();
@@ -1950,6 +1973,16 @@ ${lobbyCinematicMarkup()}
 
         <div class="arena-callout" aria-hidden="true"><span>LANTERN GATE</span><i></i><span>등불을 지키세요</span></div>
         <div class="defense-edge defense-bottom">
+          <!-- Skill bar owns its own row ABOVE the band. It used to be a radial
+               inside #combat-input-cluster on the bottom right, which put it under
+               the right thumb next to the attack buttons and made each skill a
+               zone the responsive suite had to keep clear of three others. At
+               390px the band's width is already fully committed (pad 6.5rem +
+               gate/actions 1fr + combat 8.6rem + gaps = 384px), so there is no
+               horizontal room for it there -- a separate row is the only place it
+               fits, and being a different row makes overlap with the joystick and
+               the attack cluster structurally impossible rather than tuned. -->
+          <div class="skill-actions skill-bar" id="skill-actions" aria-label="활성 스킬"></div>
           <div class="hud-panel gate-panel"><div class="gate-panel-copy">${portraitMarkup(COMMANDER_MESH_ROOT, "DW", "gate-panel-portrait rc-portrait")}<span class="hud-eyebrow">WARDEN / LANTERN INTEGRITY</span><div class="gate-panel-bars" aria-hidden="true"><span class="gate-panel-bar-icon" data-ui-icon="stat-commander"></span><span class="gate-panel-bar-track commander"><i id="battle-commander-bar-fill"></i></span><span class="gate-panel-bar-icon" data-ui-icon="stat-gate-integrity"></span><span class="gate-panel-bar-track gate"><i id="battle-gate-bar-fill"></i></span></div><strong id="battle-commander-integrity"></strong><strong id="battle-integrity"></strong><span id="battle-enemies"></span></div><div class="integrity-meter" aria-hidden="true"><i id="battle-integrity-fill"></i></div><ul class="hud-buff-strip" id="battle-buff-strip" role="list" aria-label="활성 강화" aria-live="off"></ul></div>
           <div class="one-thumb-controls" id="movement-actions" data-movement-control="octant-joystick" role="group" aria-label="한 손 이동 조작">
             <div class="virtual-joystick" data-joystick role="application" aria-label="이동 스틱" aria-describedby="movement-hint"><span class="virtual-joystick-rune" aria-hidden="true"></span><i class="virtual-joystick-knob" data-joystick-knob aria-hidden="true"></i></div>
@@ -1959,7 +1992,6 @@ ${lobbyCinematicMarkup()}
             <button type="button" id="manual-attack" class="manual-attack-action" data-combat-verb="ATTACK_LIGHT" data-combat-state="unavailable" aria-label="연속 베기 (Space 또는 J)" style="right:.5rem;bottom:.05rem"><span class="manual-attack-glyph" aria-hidden="true">✦</span><span class="manual-attack-label">연속 베기</span><span class="manual-attack-status" aria-live="polite"></span><kbd>SPACE</kbd></button>
             <button type="button" id="manual-heavy" class="manual-attack-action" data-combat-verb="ATTACK_HEAVY" data-combat-state="unavailable" aria-label="강공격 (F)" style="right:4.9rem;bottom:.05rem"><span class="manual-attack-glyph" aria-hidden="true">◆</span><span class="manual-attack-label">강공격</span><span class="manual-attack-status" aria-live="polite"></span><kbd>F</kbd></button>
             <button type="button" id="manual-dash" class="manual-attack-action" data-combat-verb="DASH" data-combat-state="unavailable" aria-label="대시 (Shift 또는 K)" style="right:2.7rem;bottom:4.3rem"><span class="manual-attack-glyph" aria-hidden="true">➜</span><span class="manual-attack-label">대시</span><span class="manual-attack-status" aria-live="polite"></span><kbd>SHIFT</kbd></button>
-            <div class="skill-actions skill-radial" id="skill-actions" aria-label="활성 스킬"></div>
           </div>
           <div class="hud-actions" id="battle-actions" aria-label="전투 행동"></div>
         </div>
@@ -2815,22 +2847,25 @@ export class BattleSession {
       }
       return;
     }
-    // Skill hotkeys 1-7: cast the Nth active skill by driving its real HUD button,
-    // so the cast path, cooldown gating, and on-screen feedback stay single-sourced.
-    const skillDigit = /^Digit([1-7])$/.exec(event.code)?.[1] ?? (/^[1-7]$/.test(key) ? key : null);
+    // Skill digits, after the direct-combat verbs so those keep priority and
+    // before the movement check — WASD/arrows never collide with digits.
+    // Read `event.code` rather than `key` so the row still works on layouts where
+    // the unshifted digit differs, and accept the numpad for the same reason.
+    const skillDigit = /^(?:Digit|Numpad)([1-9])$/.exec(event.code ?? "")?.[1];
     if (skillDigit) {
+      // Cmd+1..9 and Ctrl+1..9 switch browser tabs and Alt+digit reaches menus:
+      // claiming those would burn a cooldown while the player is leaving the page.
+      // Scoped to this branch -- Shift is a legitimate DASH modifier above.
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      const button = root.querySelector(`[data-skill-digit="${skillDigit}"]`);
+      if (!button) return;                       // fewer skills owned than keys
       event.preventDefault();
-      if (event.type === "keydown" && !event.repeat) {
-        if (this.inLobby()) this.suppressLobbyShowcase();
-        const buttons = [...root.querySelectorAll("#skill-actions [data-cast]")];
-        const btn = buttons[Number(skillDigit) - 1];
-        if (btn && btn.getAttribute("aria-disabled") !== "true") {
-          btn.click();
-          const priorShadow = btn.style.boxShadow;
-          btn.style.boxShadow = "0 0 0 3px rgba(255, 236, 170, 0.9), 0 0 14px 4px rgba(255, 200, 120, 0.7)";
-          setTimeout(() => { btn.style.boxShadow = priorShadow; }, 240);
-        }
-      }
+      if (event.type !== "keydown" || event.repeat) return;
+      if (this.inLobby()) this.suppressLobbyShowcase();
+      // Same refusal the click path performs: read the live attribute so a
+      // cooling skill declines instead of queueing a cast the run would drop.
+      if (button.getAttribute("aria-disabled") === "true") return;
+      this.send("SKILL_CAST", { skillId: button.dataset.cast });
       return;
     }
     if (!KEY_DIRECTIONS[key]) return;
@@ -4212,11 +4247,23 @@ export class BattleSession {
     const rosterKey = activeSkills.join("|");
     if (skills.dataset.skillRoster !== rosterKey) {
       skills.dataset.skillRoster = rosterKey;
-      skills.innerHTML = activeSkills.map((id) => {
+      skills.innerHTML = activeSkills.map((id, index) => {
         const skill = SKILLS[id] ?? {};
         const glyph = { "rift-bolt": "✦", "soul-lance": "╱", "grave-pulse": "◉", "void-aegis": "⬡", "shadow-step": "◇" }[id] ?? "✦";
         const name = escapeHtml(skill.name ?? id);
-        return `<button class="skill-action" type="button" data-cast="${id}" data-defense-skill="${id}" data-skill-state="ready" aria-disabled="false"><span class="skill-glyph" aria-hidden="true">${glyph}</span><span class="skill-copy"><strong>${name}</strong><small></small></span></button>`;
+        // Digit shortcut, matching the convention the combat buttons already use:
+        // a visible <kbd> badge here, and the key named inline in the accessible
+        // name — which is set in the state patch below, not here, because that
+        // patch rewrites `aria-label` every frame. Only the first nine are
+        // reachable by digit; a tenth skill stays castable by click and by
+        // Tab-then-Space.
+        const digit = index < 9 ? String(index + 1) : "";
+        return `<button class="skill-action" type="button" data-cast="${id}" data-defense-skill="${id}"`
+          + `${digit ? ` data-skill-digit="${digit}"` : ""}`
+          + ` data-skill-state="ready" aria-disabled="false">`
+          + `<span class="skill-glyph" aria-hidden="true">${glyph}</span>`
+          + `<span class="skill-copy"><strong>${name}</strong><small></small></span>`
+          + `${digit ? `<kbd>${digit}</kbd>` : ""}</button>`;
       }).join("");
       skills.querySelectorAll("[data-cast]").forEach((button) => {
         button.addEventListener("click", () => {
@@ -4250,9 +4297,14 @@ export class BattleSession {
       // is a 10 Hz stream of "재사용까지 3.2초 … 3.1초 …". Whole seconds keep the
       // information and drop the chatter to 1 Hz; the tenths remain visible for
       // sighted players, who are reading rather than being read to.
+      // The digit shortcut is appended HERE rather than in the roster template,
+      // because this line rewrites `aria-label` on every frame — a label set at
+      // build time is overwritten before the player can read it.
+      const digit = button.dataset.skillDigit;
+      const key = digit ? ` · ${digit}번 키` : "";
       const label = cooldown
-        ? `${name} 스킬 · 재사용까지 ${Math.ceil(cooldown / TICK_RATE)}초`
-        : `${name} 스킬 사용 · 준비됨`;
+        ? `${name} 스킬 · 재사용까지 ${Math.ceil(cooldown / TICK_RATE)}초${key}`
+        : `${name} 스킬 사용 · 준비됨${key}`;
       if (button.getAttribute("aria-label") !== label) button.setAttribute("aria-label", label);
       const copy = cooldown ? `${remaining}s` : "준비됨";
       const small = button.querySelector(".skill-copy small");
