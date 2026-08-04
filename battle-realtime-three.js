@@ -295,11 +295,12 @@ const PLAYER_RUNTIME_MOTION_MESH = MOTION_MODELS["lantern-reaver"];
 const PLAYER_MESH = PLAYER_RUNTIME_MOTION_MESH;
 const PROP_BLADE_MESH = "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb";
 const PROP_RELIC_MESH = "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb";
-// Unified item drop image (matches the sprite-arena route). Both games now render the drop
-// from this one prop sprite-sheet crop rather than the 3D prop GLB, so an item reads the same
-// in campaign and arena. A per-drop, per-kind mesh split is a deliberate follow-up — the
-// `pickupModelPathFor` / PICKUP_MODEL_KEYS mapping below is retained for exactly that.
-const PICKUP_IMAGE_PATH = "assets/images/sprite-2-5d/items/relic-crystal.png";
+// Campaign item drop image. Lives in the CAMPAIGN's own asset folder so its art can diverge
+// from the 2.5D arena's (assets/images/sprite-2-5d/items/) by swapping this one file — the two
+// games no longer share a source image. Same crystal today; change this file (or this path) to
+// give the campaign a different item look. A per-drop, per-kind image split would additionally
+// wire the retained `pickupModelPathFor` / PICKUP_MODEL_KEYS mapping below.
+const PICKUP_IMAGE_PATH = "assets/images/campaign/items/relic-crystal.png";
 
 // `bossId` is emitted directly by the simulation. Stage bosses without an
 // explicit motionAssetId retain their supplied static campaign mesh.

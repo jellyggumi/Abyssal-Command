@@ -23,7 +23,7 @@ try {
 }
 
 const ROOT = path.resolve(__dirname, "..");
-const ITEM_PNG = "/assets/images/sprite-2-5d/items/relic-crystal.png";
+const ITEM_PNG = "/assets/images/campaign/items/relic-crystal.png";
 
 function startServer() {
   const host = http.createServer((request, response) => {

@@ -85,6 +85,7 @@ const DIRECT_RUNTIME_ASSETS = Object.freeze([
   "assets/images/sprite-2-5d/ember-cohort/manifest.json",
   "assets/images/sprite-2-5d/ember-cohort/sprite-sheet.png",
   "assets/images/sprite-2-5d/items/relic-crystal.png",
+  "assets/images/campaign/items/relic-crystal.png",
   // Cycle 10: the composed slab floors are the gameplay ground the runtime loads.
   // Order matters -- this list is compared with assert.deepEqual against the
   // workflow's PAGES_RUNTIME_PATHS, so these three must sit here in the same
