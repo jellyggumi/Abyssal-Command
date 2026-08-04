@@ -742,7 +742,9 @@
 
   .audio-toggle {
     width: 100%;
-    min-height: 2.1rem;
+    /* 2.1rem measured 34px -- under the 44px touch floor every other control on this
+       page meets. It is a real button, not a label, so it gets the same floor. */
+    min-height: 44px;
     margin-top: 0.6rem;
     border: 1px solid rgba(151, 184, 196, 0.24);
     border-radius: 0.5rem;
@@ -901,7 +903,9 @@
     }
 
     .header-nav-link {
-      min-height: 2.2rem;
+      /* Copy shrinks, the target does not: 2.2rem measured 35px. This page is a scrolling
+         document, so the 9px back is affordable -- the 44px floor is not. */
+      min-height: 44px;
       padding: 0.3rem 0.6rem;
       font-size: 0.72rem;
     }

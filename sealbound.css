@@ -778,6 +778,9 @@ kbd {
 
 .text-restart {
   width: 100%;
+  /* Padding alone left this at 34px, under the 44px floor the ability buttons above it
+     meet. It is the only way to restart a protocol, so it gets a real target. */
+  min-height: 44px;
   margin-top: 0.72rem;
   padding: 0.58rem;
   border-radius: 0.25rem;
@@ -888,7 +891,9 @@ kbd {
   }
 
   .header-nav-link {
-    min-height: 2.1rem;
+    /* Copy shrinks, the target does not: 2.1rem measured 34px, and this is the only route
+       off the page. Same reasoning as .text-restart above. */
+    min-height: 44px;
     padding: 0.28rem 0.55rem;
     font-size: 0.7rem;
   }
