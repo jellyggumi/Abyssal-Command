@@ -1,0 +1,69 @@
+categories:
+  Basic:
+    - name: game_name
+      description: Title as commonly known.
+      detail_level: brief
+    - name: platform_genre
+      description: Platforms + precise sub-genre (bullet-heaven, idle-RPG, tower/defense-survivor, etc.) and single vs live-service.
+      detail_level: brief
+    - name: release_context
+      description: Release year, developer, rough scale of success (sales/DAU/wishlist if known).
+      detail_level: brief
+
+  CoreLoop:
+    - name: core_loop
+      description: Moment-to-moment loop + session shape and length (e.g. 20-min run, endless, idle tick). What the player DOES.
+      detail_level: detailed
+    - name: input_model
+      description: Control scheme — movement, aim, auto-attack, tap-to-move, formation/party control, how much manual agency.
+      detail_level: moderate
+
+  Depth:
+    - name: in_run_build_depth
+      description: Per-run progression — level-up choice count & pool, weapon/skill evolution & fusion, synergies, stacking, ranks, how build variety emerges.
+      detail_level: detailed
+    - name: difficulty_scaling
+      description: How difficulty extends — endless/ascension/curse/NG+/prestige tiers, scaling curve, replay incentives beyond first clear.
+      detail_level: detailed
+
+  Meta:
+    - name: meta_progression
+      description: Permanent between-run progression — unlock web, permanent upgrades, prestige, NG+, roster/collection growth. Is there an endgame ceiling?
+      detail_level: detailed
+    - name: collection_capture
+      description: Units/characters/companions collection or capture mechanic; how acquisition + roster progression works.
+      detail_level: moderate
+
+  IdleEconomy:
+    - name: idle_offline_loop
+      description: Offline/idle accrual — what accrues, caps, and crucially the REINVESTMENT SINK + comeback/catch-up mechanic. Does idle feed back into power?
+      detail_level: detailed
+    - name: economy_currencies
+      description: Currencies — sources, sinks, pacing; is the economy sized to run dry or to keep reinvesting?
+      detail_level: moderate
+
+  Content:
+    - name: content_volume
+      description: Content scale — stages/levels, enemies, bosses, characters, weapons/items; how much authored content and how it's paced.
+      detail_level: moderate
+
+  Retention:
+    - name: retention_hooks
+      description: Why players return — daily quests, events, live-ops, energy gates, seasonal content, social. What creates the come-back reason.
+      detail_level: detailed
+    - name: monetization
+      description: Monetization model (context only — ours is none): F2P/paid, gacha, battlepass, cosmetics; and how it shapes the loop.
+      detail_level: brief
+
+  Reception:
+    - name: community_praise
+      description: What players/critics most praise about the GAME-NESS (fun, depth, feel) — cite community sources.
+      detail_level: moderate
+    - name: community_complaints
+      description: Most common complaints/criticisms (grind, shallowness, paywalls, repetition) — cite community sources.
+      detail_level: moderate
+    - name: relevance_to_abyssal
+      description: Direct lesson for Abyssal Command — which of our 5 gaps (NG+/endless, idle sink, roguelite depth, dead content, balance/retention) this title informs, and the specific adoptable/avoid pattern.
+      detail_level: detailed
+
+uncertain: []

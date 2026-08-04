@@ -1,0 +1,34 @@
+topic: >
+  How difficulty tiers become FELT gameplay content instead of stat inflation —
+  for Abyssal Lantern's "Abyss Depth" ladder. Each comparable is studied for how
+  a difficulty step reads as NEW RULES / abilities / telegraphs (not +HP%), so we
+  can rebuild Abyss Depth as named rule-change packages the CURRENT engine can render.
+  User decision: each depth bundles a distinct enemy-policy mix + elite affix +
+  entrance juice + visible reward stakes.
+
+items:
+  - name: Hades — Pact of Punishment / Heat
+    slug: hades-pact
+    note: Stackable NAMED conditions (extra boss phase, tighter timers, healing caps, +armor). Difficulty = a menu of readable rules the player composes.
+  - name: Dead Cells — Boss Cells + enemy affixes/malaise
+    slug: dead-cells-affix
+    note: Each Boss Cell tier changes RULES (fewer heals, more elites, malaise infection), and enemies gain visible affixes/behaviors, not just stats.
+  - name: Risk of Rain 2 — Eclipse + elite affixes
+    slug: ror2-eclipse
+    note: Eclipse E1–E8 each a hand-authored handicap RULE; elites (Blazing/Overloading/Malachite) are color-coded enemies with distinct on-screen abilities.
+  - name: Slay the Spire — Ascension 1–20
+    slug: sts-ascension
+    note: 20 discrete named rule changes (elites everywhere, less healing, stronger bosses); each rung is a specific mechanic, not a global multiplier.
+  - name: Diablo / Path of Exile — rare/elite monster affixes
+    slug: arpg-elite-affix
+    note: The canonical "elite affix" model — enemies roll visible modifier packs (auras, ground effects, on-death) that change how you fight that pack.
+  - name: Vampire Survivors — Arcana + Hurry/Hyper/Limit Break
+    slug: vs-arcana
+    note: Run-rewriting Arcana cards + Hyper/Hurry modes flip rules and pace; difficulty toggles that change the run's feel, not just numbers.
+
+execution:
+  batch_size: 6
+  items_per_agent: 1
+  output_dir: ./results
+  time_range: unlimited (include genre-defining originals) with priority on current/2023-present patch state
+  focus: how a difficulty STEP is expressed as felt gameplay — mechanic changes, visual telegraph, entrance juice, reward stakes, readability/fairness — and which pattern Abyssal Lantern's CURRENT engine can render (cheap/med/needs-build).

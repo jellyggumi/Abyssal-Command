@@ -1,0 +1,43 @@
+categories:
+  Basic:
+    - name: game_name
+      description: Title as commonly known.
+      detail_level: brief
+    - name: difficulty_system_name
+      description: The system's own name for its difficulty ladder (Heat/Pact, Boss Cells, Eclipse, Ascension, affix roll, Arcana/Hyper).
+      detail_level: brief
+
+  FeltMechanics:
+    - name: modifier_form
+      description: What shape a single difficulty STEP takes — a stacked condition, a discrete named tier, a rolled affix pack, a run-rewriting card, a toggle.
+      detail_level: detailed
+    - name: mechanic_change_not_number
+      description: The concrete RULE/behavior changes a step introduces (new enemy behavior, extra boss phase, hazard, healing cap, spawn-mix shift) — explicitly NOT just +HP/+dmg %. Cite examples.
+      detail_level: detailed
+    - name: visual_telegraph
+      description: How the game SHOWS the difficulty on screen — recolored/auraed enemies, ground effects, a banner/announce, an HUD marker. How the player READS that it's harder before dying.
+      detail_level: detailed
+
+  FeelAndStakes:
+    - name: entrance_juice
+      description: The moment-of-activation feel — screen treatment, announce, music/SFX shift, a boss/elite reveal when a tier or affixed pack appears.
+      detail_level: moderate
+    - name: reward_stakes_coupling
+      description: How higher difficulty is coupled to visible reward/incentive (better loot, unlock, currency multiplier, cosmetic, leaderboard) so the player CHOOSES up.
+      detail_level: moderate
+    - name: player_adaptation
+      description: How the step forces a build/tactic change (not just tankier enemies) — what the player must DO differently. Depth-as-decision.
+      detail_level: moderate
+    - name: readability_fairness
+      description: How it stays fair/legible at higher tiers (telegraph windows, no off-screen deaths, opt-in). Failure modes to avoid (solved-build trivialize, unfair spikes, perf collapse).
+      detail_level: moderate
+
+  AbyssalFit:
+    - name: engine_render_feasibility
+      description: Which parts THIS pattern maps onto Abyssal Lantern's CURRENT engine (enemy policy mix, elite spawns, VFX pool, camera shake/hitstop, telegraph decals, reward table, HUD, audio cues) — tag each cheap / medium / needs-build, referencing our levers.
+      detail_level: detailed
+    - name: adopt_pattern_for_abyss_depth
+      description: The one concrete pattern to adopt for a named Abyss Depth package (enemy-policy mix + elite affix + entrance juice + reward stakes), and the specific avoid, honoring non-monetized / deterministic-60Hz / mobile constraints.
+      detail_level: detailed
+
+uncertain: []

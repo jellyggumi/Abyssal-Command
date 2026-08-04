@@ -1,0 +1,45 @@
+topic: >
+  Comparable gameplay analysis for Abyssal Command — a mobile-first
+  single-player defense-survivor + Solo-Warden RPG meta + offline idle game.
+  Compare same/adjacent-genre titles along gameplay axes to locate our
+  game-ness gaps (finite once-through ceiling, sink-less idle, thin roguelite
+  depth, dead authored content, balance/retention).
+
+items:
+  - name: Vampire Survivors
+    slug: vampire-survivors
+    note: Genre origin of bullet-heaven/survivor-like; weapon-evolution build depth, unlock web, endless + Hurry.
+  - name: Brotato
+    slug: brotato
+    note: Run-build depth via item economy + shop between waves; 6-item stacking, characters as build constraints.
+  - name: Soulstone Survivors
+    slug: soulstone-survivors
+    note: Survivor-like with a large runic skill tree + ascension/curse endless scaling.
+  - name: HoloCure
+    slug: holocure
+    note: Free collect-and-level survivor; character roster, weapon fusion, collectables/holo-house meta.
+  - name: "Survivor.io"
+    slug: survivor-io
+    note: Mobile market-leader survivor; gear/evolution meta, energy/stamina retention, live-ops events.
+  - name: 20 Minutes Till Dawn
+    slug: 20-minutes-till-dawn
+    note: Survivor-like with per-run upgrade drafts + character/rune meta; tight 20-min sessions.
+  - name: Melvor Idle
+    slug: melvor-idle
+    note: Idle-RPG reinvestment loop reference; offline progress, skill sinks, no-timer AFK economy.
+  - name: Kingshot
+    slug: kingshot
+    note: Mobile idle-defense + base/troop meta (user-referenced); shoot-defense core + 4X-lite progression + live-ops.
+  - name: Legend of Mushroom
+    slug: legend-of-mushroom
+    note: Idle-RPG progression/prestige reference; auto-battle, ascension/prestige, gacha gear, daily retention.
+  - name: AFK Journey
+    slug: afk-journey
+    note: Formation + idle meta reference; team composition agency, AFK rewards, roster progression.
+
+execution:
+  batch_size: 5          # parallel web-search agents at a time
+  items_per_agent: 1     # one game per agent for depth
+  output_dir: ./results
+  time_range: unlimited (include genre origins) with priority on 2023-present for mobile-market titles
+  focus: full gameplay (core loop, input, in-run build depth, meta/NG+/endless, collection, idle offline loop, economy, content volume, difficulty scaling, retention hooks, monetization-for-context, community praise/complaints)
