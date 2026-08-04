@@ -591,6 +591,43 @@
     background: linear-gradient(180deg, #164351, #0a2029);
   }
 
+  /* Header nav — the always-visible route off this page. Borrows the continue
+     button's lantern palette so the two read as the same "leave the arena"
+     affordance, but sits at header scale rather than modal scale. */
+  .header-aside {
+    display: grid;
+    justify-items: end;
+    gap: 0.45rem;
+  }
+
+  .header-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.4rem;
+  }
+
+  .header-nav-link {
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 0.9rem;
+    border: 1px solid rgba(88, 227, 242, 0.45);
+    border-radius: 0.5rem;
+    color: #cdf6ff;
+    background: linear-gradient(180deg, #10323c, #081820);
+    font-size: 0.82rem;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .header-nav-link:hover,
+  .header-nav-link:focus-visible {
+    border-color: var(--lantern);
+    background: linear-gradient(180deg, #164351, #0a2029);
+  }
+
   .game-over-panel .countdown {
     min-height: 1.1rem;
     color: var(--lantern);
@@ -760,6 +797,17 @@
       align-items: start;
     }
 
+    /* Header stacks here, so the aside stops hugging the right edge and reads as
+       the next line of the same left-aligned column. */
+    .header-aside {
+      justify-items: start;
+    }
+
+    .header-nav {
+      justify-content: flex-start;
+      padding-left: 0.7rem;
+    }
+
     .status {
       max-width: none;
       padding-left: 0.7rem;
@@ -836,6 +884,26 @@
     .game-header {
       align-items: center;
       margin-bottom: 0.38rem;
+    }
+
+    /* Vertical space is the scarce axis here (.game-page is a 100svh grid whose
+       second row is the arena), so the aside goes back to ONE line: status and the
+       route link share it instead of stacking and stealing a row from the arena. */
+    .header-aside {
+      display: flex;
+      align-items: center;
+      justify-items: unset;
+      gap: 0.5rem;
+    }
+
+    .header-nav {
+      padding-left: 0;
+    }
+
+    .header-nav-link {
+      min-height: 2.2rem;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.72rem;
     }
 
     .game-header .eyebrow,

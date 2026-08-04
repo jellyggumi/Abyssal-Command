@@ -19,9 +19,19 @@
           <p class="eyebrow">어비스 랜턴 · 야전기록 07</p>
           <h1 id="game-title">잿불 법정을 사수하라</h1>
         </div>
-        <p id="sprite-2-5d-status" class="status" role="status" aria-live="polite">
-          전투원을 불러오는 중…
-        </p>
+        <div class="header-aside">
+          <p id="sprite-2-5d-status" class="status" role="status" aria-live="polite">
+            전투원을 불러오는 중…
+          </p>
+          <!-- Persistent way out. This page is what GitHub Pages serves at the root, and
+               until now its ONLY outbound link lived inside the hidden game-over panel:
+               a visitor had to LOSE the sprite run before any route to the campaign
+               appeared. The hub is where the main campaign lobby, Sealbound and this
+               arena are chosen between, so it belongs in the always-visible header. -->
+          <nav class="header-nav" aria-label="다른 전선으로 이동">
+            <a class="header-nav-link" href="abyssal-oneline.html">어비스 랜턴 본편<span aria-hidden="true"> →</span></a>
+          </nav>
+        </div>
       </header>
 
       <section class="game-layout" aria-label="잿불 법정 방어 아레나">

@@ -315,6 +315,36 @@ html[data-defense-started="true"] #command-deck-right { display: none; }
 }
 .sortie-fab small { color: #c6dded; }
 .sortie-fab b { font-size: 1.25rem; }
+/* HubReturnLink: the campaign shell's route back to the front picker. Anchored to the TOP of
+   the live-canvas band, NOT the viewport corner: #command-deck-left is fixed at left:0/top:0
+   and its masthead jump rail owns that corner, so a corner-pinned link would sit on top of
+   the rail's first chip and swallow its clicks. Offsetting past the deck width is the same
+   trick the mobile FAB uses, and it lands in the band the decks are documented to always
+   leave open. Pre-run only, and at the opposite end from the bottom band so it never enters
+   the in-run zone geometry the responsive suite measures. 44px floor like every HUD control.
+   The default deck width applies below 1000px too, so the offset is unconditional. */
+.hub-return {
+  position: fixed;
+  z-index: 6;
+  top: max(.55rem, env(safe-area-inset-top));
+  left: calc(var(--lantern-left-deck, clamp(11rem, 26vw, 20rem)) + .5rem);
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  min-height: 44px;
+  padding: .45rem .7rem;
+  border: 1px solid rgba(129, 214, 255, .45);
+  border-radius: .5rem;
+  color: #cdf0ff;
+  background: linear-gradient(180deg, rgba(18, 42, 62, .92), rgba(9, 20, 31, .92));
+  backdrop-filter: blur(6px);
+  font-size: .78rem;
+  letter-spacing: .02em;
+  text-decoration: none;
+}
+.hub-return b[data-ui-icon] { width: 18px; height: 18px; }
+.hub-return:hover,
+.hub-return:focus-visible { border-color: #81d6ff; background: linear-gradient(180deg, rgba(26, 60, 86, .95), rgba(13, 29, 44, .95)); }
 /* AbyssDepthControl: run-scoped difficulty selector, a compact pill (eyebrow over select).
    Default (<=1099px): centred just above the SortieFab. Desktop (>=1100px, section below):
    moves to the LEFT of the SortieFab on the same line. Pre-run only. */
@@ -418,7 +448,14 @@ html[data-defense-started="true"] #command-deck-right { display: none; }
 #defense-battle-surface[data-defense-started="false"] #defense-edge-hud { display: none; }
 .defense-edge { position: absolute; display: flex; gap: .45rem; pointer-events: auto; }
 .defense-top { top: max(.4rem, var(--defense-safe-top)); left: max(.4rem, var(--defense-safe-left)); right: max(.4rem, var(--defense-safe-right)); justify-content: space-between; align-items: flex-start; }
-.defense-bottom { bottom: max(.4rem, var(--defense-safe-bottom)); left: max(.4rem, var(--defense-safe-left)); right: max(.4rem, var(--defense-safe-right)); justify-content: space-between; align-items: flex-end; }
+.defense-bottom { bottom: max(.4rem, var(--defense-safe-bottom)); left: max(.4rem, var(--defense-safe-left)); right: max(.4rem, var(--defense-safe-right)); justify-content: space-between; align-items: flex-end; flex-wrap: wrap; row-gap: .3rem; }
+/* The band wraps so the skill bar holds a full-width line of its OWN above the
+   gate/pad/combat row: `width: 100%` forces the break, and `order: 0` puts it first
+   against the explicit orders those three carry at >=1000px. Every grid composition
+   below re-places it into a named `skills` row for the same reason -- it must never
+   share a rectangle with the joystick or the attack cluster, which is exactly what
+   the responsive suite's per-breakpoint zone-overlap gate asserts. */
+.defense-bottom > .skill-bar { width: 100%; order: 0; }
 /* Desktop (>=1000px): pack the top HUD panels to the LEFT in one line (mission -> objective
    flow -> legion -> objective) instead of spreading them across the band with space-between,
    so they read as a single left-aligned strip and nothing floats in the centre/right where the
@@ -1556,10 +1593,12 @@ body {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
-      "gate actions"
-      "gate movement";
+      "skills skills"
+      "gate   actions"
+      "gate   movement";
     align-items: end;
   }
+  .defense-bottom > .skill-bar { grid-area: skills; width: auto; }
   /* Phone bands are narrow enough on their own that the actions column can not be allowed
      its max-content width: it starved the gate column down to ~23px, and the gate readout's
      block children (main's HUD skin makes them display: block) spilled sideways across the
@@ -2253,53 +2292,77 @@ body {
 .manual-attack-label { font-size: .62rem; font-weight: 900; letter-spacing: .08em; }
 .manual-attack-status { min-height: .7rem; max-width: 4.65rem; overflow: hidden; color: #b9d7e8; font-size: .43rem; font-weight: 800; line-height: 1.1; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 .manual-attack-action kbd { color: #f4d98f; font-size: .48rem; letter-spacing: .08em; }
-.skill-radial { position: absolute; inset: 0; display: block; pointer-events: none; }
-.skill-radial .skill-action {
-  position: absolute;
-  z-index: 2;
+/* SKILL BAR — was `.skill-radial`, a ring of absolutely-positioned buttons inside
+   #combat-input-cluster on the bottom right. Two reasons it is a row on its own
+   line now: it sat under the right thumb competing with three attack buttons, and
+   the radial's five hand-tuned nth-child offsets were five more rectangles the
+   responsive overlap gate had to keep apart at every breakpoint. A flex row above
+   the status bar cannot overlap the joystick or the attack cluster by
+   construction, because it is a different grid row.
+
+   The state affordance below is carried over verbatim and re-scoped: ready vs
+   cooling still uses THREE channels per §C's no-color-only rule — border color,
+   border STYLE (solid vs dashed, which survives grayscale and colour-blindness),
+   and the copy underneath (`준비됨` vs a live seconds count from renderControls).
+   No test covers that contract, so it would have broken silently. */
+.skill-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: .3rem;
+  align-items: flex-end;
+  min-width: 0;
+  /* The bar is only as wide as its buttons, so the battlefield stays clickable
+     to the right of it. */
+  justify-content: flex-start;
+}
+.skill-bar .skill-action {
   display: grid;
   place-items: center;
-  width: clamp(2.75rem, 5vw, 3.75rem);
-  height: clamp(2.75rem, 5vw, 3.75rem);
+  gap: .05rem;
+  width: clamp(2.75rem, 5vw, 3.4rem);
+  height: clamp(2.75rem, 5vw, 3.4rem);
+  /* Flex items shrink by default, which would make the width above a HINT and let a
+     narrow grid cell squeeze these under the 44px touch floor the responsive suite
+     asserts on every visible HUD button. Pin the floor and refuse to shrink. */
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
   padding: .2rem;
-  border-radius: 50%;
-  pointer-events: auto;
+  border-radius: .5rem;
   touch-action: manipulation;
   transition: transform 140ms ease, border-color 140ms ease, filter 140ms ease;
 }
-.skill-radial .skill-action:nth-child(1) { left: .1rem; bottom: 4.8rem; }
-.skill-radial .skill-action:nth-child(2) { left: 2.45rem; top: .35rem; }
-.skill-radial .skill-action:nth-child(3) { right: .15rem; top: .15rem; }
-.skill-radial .skill-action:nth-child(4) { right: .05rem; bottom: 3.9rem; }
-.skill-radial .skill-action:nth-child(5) { left: 2.35rem; bottom: .15rem; }
-/* Interaction affordance now keys off the state attribute, not `:disabled` — the
-   button stays enabled (and focusable) while cooling and refuses the cast in JS,
-   so `:not(:disabled)` would have matched a cooling skill too. */
-.skill-radial .skill-action[data-skill-state="ready"]:hover,
-.skill-radial .skill-action[data-skill-state="ready"]:focus-visible { transform: scale(1.08); filter: brightness(1.25); border-color: var(--sem-ready); }
-/* Ready vs cooling carries THREE separate channels, per §C's no-color-only rule:
-   the border color, the border STYLE (solid vs dashed — survives grayscale and
-   color-blindness), and the copy underneath (`준비됨` vs a live seconds count,
-   written by renderControls). */
-.skill-radial .skill-action[data-skill-state="ready"] { border: 2px solid var(--sem-ready); box-shadow: 0 0 0 .16rem var(--sem-ready-soft); }
-.skill-radial .skill-action[data-skill-state="cooling"] { border: 2px dashed var(--sem-disabled); box-shadow: none; filter: saturate(.5); cursor: not-allowed; }
-.skill-radial .skill-action[data-skill-state="cooling"] .skill-copy small { color: var(--sem-warning); }
-.skill-radial .skill-action[data-skill-state="ready"] .skill-copy small { color: var(--sem-ready); }
-.skill-radial .skill-glyph { font-size: 1rem; line-height: 1; }
-.skill-radial .skill-copy { display: grid; justify-items: center; min-width: 0; }
-.skill-radial .skill-copy strong { max-width: 4.2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .48rem; }
-.skill-radial .skill-copy small { font-size: .45rem; color: #b9d7e8; }
+.skill-bar .skill-action[data-skill-state="ready"]:hover,
+.skill-bar .skill-action[data-skill-state="ready"]:focus-visible { transform: translateY(-2px); filter: brightness(1.25); border-color: var(--sem-ready); }
+.skill-bar .skill-action[data-skill-state="ready"] { border: 2px solid var(--sem-ready); box-shadow: 0 0 0 .12rem var(--sem-ready-soft); }
+.skill-bar .skill-action[data-skill-state="cooling"] { border: 2px dashed var(--sem-disabled); box-shadow: none; filter: saturate(.5); cursor: not-allowed; }
+.skill-bar .skill-action[data-skill-state="cooling"] .skill-copy small { color: var(--sem-warning); }
+.skill-bar .skill-action[data-skill-state="ready"] .skill-copy small { color: var(--sem-ready); }
+.skill-bar .skill-glyph { font-size: 1rem; line-height: 1; }
+.skill-bar .skill-copy { display: grid; justify-items: center; min-width: 0; }
+.skill-bar .skill-copy strong { max-width: 4.2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .46rem; }
+.skill-bar .skill-copy small { font-size: .44rem; color: #b9d7e8; }
+/* Digit badge, same treatment as the combat buttons' <kbd>. */
+.skill-bar .skill-action kbd {
+  position: absolute;
+  top: .1rem;
+  right: .18rem;
+  color: #f4d98f;
+  font-size: .46rem;
+  letter-spacing: .06em;
+}
+.skill-bar .skill-action { position: relative; }
 @media (max-width: 720px), (max-height: 500px) {
   .combat-input-cluster { width: 10.2rem; height: 8.35rem; }
   .manual-attack-action { right: .2rem; bottom: .05rem; }
-  .skill-radial .skill-action { width: 2.8rem; height: 2.8rem; }
-  .skill-radial .skill-action:nth-child(1) { left: 0; bottom: 4.3rem; }
-  .skill-radial .skill-action:nth-child(2) { left: 2.2rem; top: .1rem; }
-  .skill-radial .skill-action:nth-child(3) { right: .05rem; top: 0; }
-  .skill-radial .skill-action:nth-child(4) { right: 0; bottom: 3.6rem; }
-  .skill-radial .skill-action:nth-child(5) { left: 2.1rem; bottom: 0; }
-  .skill-radial .skill-copy strong { display: none; }
-  .skill-radial .skill-copy small { font-size: .42rem; }
+  /* Glyph + cooldown only. The skill NAME is the first thing to go on a phone:
+     it is the widest part of the button and the least functional, since the glyph
+     already identifies the skill and the digit badge names its key. Dropping it
+     is what lets five 44px buttons and their gaps fit inside 360px. */
+  .skill-bar { gap: .25rem; }
+  .skill-bar .skill-action { width: 44px; height: 44px; padding: .12rem; }
+  .skill-bar .skill-copy strong { display: none; }
+  .skill-bar .skill-copy small { font-size: .42rem; }
   .defense-bottom { align-items: flex-end; gap: .25rem; }
 }
 @media (max-width: 480px) {
@@ -2307,11 +2370,15 @@ body {
   .manual-attack-action { width: 4rem; height: 4rem; }
   .manual-attack-label { font-size: .55rem; }
   .manual-attack-action kbd { display: none; }
-  .skill-radial .skill-action { width: 2.55rem; height: 2.55rem; }
-  .skill-radial .skill-glyph { font-size: .88rem; }
+  /* 44px is the floor the responsive suite asserts, so the button cannot shrink
+     further -- only its contents. The digit badge goes the way of the combat
+     buttons' kbd above: there is no keyboard on this viewport to hint at. */
+  .skill-bar { gap: .2rem; }
+  .skill-bar .skill-glyph { font-size: .88rem; }
+  .skill-bar .skill-action kbd { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .manual-attack-action, .skill-radial .skill-action { transition: none; }
+  .manual-attack-action, .skill-bar .skill-action { transition: none; }
 }
  
 
@@ -2449,8 +2516,11 @@ button:disabled {
 .growth-equip-slot > span:not(.tier-icon):not(.progression-icon) { min-width: 0; overflow-wrap: break-word; word-break: keep-all; }
 
 .lobby-cinematic {
+  /* Top padding reserves the .hub-return row. Both are pre-run-only and both live in the
+     canvas band, so they always coexist -- the brand lockup used to start at 1rem and the
+     link's 44px plate landed on top of it. */
   padding:
-    max(1rem, calc(var(--defense-safe-top) + .5rem))
+    max(4rem, calc(var(--defense-safe-top) + 3.5rem))
     calc(var(--lantern-right-deck) + 1rem)
     max(5.5rem, calc(var(--defense-safe-bottom) + 5rem))
     calc(var(--lantern-left-deck) + 1rem);
@@ -2605,8 +2675,12 @@ button:disabled {
     grid-template-rows: auto auto minmax(0, 1fr);
     grid-template-areas: "head" "objective" "dialogue";
     gap: .55rem;
+    /* Same .hub-return clearance as the base rule. The link is fixed at deck+.5rem/.55rem
+       with a 44px plate, and this block's own left padding puts the brand lockup at the same
+       x -- without the reserve the link covers the lockup outright (z 6 over the cinematic's
+       3), which is what it did before this line. */
     padding:
-      max(.65rem, var(--defense-safe-top))
+      max(3.55rem, calc(var(--defense-safe-top) + 3.2rem))
       max(.6rem, var(--defense-safe-right))
       calc(42dvh + 5.2rem)
       calc(var(--deck-left-width) + .65rem);
@@ -2639,6 +2713,13 @@ button:disabled {
     transform: none;
   }
   .sortie-fab:active { transform: scale(.98); }
+  /* Same band, top edge. --deck-left-width is the <=699px deck measure, so the link tracks
+     the narrower mobile column instead of the desktop clamp. */
+  .hub-return {
+    left: calc(var(--deck-left-width) + .5rem);
+    font-size: .72rem;
+    padding: .4rem .55rem;
+  }
   .sortie-action-label { font-size: .82rem; white-space: normal; }
   .abyss-depth-control {
     left: calc(var(--deck-left-width) + .5rem);
@@ -2686,13 +2767,17 @@ button:disabled {
   .defense-bottom {
     display: grid;
     grid-template-columns: minmax(6.5rem, auto) minmax(0, 1fr) 8.6rem;
-    grid-template-rows: auto auto;
+    /* Three rows now: the skill line spans the full band width above the two the
+       pad/gate/combat composition already used. */
+    grid-template-rows: auto auto auto;
     grid-template-areas:
-      "movement gate combat"
+      "skills   skills  skills"
+      "movement gate    combat"
       "movement actions combat";
     gap: .28rem;
     align-items: end;
   }
+  .defense-bottom > .skill-bar { grid-area: skills; width: auto; }
   .defense-bottom > .gate-panel {
     grid-area: gate;
     width: 100%;
@@ -2755,7 +2840,7 @@ button:disabled {
   #battle-actions #toggle-pause { font-size: 0; }
   #battle-actions #toggle-pause::before { width: 20px; height: 20px; margin: 0; }
   #battle-actions #extract-elite { grid-column: 1 / -1; font-size: .66rem; }
-  .skill-radial .skill-action {
+  .skill-bar .skill-action {
     width: 44px;
     height: 44px;
     min-width: 44px;
@@ -2784,8 +2869,9 @@ button:disabled {
 
 @media (orientation: landscape) and (max-height: 560px) {
   .lobby-cinematic {
+    /* Same .hub-return clearance, at this breakpoint's compressed plate height. */
     padding:
-      max(.55rem, var(--defense-safe-top))
+      max(3.75rem, calc(var(--defense-safe-top) + 3.35rem))
       calc(var(--lantern-right-deck) + .75rem)
       max(4.75rem, calc(var(--defense-safe-bottom) + 4.5rem))
       calc(var(--lantern-left-deck) + .75rem);
@@ -3358,8 +3444,14 @@ html[data-defense-started="true"] .idle-return-toast {
   .defense-bottom {
     bottom: 0;
     display: grid;
-    grid-template-columns: 7.25rem minmax(7.5rem, 1fr) minmax(5.5rem, 7rem) 9.4rem;
-    grid-template-areas: "movement gate actions combat";
+    /* Skills join as a COLUMN here, not a row: this breakpoint is height-starved
+       (<=560px) and the central clear band has only ~8px of slack, so a full-width
+       second line would eat it. The column is capped at three buttons wide and the
+       bar WRAPS inside it, so a five-skill roster becomes 2x44px + gap = 93px --
+       still under the pad's 116px, which is what sets the band height. The band
+       therefore does not grow no matter how many skills are owned. */
+    grid-template-columns: 7.25rem minmax(7.5rem, 1fr) minmax(0, auto) minmax(5.5rem, 7rem) 9.4rem;
+    grid-template-areas: "movement gate skills actions combat";
     gap: .3rem;
     align-items: end;
     padding:
@@ -3369,6 +3461,15 @@ html[data-defense-started="true"] .idle-return-toast {
       max(.35rem, var(--defense-safe-left));
   }
   /* Pad box comes from --pad-size in the unconditional rule; only placement is composition A's. */
+  .defense-bottom > .skill-bar {
+    grid-area: skills;
+    width: auto;
+    align-self: end;
+    flex-wrap: wrap;
+    /* Three 44px buttons + two gaps. Beyond that the bar wraps rather than
+       widening, so the four sibling columns keep their minimums at 667px. */
+    max-width: calc(44px * 3 + .3rem * 2);
+  }
   .defense-bottom > #movement-actions { grid-area: movement; justify-self: start; }
   .defense-bottom > .gate-panel {
     grid-area: gate;
