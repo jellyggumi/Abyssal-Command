@@ -7,16 +7,43 @@ scope: explains `guard-attack-mid.png`, `lantern-reaver-attack-mid.png`,
 
 ---
 
-## 1. Verdict — corrected mid-investigation
+## 1. Verdict — corrected twice during investigation
 
-This document began as "the renders are an importer artifact, the assets are fine." Runtime
-renders of the **current** bytes contradicted the second half of that, so the verdict is split:
+This document began as "the renders are an importer artifact, the assets are fine." Both halves
+turned out wrong, in opposite directions:
 
 | claim | status |
 |---|---|
-| Blender's importer re-derives armature rest from IBMs and shredded these renders | **holds** (§2, §6) |
-| the REST pose is healthy in the current bytes | **holds** — `current-bytes/current-guard-rest.png` is a clean T-pose |
-| the shipped assets are therefore fine | **FALSE for the animated pose** (§1.1) |
+| the shipped assets are fine | **FALSE.** Current bytes shred under animation in the runtime, no Blender involved (§1.1) |
+| the REST pose is healthy in current bytes | **holds** — seam separation exactly 0.00000 on nine of eleven actors |
+| Blender's importer explains *these* PNGs | **UNPROVEN, probably false** (§1.0) |
+| the importer defect is real | **holds**, but for two other actors (§1.0) |
+
+### 1.0 The importer defect is real, and it does not explain these images `[MEASURED]`
+
+I attributed the four PNGs to the importer bug on timestamp evidence. That attribution does not
+survive measurement.
+
+`lantern-reaver`, `guard` and `scout` satisfy `jointWorldRest × IBM == identity` to ~1e-7 **in all
+three generations** — the PNG-era bytes included. A bare Blender import re-derives the same rest for
+them, so `guess_original_bind_pose` changes nothing on those actors and cannot have produced their
+shredding.
+
+The importer bug is nonetheless real, and precisely locatable: `ember-cohort` (8.1164°) and
+`possessed` (22.1940°) are the **only** IBM-inconsistent assets in the cohort. The 22.1940 figure
+reproduces byte-exactly the "22.194 deg" quoted in commit `53293208` — independent confirmation
+that the fix addressed a genuine defect, on the two actors that actually carry it.
+
+**So what produced the four PNGs is still open.** Their timestamps (01:30–01:35) fall between
+`6e2ab06d` (07-29 22:28) and `28016a40` (07-30 01:55), and the `6e2ab06d` generation measures
+0.066–0.096 × diag seam separation — an order of magnitude below the shredding those images show.
+Neither the importer defect nor the seam-binding defect accounts for them.
+
+The likeliest remaining explanation is that they were never renders of the runtime GLBs at all:
+`FINDING-blender-import-path.md` identifies them as an ad-hoc headless run against the staged
+`review.blend` scenes, which are a different artifact with their own rig state. That is consistent
+with the evidence but not proven, and it is not load-bearing for anything below — the live defect
+in §1.1 is measured on current bytes directly.
 
 ### 1.1 Every actor shreds under animation, in the runtime, with current bytes
 
@@ -103,6 +130,37 @@ to bound. Any fix must add that invariant rather than assume the existing proof 
 **`scout` is not a clean reference.** It shreds too, at 0.314 × diag. There is no intact control
 among the three actors rendered, and any future comparison that treats `scout` as healthy will
 understate the defect.
+
+### 1.1h Do not reuse the existing gate's `seamEdgesDisjoint` `[MEASURED]`
+
+`joint-weight-repair-gate.json` already has a field with "seam" and "disjoint" in its name. It is
+**anti-correlated** with this defect, so tightening it would be worse than adding nothing:
+
+| actor | `before.seamEdgesDisjoint` | `verdict.seamDisjoint` | real L1=2.0 pairs | real separation |
+|---|---|---|---|---|
+| `broken-court-monarch-boss` | **1558** | PASS | 0 | 0.00000 |
+| `shadow-commander-boss` | **1287** | PASS | 0 | 0.00000 |
+| `shadow-soldier-v04` | **667** | PASS | 1 | 0.00002 |
+| `broken-court-monarch-v04` | **508** | PASS | 0 | 0.00000 |
+| `human-command-boss` | 497 | PASS | 250 | 0.216 |
+| `scout` | 189 | PASS | 429 | 0.314 |
+| `lantern-reaver` | 175 | PASS | 425 | 0.475 |
+| `ember-cohort` | 136 | PASS | 348 | 0.347 |
+| `shade` | 107 | PASS | 259 | 0.604 |
+| `guard` | 71 | PASS | 139 | 0.241 |
+| `possessed` | **2** | PASS | 483 | **0.611** |
+
+The four healthy actors score **highest** (508–1558) and the seven broken ones lowest (2–497).
+`possessed`, the worst actor at 0.611 × diag, scores the minimum of 2. All eleven report PASS.
+
+Note how thin the boundary is — clean minimum 508 against defective maximum 497. Anyone tuning a
+threshold here would land on a number that separates the cohort by coincidence and would break on
+the next asset.
+
+The two quantities share a word and nothing else: `seamEdgesDisjoint` counts disjoint seam **edges
+in the rest topology**, while the defect is L1 weight divergence between **coincident vertices
+under rotation**. Add seam separation as a **new** gate field. Do not tighten the existing one, and
+do not treat its PASS as evidence about this defect.
 
 ### 1.1e Cohort scope — 7 defective, 4 clean `[MEASURED]`
 
