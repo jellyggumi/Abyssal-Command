@@ -454,7 +454,16 @@ def author_clips(row: dict[str, Any], root: Path) -> list[dict[str, Any]]:
     import bpy  # noqa: PLC0415
 
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    bpy.ops.import_scene.gltf(filepath=str(root / row["inputPath"]))
+    # `guess_original_bind_pose=False`: left at its default Blender rebuilds the
+    # armature rest from the inverse bind matrices instead of the authored
+    # `node.rotation` chain. This function authors pose channels RELATIVE TO
+    # REST and exports them, so a re-derived rest is baked into every clip it
+    # writes. Same rule as `scripts/measure-joint-articulation.py:113-122`.
+    bpy.ops.import_scene.gltf(
+        filepath=str(root / row["inputPath"]),
+        guess_original_bind_pose=False,
+        bone_heuristic="BLENDER",
+    )
     armature = next((obj for obj in bpy.data.objects if obj.type == "ARMATURE"), None)
     if armature is None:
         raise AuthorError(f"{row['relativePath']}: no armature")

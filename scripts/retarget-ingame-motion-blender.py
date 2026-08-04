@@ -190,7 +190,25 @@ def reset_scene() -> None:
 def import_gltf(path: Path) -> None:
     import bpy
 
-    bpy.ops.import_scene.gltf(filepath=str(path))
+    # `guess_original_bind_pose` must stay False. Left at its default (True),
+    # Blender rebuilds the armature rest pose from the inverse bind matrices
+    # instead of reading the authored `node.rotation` chain -- so a rig whose
+    # rest pose was corrected without rebaking its IBMs imports re-posed back
+    # to the pre-correction pose.
+    #
+    # That mattered here more than anywhere else: this module read the same
+    # target rig's rest pose two disagreeing ways. Clips were posed and
+    # exported against the IBM-derived rest, then `postprocess_rest_relative_
+    # deltas` rebased them against `_reference_rest_quaternions`, which reads
+    # `node["rotation"]` in pure Python -- the value the runtime honours. On a
+    # rest-corrected rig the two differ and the mismatch was written into the
+    # shipped motion pack. Same rule and reason as
+    # `scripts/measure-joint-articulation.py:113-122`.
+    bpy.ops.import_scene.gltf(
+        filepath=str(path),
+        guess_original_bind_pose=False,
+        bone_heuristic="BLENDER",
+    )
 
 
 def import_fbx(path: Path) -> None:

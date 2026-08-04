@@ -19,7 +19,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { createRequire, syncBuiltinESMExports } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -1704,10 +1704,45 @@ describe("pose-pair render evidence", () => {
 // a future bare call is caught without needing a Blender run.
 // ---------------------------------------------------------------------------
 
-const BIND_POSE_TOOLS = Object.freeze([
-  `${TOOLS_DIR}/render-character-motion-contact-sheet-blender.py`,
-  `${TOOLS_DIR}/derive-kinematic-bounds-blender.py`,
+// Discovered, not enumerated. The previous version listed two files by hand,
+// so it passed while thirteen other call sites across `scripts/` were still
+// bare -- including `retarget-ingame-motion-blender.py`, which posed clips
+// against an IBM-derived rest and then rebased them against a `node.rotation`
+// rest, writing the mismatch into the shipped motion pack. A hand-maintained
+// list cannot catch a call site nobody remembered to add, so this walks the
+// tree instead and holds every Python file that imports glTF.
+const BIND_POSE_SEARCH_DIRS = Object.freeze([
+  "scripts",
+  TOOLS_DIR,
+  `${PIPELINE}/../qa/motion-repair-20260803/scratch`,
 ]);
+
+/** Every tracked .py under the search dirs that calls `import_scene.gltf(`. */
+function bindPoseCallSiteFiles() {
+  const found = [];
+  const walk = (relative) => {
+    const absolute = repositoryPath(relative);
+    let entries;
+    try {
+      entries = readdirSync(absolute, { withFileTypes: true });
+    } catch {
+      return;                       // a search dir may not exist in every tree
+    }
+    for (const entry of entries) {
+      if (entry.name.startsWith(".") || entry.name === "__pycache__") continue;
+      const child = `${relative}/${entry.name}`;
+      if (entry.isDirectory()) {
+        walk(child);
+      } else if (entry.name.endsWith(".py")) {
+        if (readFileSync(repositoryPath(child), "utf8").includes("import_scene.gltf(")) {
+          found.push(child);
+        }
+      }
+    }
+  };
+  for (const dir of BIND_POSE_SEARCH_DIRS) walk(dir);
+  return found.sort();
+}
 
 /** Every `import_scene.gltf(...)` call site with its balanced argument text. */
 function gltfImportCallSites(source) {
@@ -1738,19 +1773,34 @@ function gltfImportCallSites(source) {
 }
 
 describe("Blender-side tools import glTF without re-deriving armature rest", () => {
-  test("every import_scene.gltf call in both Blender tools disables bind-pose guessing", () => {
-    for (const relative of BIND_POSE_TOOLS) {
+  test("every discovered import_scene.gltf call disables bind-pose guessing", () => {
+    const files = bindPoseCallSiteFiles();
+    // Guard the discovery itself: a broken walk would vacuously pass.
+    assert.ok(
+      files.length >= 14,
+      `expected to discover at least 14 Python files calling import_scene.gltf, found ${files.length}`
+        + ` (${files.join(", ")}) -- if the walk stopped finding them the contract is not being enforced`,
+    );
+
+    const offenders = [];
+    for (const relative of files) {
       const sites = gltfImportCallSites(readFileSync(repositoryPath(relative), "utf8"));
       assert.ok(sites.length >= 1, `${relative} must contain at least one import_scene.gltf call site`);
-      const bare = sites.filter((site) => !/guess_original_bind_pose\s*=\s*False/.test(site.args));
-      assert.deepEqual(
-        bare.map((site) => site.line),
-        [],
-        `${relative}: import_scene.gltf call(s) on the listed line(s) must pass guess_original_bind_pose=False, `
-          + "matching scripts/measure-joint-articulation.py; otherwise Blender rebuilds armature rest from the "
-          + "inverse bind matrices instead of the authored node.rotation chain",
-      );
+      for (const site of sites) {
+        if (!/guess_original_bind_pose\s*=\s*False/.test(site.args)) {
+          offenders.push(`${relative}:${site.line}`);
+        }
+      }
     }
+
+    assert.deepEqual(
+      offenders,
+      [],
+      "these import_scene.gltf call sites must pass guess_original_bind_pose=False, matching "
+        + "scripts/measure-joint-articulation.py; otherwise Blender rebuilds armature rest from the "
+        + "inverse bind matrices instead of the authored node.rotation chain. Pin it even where the "
+        + "imported armature is discarded, so the rule needs no exception list",
+    );
   });
 });
 

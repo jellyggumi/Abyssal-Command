@@ -328,7 +328,16 @@ def stage_rows(root: Path, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         asset_id = row["assetId"]
 
         bpy.ops.wm.read_factory_settings(use_empty=True)
-        bpy.ops.import_scene.gltf(filepath=str(source))
+        # `guess_original_bind_pose=False`: this imports the runtime GLB, then
+        # transfers weights against its armature and re-exports. Left at its
+        # default Blender rebuilds the rest from the inverse bind matrices, so
+        # the weights would be transferred against a re-posed rig and written
+        # back. Same rule as `scripts/measure-joint-articulation.py:113-122`.
+        bpy.ops.import_scene.gltf(
+            filepath=str(source),
+            guess_original_bind_pose=False,
+            bone_heuristic="BLENDER",
+        )
 
         body = bpy.data.objects.get(f"{asset_id}{BODY_SUFFIX}")
         static = bpy.data.objects.get(f"{asset_id}{STATIC_SUFFIX}")

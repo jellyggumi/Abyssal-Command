@@ -121,7 +121,15 @@ def run_in_blender(args, budgets):
     # --- 1. Import raw GLB -------------------------------------------------
     bpy.ops.wm.read_factory_settings(use_empty=True)
     existing = set(o.name for o in bpy.data.objects)
-    bpy.ops.import_scene.gltf(filepath=str(args.glb))
+    # `guess_original_bind_pose=False` — see
+    # `scripts/measure-joint-articulation.py:113-122`. Inert here: the next line
+    # keeps only MESH objects and this pass builds its own rig from raw
+    # marching-cubes output. Pinned so the contract needs no exception list.
+    bpy.ops.import_scene.gltf(
+        filepath=str(args.glb),
+        guess_original_bind_pose=False,
+        bone_heuristic="BLENDER",
+    )
     imported = [o for o in bpy.data.objects if o.name not in existing and o.type == "MESH"]
     if not imported:
         raise RuntimeError(f"No mesh objects imported from {args.glb}")

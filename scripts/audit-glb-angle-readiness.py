@@ -146,7 +146,15 @@ def main():
 
         existing = set(o.name for o in bpy.data.objects)
         try:
-            bpy.ops.import_scene.gltf(filepath=str(glb_path))
+            # `guess_original_bind_pose=False` — see
+            # `scripts/measure-joint-articulation.py:113-122`. Left at its
+            # default Blender rebuilds armature rest from the inverse bind
+            # matrices, so a rest-corrected rig renders re-posed.
+            bpy.ops.import_scene.gltf(
+                filepath=str(glb_path),
+                guess_original_bind_pose=False,
+                bone_heuristic="BLENDER",
+            )
         except Exception as exc:
             results.append({"asset": name, "error": f"import failed: {exc}"})
             continue

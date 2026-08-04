@@ -74,9 +74,19 @@ def reset_scene() -> None:
 
 
 def import_glb(path: Path) -> None:
-    """Import GLB file with deterministic options."""
+    """Import GLB file with deterministic options.
+
+    `guess_original_bind_pose=False` is the option that actually determines the
+    rest pose, and this function previously omitted it while calling itself
+    deterministic. Left at its default Blender rebuilds the armature rest from
+    the inverse bind matrices rather than the authored `node.rotation` chain, so
+    this gate measured a re-posed rig instead of the shipped one. Same rule as
+    `scripts/measure-joint-articulation.py:113-122`.
+    """
     bpy.ops.import_scene.gltf(
         filepath=str(path),
+        guess_original_bind_pose=False,
+        bone_heuristic="BLENDER",
         import_materials=False,
         import_cameras=False,
         import_lights=False,

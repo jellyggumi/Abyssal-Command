@@ -313,7 +313,17 @@ def run(args, budgets):
 
     # --- 1. Import --------------------------------------------------------
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    bpy.ops.import_scene.gltf(filepath=str(args.glb))
+    # `guess_original_bind_pose=False` — see
+    # `scripts/measure-joint-articulation.py:113-122`. Inert here, because the
+    # loop below removes every ARMATURE and clears the body's vertex groups, so
+    # no guessed rest survives. Pinned anyway so the contract holds without an
+    # exception list and a future edit that keeps the imported armature cannot
+    # silently reintroduce the defect.
+    bpy.ops.import_scene.gltf(
+        filepath=str(args.glb),
+        guess_original_bind_pose=False,
+        bone_heuristic="BLENDER",
+    )
     meshes = [o for o in bpy.data.objects if o.type == "MESH"]
     if not meshes:
         raise RuntimeError(f"no mesh in {args.glb}")

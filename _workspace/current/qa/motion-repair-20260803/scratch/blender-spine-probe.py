@@ -32,7 +32,14 @@ def wipe():
 
 def load(path):
     wipe()
-    bpy.ops.import_scene.gltf(filepath=path)
+    # `guess_original_bind_pose=False` — see
+    # `scripts/measure-joint-articulation.py:113-122`. This probe compares rest
+    # rotations, which is precisely what the default re-derives.
+    bpy.ops.import_scene.gltf(
+        filepath=path,
+        guess_original_bind_pose=False,
+        bone_heuristic="BLENDER",
+    )
     arms = [o for o in bpy.context.scene.objects if o.type == "ARMATURE"]
     if len(arms) != 1:
         raise RuntimeError(f"expected exactly one armature in {path}, got {len(arms)}")

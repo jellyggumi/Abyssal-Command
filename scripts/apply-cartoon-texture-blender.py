@@ -343,7 +343,16 @@ def run_in_blender(args, source, texture, normal, output, report_path):
 
     report = _base_report(args, source, texture, normal, output, report_path, dry_run=False)
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    bpy.ops.import_scene.gltf(filepath=str(source))
+    # `guess_original_bind_pose=False`: this re-exports the armature alongside
+    # the recoloured body, so a rest pose re-derived from the inverse bind
+    # matrices would be written into the staged candidate even though this pass
+    # only means to change materials. Same rule as
+    # `scripts/measure-joint-articulation.py:113-122`.
+    bpy.ops.import_scene.gltf(
+        filepath=str(source),
+        guess_original_bind_pose=False,
+        bone_heuristic="BLENDER",
+    )
     body, armature, root, meshes = _body_and_hierarchy(args.asset_id)
     if not body.data.uv_layers:
         raise RuntimeError("body mesh has no UV map; unwrap it before cartoon texture mapping")

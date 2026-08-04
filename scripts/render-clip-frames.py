@@ -41,7 +41,15 @@ def main():
     frames = [int(f) for f in args.frames.split(",") if f.strip()]
 
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    bpy.ops.import_scene.gltf(filepath=args.glb)
+    # `guess_original_bind_pose=False` — see
+    # `scripts/measure-joint-articulation.py:113-122`. Left at its default this
+    # renders a rest-corrected rig re-posed back to its pre-correction pose,
+    # which is exactly how a healthy rig comes out looking broken.
+    bpy.ops.import_scene.gltf(
+        filepath=args.glb,
+        guess_original_bind_pose=False,
+        bone_heuristic="BLENDER",
+    )
 
     rig = next((o for o in bpy.data.objects if o.type == "ARMATURE"), None)
     stem = Path(args.glb).stem

@@ -448,7 +448,15 @@ def reset_scene() -> None:
     bpy.context.view_layer.update()
 
 def import_glb(path: Path) -> None:
-    bpy.ops.import_scene.gltf(filepath=str(path))
+    # `guess_original_bind_pose=False`: this audit measures deformation against
+    # the rest pose, so a rest re-derived from the inverse bind matrices makes it
+    # audit a rig the runtime never loads. Same rule as
+    # `scripts/measure-joint-articulation.py:113-122`.
+    bpy.ops.import_scene.gltf(
+        filepath=str(path),
+        guess_original_bind_pose=False,
+        bone_heuristic="BLENDER",
+    )
 
 
 def collect_scene_objects() -> tuple[list[Any], list[Any]]:

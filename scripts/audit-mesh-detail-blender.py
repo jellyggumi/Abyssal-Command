@@ -211,7 +211,14 @@ def audit_glb(path):
     clear_scene()
     scene = bpy.context.scene
     try:
-        bpy.ops.import_scene.gltf(filepath=str(path))
+        # `guess_original_bind_pose=False` — see
+        # `scripts/measure-joint-articulation.py:113-122`. This audit reads
+        # `armature.data.bones`, i.e. the rest pose itself.
+        bpy.ops.import_scene.gltf(
+            filepath=str(path),
+            guess_original_bind_pose=False,
+            bone_heuristic="BLENDER",
+        )
     except Exception as exc:  # noqa: BLE001 - report and continue the audit
         base["error"] = f"import failed: {exc}"
         return base

@@ -31,7 +31,15 @@ def parse(argv):
 
 def render_one(bpy, mathutils, glb_path, out_png, res, axis):
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    bpy.ops.import_scene.gltf(filepath=str(glb_path))
+    # `guess_original_bind_pose=False` — see
+    # `scripts/measure-joint-articulation.py:113-122`. This renders the pose, so
+    # a rest re-derived from the inverse bind matrices shows a rig the runtime
+    # never loads.
+    bpy.ops.import_scene.gltf(
+        filepath=str(glb_path),
+        guess_original_bind_pose=False,
+        bone_heuristic="BLENDER",
+    )
 
     meshes = [o for o in bpy.data.objects if o.type == "MESH"]
     if not meshes:
