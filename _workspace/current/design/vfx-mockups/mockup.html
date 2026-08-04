@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>VFX before/after mockup</title>
+<style>
+  html,body{margin:0;background:#05080d;color:#cdd7db;font-family:ui-monospace,monospace}
+  .panel{margin:0 0 4px}
+  .cap{padding:8px 12px;font-size:22px;font-weight:700;letter-spacing:.5px}
+  .before .cap{color:#ff8a6c}
+  .after .cap{color:#7ff6ff}
+  canvas{display:block;width:1536px;height:1024px;image-rendering:pixelated}
+</style>
+</head>
+<body>
+<div id="melee-before" class="panel before"><div class="cap">BEFORE — 근접 타격 (현재: 얇은 stroke 한 겹)</div><canvas id="c-mb" width="1536" height="1024"></canvas></div>
+<div id="melee-after" class="panel after"><div class="cap">AFTER — 근접 타격 (제안: 플래시+불티+트레일+넉백+데미지넘버+셰이크)</div><canvas id="c-ma" width="1536" height="1024"></canvas></div>
+<div id="nova-before" class="panel before"><div class="cap">BEFORE — 노바 AoE (현재: 타원 링 1개)</div><canvas id="c-nb" width="1536" height="1024"></canvas></div>
+<div id="nova-after" class="panel after"><div class="cap">AFTER — 노바 AoE (제안: 코어 섬광+다중 충격파+방사 불티+강한 셰이크)</div><canvas id="c-na" width="1536" height="1024"></canvas></div>
+<div id="ready" data-ready="0" style="height:1px"></div>
+<script type="module">
+const ARENA_X=768, ARENA_Y=604, ARENA_HALF_HEIGHT=270;
+const FAR=0.62, NEAR=1;
+const PIVOT={x:128,y:232};
+function depthScale(y){
+  const nd=Math.min(1,Math.max(0,(y-(ARENA_Y-ARENA_HALF_HEIGHT))/(ARENA_HALF_HEIGHT*2)));
+  const q=Math.round(nd*9)/9; return FAR+(NEAR-FAR)*q;
+}
+function load(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});}
+
+const [bg,warden,cohort] = await Promise.all([
+  load("../../../../assets/images/sprite-2-5d/cinder-court-backdrop.png"),
+  load("../../../../assets/images/sprite-2-5d/warden/sprite-sheet.png"),
+  load("../../../../assets/images/sprite-2-5d/ember-cohort/sprite-sheet.png"),
+]);
+// rows: idle y=0, walk y=256, attack y=512 ; cols step 256
+const RECT={ idle:{x:0,y:0}, walk:{x:0,y:256}, attack:{x:768,y:512} }; // attack frame 3
+function frameRect(kind,col){ return {x:col*256,y:kind*256,w:256,h:256}; }
+
+function drawShadow(ctx,a){
+  const ds=depthScale(a.y), ax=Math.round(a.x), ay=Math.round(a.y);
+  ctx.save(); ctx.globalAlpha=0.34; ctx.fillStyle="#020407"; ctx.beginPath();
+  ctx.ellipse(ax, ay-2*ds, (a.kind==="player"?42:36)*ds, (a.kind==="player"?14:12)*ds,0,0,Math.PI*2);
+  ctx.fill(); ctx.restore();
+}
+const flashCanvas=document.createElement("canvas"); flashCanvas.width=512; flashCanvas.height=512;
+const flashCtx=flashCanvas.getContext("2d"); flashCtx.imageSmoothingEnabled=false;
+function drawActor(ctx,a,{flash=0,flashColor="#ffffff",knock=0}={}){
+  const ds=depthScale(a.y), ss=a.scale*ds, ax=Math.round(a.x), ay=Math.round(a.y);
+  const sheet = a.kind==="player"?warden:cohort;
+  const rk = a.kind==="player" ? {x:768,y:512} : {x:0,y:0}; // player attack f3, enemy idle f0
+  const dx=Math.round(-PIVOT.x*ss), dy=Math.round(-PIVOT.y*ss), dw=Math.round(256*ss), dh=Math.round(256*ss);
+  drawShadow(ctx,a);
+  ctx.save();
+  ctx.translate(ax + (a.facing<0? -knock: knock), ay);
+  ctx.scale(a.facing,1);
+  ctx.drawImage(sheet, rk.x,rk.y,256,256, dx,dy,dw,dh);
+  if(flash>0){
+    // canvas2d silhouette flash: tint ONLY sprite pixels via offscreen buffer
+    flashCtx.clearRect(0,0,512,512);
+    flashCtx.globalCompositeOperation="source-over";
+    flashCtx.drawImage(sheet, rk.x,rk.y,256,256, 0,0,dw,dh);
+    flashCtx.globalCompositeOperation="source-atop";
+    flashCtx.fillStyle=flashColor;
+    flashCtx.fillRect(0,0,dw,dh);
+    flashCtx.globalCompositeOperation="source-over";
+    ctx.globalAlpha=flash;
+    ctx.drawImage(flashCanvas, 0,0,dw,dh, dx,dy,dw,dh);
+    ctx.globalAlpha=1;
+  }
+  ctx.restore();
+}
+function bgWith(ctx){ ctx.globalAlpha=1; ctx.drawImage(bg,0,0,1536,1024); ctx.fillStyle="rgba(2,7,12,0.06)"; ctx.fillRect(0,0,1536,1024); }
+function groundRing(ctx,a){ const ds=depthScale(a.y); ctx.save(); ctx.strokeStyle="rgba(90,230,240,0.2)"; ctx.lineWidth=3*ds; ctx.beginPath(); ctx.ellipse(Math.round(a.x),Math.round(a.y),50*ds,17*ds,0,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
+
+// scene actors
+const player={kind:"player",x:768,y:648,facing:1,scale:0.78};
+const e1={kind:"enemy",x:966,y:642,facing:-1,scale:0.72}; // struck
+const e2={kind:"enemy",x:1086,y:712,facing:-1,scale:0.72};
+const e3={kind:"enemy",x:1128,y:566,facing:-1,scale:0.72};
+const enemies=[e3,e1,e2]; // depth-ish order
+
+// ---------- MELEE BEFORE ----------
+(function(){ const ctx=document.getElementById("c-mb").getContext("2d"); ctx.imageSmoothingEnabled=false;
+  bgWith(ctx); groundRing(ctx,player);
+  drawActor(ctx,e3,{}); drawActor(ctx,player,{}); drawActor(ctx,e1,{}); drawActor(ctx,e2,{});
+  // current thin slash arc (#ffb064 a0.5)
+  const ds=depthScale(player.y), ax=Math.round(player.x), ay=Math.round(player.y);
+  ctx.save(); ctx.globalAlpha=0.5; ctx.strokeStyle="#ffb064"; ctx.lineWidth=8; ctx.beginPath();
+  ctx.arc(ax, ay-54*ds, 118, -0.85, 0.62, false); ctx.stroke(); ctx.restore();
+  // current thin hit ellipse on e1 (#ff8a4c)
+  const eds=depthScale(e1.y);
+  ctx.save(); ctx.globalAlpha=0.8; ctx.strokeStyle="#ff8a4c"; ctx.lineWidth=4*eds; ctx.beginPath();
+  ctx.ellipse(Math.round(e1.x), Math.round(e1.y)-79*eds, 42*eds, 90*eds,0,0,Math.PI*2); ctx.stroke(); ctx.restore();
+})();
+
+// ---------- MELEE AFTER ----------
+(function(){ const ctx=document.getElementById("c-ma").getContext("2d"); ctx.imageSmoothingEnabled=false;
+  // screen shake offset (small)
+  ctx.save(); ctx.translate(6,-4);
+  bgWith(ctx); groundRing(ctx,player);
+  drawActor(ctx,e3,{});
+  drawActor(ctx,player,{});
+  // struck enemy: knockback + strong white silhouette flash
+  drawActor(ctx,e1,{flash:0.85,flashColor:"#ffffff",knock:10});
+  drawActor(ctx,e2,{});
+  const ds=depthScale(player.y), ax=Math.round(player.x), ay=Math.round(player.y);
+  // crescent slash trail: layered gradient arcs sweeping
+  for(let k=0;k<5;k++){
+    const t=k/4, a=0.10+0.55*(1-t);
+    ctx.save(); ctx.globalCompositeOperation="lighter"; ctx.globalAlpha=a;
+    ctx.strokeStyle= k<2?"#fff2c8":"#ff9a3c"; ctx.lineWidth=(3+16*(1-t));
+    ctx.beginPath(); ctx.arc(ax, ay-54*ds, 110-k*4, -1.05+t*0.2, 0.78-t*0.2, false); ctx.stroke(); ctx.restore();
+  }
+  // impact contact point on e1
+  const eds=depthScale(e1.y), hx=Math.round(e1.x)-10, hy=Math.round(e1.y)-70*eds;
+  // white core flash
+  ctx.save(); ctx.globalCompositeOperation="lighter";
+  const g=ctx.createRadialGradient(hx,hy,0,hx,hy,60); g.addColorStop(0,"rgba(255,255,255,0.95)"); g.addColorStop(0.4,"rgba(255,200,120,0.6)"); g.addColorStop(1,"rgba(255,140,60,0)");
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(hx,hy,60,0,Math.PI*2); ctx.fill();
+  // ember spark burst (additive)
+  const sparks=14;
+  for(let i=0;i<sparks;i++){ const ang=(i/sparks)*Math.PI*2 + 0.3; const dist=20+ (i%4)*22; const px=hx+Math.cos(ang)*dist, py=hy+Math.sin(ang)*dist*0.8;
+    ctx.globalAlpha=0.9-(i%4)*0.15; ctx.fillStyle= i%3===0?"#fff0c0":"#ff8a3c"; const r=3+(i%3);
+    ctx.beginPath(); ctx.arc(px,py,r,0,Math.PI*2); ctx.fill();
+    // spark streak
+    ctx.strokeStyle=ctx.fillStyle; ctx.lineWidth=2; ctx.globalAlpha*=0.6; ctx.beginPath(); ctx.moveTo(hx,hy); ctx.lineTo(px,py); ctx.stroke();
+  }
+  ctx.restore();
+  // damage number
+  ctx.save(); ctx.globalAlpha=1; ctx.textAlign="center";
+  ctx.font="900 46px ui-monospace,monospace"; ctx.lineWidth=6; ctx.strokeStyle="rgba(4,6,10,0.9)";
+  ctx.strokeText("58", hx+18, hy-58); ctx.fillStyle="#ffe27a"; ctx.fillText("58", hx+18, hy-58); ctx.restore();
+  ctx.restore(); // shake
+})();
+
+// ---------- NOVA BEFORE ----------
+(function(){ const ctx=document.getElementById("c-nb").getContext("2d"); ctx.imageSmoothingEnabled=false;
+  bgWith(ctx); groundRing(ctx,player);
+  drawActor(ctx,e3,{}); drawActor(ctx,player,{}); drawActor(ctx,e1,{}); drawActor(ctx,e2,{});
+  // current single nova ring (#ffb161 a~0.5)
+  const NOVA_R=250; const ax=Math.round(player.x), ay=Math.round(player.y)-40;
+  ctx.save(); ctx.globalAlpha=0.5; ctx.strokeStyle="#ffb161"; ctx.lineWidth=10; ctx.beginPath();
+  ctx.ellipse(ax,ay,NOVA_R*0.75,NOVA_R*0.7*0.75,0,0,Math.PI*2); ctx.stroke(); ctx.restore();
+})();
+
+// ---------- NOVA AFTER ----------
+(function(){ const ctx=document.getElementById("c-na").getContext("2d"); ctx.imageSmoothingEnabled=false;
+  ctx.save(); ctx.translate(-10,7); // stronger shake
+  bgWith(ctx); groundRing(ctx,player);
+  drawActor(ctx,e3,{flash:0.5,flashColor:"#ffd089"});
+  drawActor(ctx,player,{});
+  drawActor(ctx,e1,{flash:0.7,flashColor:"#ffd089",knock:16});
+  drawActor(ctx,e2,{flash:0.6,flashColor:"#ffd089",knock:14});
+  const NOVA_R=250; const ax=Math.round(player.x), ay=Math.round(player.y)-40;
+  ctx.save(); ctx.globalCompositeOperation="lighter";
+  // core flash
+  const g=ctx.createRadialGradient(ax,ay,0,ax,ay,NOVA_R); g.addColorStop(0,"rgba(255,255,255,0.9)"); g.addColorStop(0.25,"rgba(255,210,130,0.55)"); g.addColorStop(0.7,"rgba(255,130,50,0.22)"); g.addColorStop(1,"rgba(255,90,40,0)");
+  ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(ax,ay,NOVA_R,NOVA_R*0.7,0,0,Math.PI*2); ctx.fill();
+  // multi shockwave rings
+  const rings=[{r:0.55,a:0.9,w:14,c:"#fff2cc"},{r:0.78,a:0.6,w:10,c:"#ffb161"},{r:0.98,a:0.35,w:7,c:"#ff7a3c"}];
+  for(const R of rings){ ctx.globalAlpha=R.a; ctx.strokeStyle=R.c; ctx.lineWidth=R.w; ctx.beginPath(); ctx.ellipse(ax,ay,NOVA_R*R.r,NOVA_R*0.7*R.r,0,0,Math.PI*2); ctx.stroke(); }
+  // radial embers
+  const N=28;
+  for(let i=0;i<N;i++){ const ang=(i/N)*Math.PI*2; const dist=NOVA_R*(0.5+ (i%5)*0.1); const px=ax+Math.cos(ang)*dist, py=ay+Math.sin(ang)*dist*0.7;
+    ctx.globalAlpha=0.85-(i%5)*0.12; ctx.fillStyle= i%3===0?"#fff0c0":"#ff8a3c"; const r=3+(i%3);
+    ctx.beginPath(); ctx.arc(px,py,r,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+  ctx.restore(); // shake
+})();
+
+document.getElementById("ready").dataset.ready="1";
+</script>
+</body>
+</html>
