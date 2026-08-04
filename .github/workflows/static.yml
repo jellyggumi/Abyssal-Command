@@ -36,6 +36,7 @@ env:
     assets/images/sprite-2-5d/cinder-court-backdrop.png
     assets/images/sprite-2-5d/warden/manifest.json assets/images/sprite-2-5d/warden/sprite-sheet.png
     assets/images/sprite-2-5d/ember-cohort/manifest.json assets/images/sprite-2-5d/ember-cohort/sprite-sheet.png
+    assets/images/sprite-2-5d/items/relic-crystal.png
     assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb
     assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb
     assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb

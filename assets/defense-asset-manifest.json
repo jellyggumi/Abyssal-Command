@@ -681,6 +681,15 @@
     },
     {
       "disposition": "retain",
+      "currentPath": "assets/images/sprite-2-5d/items/relic-crystal.png",
+      "replacementPath": "assets/images/sprite-2-5d/items/relic-crystal.png",
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
       "currentPath": "assets/images/sprite-2-5d/warden/manifest.json",
       "replacementPath": "assets/images/sprite-2-5d/warden/manifest.json",
       "extension": ".json",

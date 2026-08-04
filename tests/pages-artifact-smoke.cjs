@@ -68,6 +68,7 @@ const REQUIRED_FILES = [
   "assets/images/sprite-2-5d/warden/sprite-sheet.png",
   "assets/images/sprite-2-5d/ember-cohort/manifest.json",
   "assets/images/sprite-2-5d/ember-cohort/sprite-sheet.png",
+  "assets/images/sprite-2-5d/items/relic-crystal.png",
   // Cycle 10: the composed slab floors are what the runtime loads for gameplay ground.
   // The retained diorama and textured candidates stay listed as offline provenance.
   "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb",

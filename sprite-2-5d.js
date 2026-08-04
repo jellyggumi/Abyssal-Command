@@ -82,6 +82,7 @@ const ASSET_URLS = {
   wardenSheet: new URL("./assets/images/sprite-2-5d/warden/sprite-sheet.png", import.meta.url),
   cohortManifest: new URL("./assets/images/sprite-2-5d/ember-cohort/manifest.json", import.meta.url),
   cohortSheet: new URL("./assets/images/sprite-2-5d/ember-cohort/sprite-sheet.png", import.meta.url),
+  relicItem: new URL("./assets/images/sprite-2-5d/items/relic-crystal.png", import.meta.url),
 };
 
 const body = document.body;
@@ -191,6 +192,7 @@ const assets = {
   backdrop: null,
   warden: null,
   cohort: null,
+  relicItem: null,
 };
 
 const player = {
@@ -439,6 +441,15 @@ async function loadAssets() {
   assets.backdrop = results[0];
   assets.warden = validateManifest("Dusk Warden", results[1], results[2]);
   assets.cohort = validateManifest("Ember Cohort", results[3], results[4]);
+
+  // Item drop sprite. Optional: a load failure degrades drawPickups() to its diamond
+  // fallback rather than blocking the whole run on a missing icon.
+  try {
+    assets.relicItem = await loadImage(ASSET_URLS.relicItem, "Relic item sprite");
+  } catch (error) {
+    console.warn("Relic item sprite failed to load; using diamond fallback:", error);
+    assets.relicItem = null;
+  }
 }
 
 function setClip(actor, clipName, force = false) {
@@ -1685,13 +1696,31 @@ function drawPickups() {
     const bob = state.reducedMotion ? 0 : Math.sin(pickup.bob * 4) * 4;
     const centerX = Math.round(pickup.x);
     const centerY = Math.round(pickup.y - 26 * depthScale + bob);
-    const radius = 11 * depthScale;
     const expiring = pickup.life <= 3;
 
     context.save();
     context.globalAlpha = expiring && !state.reducedMotion
       ? 0.35 + Math.abs(Math.sin(pickup.life * 6)) * 0.65
       : 0.92;
+
+    const sprite = assets.relicItem;
+    if (sprite && sprite.naturalWidth > 0) {
+      // Draw the prop sprite-sheet crystal, tinted per item kind so the three drops still
+      // read apart. Height ~40px at depthScale 1; aspect preserved from the source image.
+      const drawHeight = 40 * depthScale;
+      const drawWidth = drawHeight * (sprite.naturalWidth / sprite.naturalHeight);
+      context.drawImage(sprite, centerX - drawWidth / 2, centerY - drawHeight / 2, drawWidth, drawHeight);
+      // A soft kind-colour wash so ember-shard / oil-flask / relic-mote differ at a glance.
+      context.globalCompositeOperation = "source-atop";
+      context.globalAlpha *= 0.35;
+      context.fillStyle = ITEM_KINDS[pickup.kind].color;
+      context.fillRect(centerX - drawWidth / 2, centerY - drawHeight / 2, drawWidth, drawHeight);
+      context.restore();
+      continue;
+    }
+
+    // Fallback: the original procedural diamond (used only if the sprite failed to load).
+    const radius = 11 * depthScale;
     context.fillStyle = ITEM_KINDS[pickup.kind].color;
     context.beginPath();
     context.moveTo(centerX, centerY - radius);

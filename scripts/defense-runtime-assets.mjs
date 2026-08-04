@@ -26,6 +26,7 @@ export const RETAINED_ASSET_PATHS = Object.freeze([
   "assets/images/sprite-2-5d/warden/sprite-sheet.png",
   "assets/images/sprite-2-5d/ember-cohort/manifest.json",
   "assets/images/sprite-2-5d/ember-cohort/sprite-sheet.png",
+  "assets/images/sprite-2-5d/items/relic-crystal.png",
   // Live terrain, NPC, bosses, and props are loaded directly from their
   // generated mesh outputs.
   //
