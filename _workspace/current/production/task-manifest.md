@@ -643,3 +643,22 @@ share = areaFalloffBp(distance, radius)
 
 수치가 움직인 이유는 전투 규칙이 바뀌었기 때문이며, 게이트가 지키는 주장 자체는 하나도
 약화되지 않았다.
+
+---
+
+## 15. 2026-08-04 — 시작 네비게이션·승패 판독성 슬라이스 (스펙)
+
+대상: `index.html` → `sprite-2-5d.js` "어비스 랜턴 · 잿불 법정". 결정: `decision-log.md#D-20260804-NAV-01`.
+
+| task | owner | 산출물 | 게이트 | 상태 |
+|---|---|---|---|---|
+| 인테이크 브리프·모드·다음 비트 | game-production-director | `intake/production-brief-navigation-onboarding.md` | — | done |
+| 승패 모델·금지구역·오버레이 카피 | game-designer | `design/navigation-onboarding-spec.md` | G1/G7 입력 | done |
+| 오버레이 정보구조·a11y | ui-senior-developer | `ui/navigation-overlay-ia.md` | G4/G6 입력 | done |
+| 구현 스펙(정확한 코드 변경) | game-programmer | `engineering/navigation-onboarding-implementation.md` | G6 입력 | done |
+| QA 게이트 N1–N16 | game-qa | `qa/navigation-onboarding-gates.md` | 전 게이트 측정틀 | done |
+| **구현** (승패 상태기계·briefing 오버레이·경계 가시화) | game-programmer | `sprite-2-5d.js`·`index.html`·`sprite-2-5d.css` | N1–N16 | done |
+| **게이트 측정** N1–N16 | game-qa | `qa/navigation-onboarding-gates.md` §구현 후 측정 [OBSERVED] | N1–N16 | done (N7/N14 휴먼·미정밀) |
+
+next-beat: 첫 플레이어가 켜자마자 이동·공격·승패·사수 지점을 읽지 않고 아는 빌드.
+스코프 경계: Tier 1만 구현(경계 가시화+교육). Tier 2 실물 코어 방어는 별도 사이클.
