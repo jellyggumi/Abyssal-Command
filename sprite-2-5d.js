@@ -30,7 +30,13 @@ const WARD_COST = 30;
 const WARD_COOLDOWN = 9;
 const WARD_DURATION = 3;
 const PICKUP_LIFETIME = 12;
-const PICKUP_MAGNET_RADIUS = 78;
+// Collection radius for field drops. Matched to PLAYER_ATTACK_RANGE (160) so a drop from an
+// enemy the player melee-kills lands inside its own collect zone — otherwise kills at up to
+// 160px drop items outside the 78px magnet and they pile up uncollected (felt like "no drops").
+// Still a WALK-TO radius, not a full-arena vacuum: ranged Nova kills (radius 250) drop beyond it
+// and must be walked to. The y-axis is iso-compressed by 1.42 at the check site, so the vertical
+// reach is ~113.
+const PICKUP_MAGNET_RADIUS = 160;
 const RELIC_SCORE = 250;
 const EMBER_SHARD_HEAL = 18;
 const OIL_FLASK_CHARGE = 35;
