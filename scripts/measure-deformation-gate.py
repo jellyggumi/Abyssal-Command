@@ -74,22 +74,26 @@ def reset_scene() -> None:
 
 
 def import_glb(path: Path) -> None:
-    """Import GLB file with deterministic options.
+    """Import GLB with the one option that actually determines the rest pose.
 
-    `guess_original_bind_pose=False` is the option that actually determines the
-    rest pose, and this function previously omitted it while calling itself
-    deterministic. Left at its default Blender rebuilds the armature rest from
-    the inverse bind matrices rather than the authored `node.rotation` chain, so
-    this gate measured a re-posed rig instead of the shipped one. Same rule as
-    `scripts/measure-joint-articulation.py:113-122`.
+    `guess_original_bind_pose=False`: left at its default Blender rebuilds the
+    armature rest from the inverse bind matrices rather than the authored
+    `node.rotation` chain, so this gate would measure a re-posed rig instead of
+    the shipped one. Same rule as `scripts/measure-joint-articulation.py:113-122`.
+
+    This call previously passed `import_materials`, `import_cameras` and
+    `import_lights` and called itself deterministic while omitting the flag that
+    determines rest. None of those three exist on `import_scene.gltf` in Blender
+    5.1.2 -- verified by reading `get_rna_type().properties` -- so the call
+    raised before importing anything and this gate cannot have run successfully
+    against this Blender. They are dropped rather than translated: the gate reads
+    geometry and bone transforms, so materials, cameras and lights were never
+    load-bearing here.
     """
     bpy.ops.import_scene.gltf(
         filepath=str(path),
         guess_original_bind_pose=False,
         bone_heuristic="BLENDER",
-        import_materials=False,
-        import_cameras=False,
-        import_lights=False,
     )
 
 

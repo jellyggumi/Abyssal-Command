@@ -18,33 +18,70 @@ renders of the **current** bytes contradicted the second half of that, so the ve
 | the REST pose is healthy in the current bytes | **holds** — `current-bytes/current-guard-rest.png` is a clean T-pose |
 | the shipped assets are therefore fine | **FALSE for the animated pose** (§1.1) |
 
-### 1.1 The animated pose is still broken, in the runtime, with current bytes
+### 1.1 Every actor shreds under animation, in the runtime, with current bytes
 
 Rendered through the runtime's own `GLTFLoader` under `mixer.update(1/60)` — no Blender
 involved, so the importer flag cannot be the cause:
 
-| actor | rig shape | rest | attack mid |
-|---|---|---|---|
-| `scout` | 1 mesh, multi-influence | intact | **intact** |
-| `guard` | 35 part-split meshes | intact | **shredded** |
-| `lantern-reaver` | 67 part-split meshes | intact | **shredded** |
+| actor | rest | attack mid |
+|---|---|---|
+| `scout` | intact | **shredded** |
+| `guard` | intact | **shredded** |
+| `lantern-reaver` | intact | **shredded** |
 
-Evidence: `current-bytes/current-{scout,guard,lantern-reaver}-{rest,attack-mid}.png`.
+Evidence: `current-bytes/reframed-{scout,guard,lantern-reaver}-{rest,attack-mid}.png`. Use the
+`reframed-` set, not the wider `current-` set — see §1.1b for why the wide framing misleads.
 
-The discriminator is rig shape, not the importer and not weight health. Rest is intact for all
-three because at rest every part sits where it was authored; under animation the part-split rigs
-come apart while the single-mesh rig deforms correctly.
+There is **no intact control among these three**. The failure is not specific to an actor, a rig
+shape, or a weight profile: rest is clean everywhere and the animated pose comes apart everywhere.
 
-This is **not** the single-influence regression the prior lane chased. Today's gate reports
-`guard inf1 31 (0.6%)` and `lantern-reaver inf1 1090 (19.4%)` with normalized sums (§4) — the
-weights are multi-influence. The parts still separate. So the cause lies in how the part-split
-rigs compose per-part skinning under animation, most plausibly a per-part
-`inverseBindMatrices`-versus-clip-rest mismatch, which is the same family as the importer bug but
-baked into the asset rather than introduced on import.
+It is also not the single-influence regression the prior lane chased. Today's gate reports
+`guard inf1 31 (0.6%)` and `lantern-reaver inf1 1090 (19.4%)` with normalized sums (§4), so the
+weights are multi-influence and the mesh comes apart regardless.
 
-The user's original report — that the rig's motion animation crumples the mesh — is therefore
-**correct**, and the timestamp evidence in §2 does not excuse it. §2 explains the five-day-old
-PNGs; it does not explain the renders taken today.
+The user's original report — that the rig's motion animation crumples the mesh — is **correct, and
+universal across the actors tested.** The timestamp evidence in §2 explains the five-day-old PNGs;
+it does not excuse this.
+
+### 1.1a Retracted: "rig shape is the discriminator" `[MEASURED — FALSE]`
+
+An earlier revision asserted `scout` was a single-mesh multi-influence rig while `guard` had 35
+part-split meshes and `lantern-reaver` 67, and concluded rig shape was the discriminator. **Both
+halves were wrong.** The counts came from `joint-repair-runtime-verification.md` §7, which
+described an older generation of bytes, and were committed without re-measurement.
+
+Measured from the GLB JSON chunks directly:
+
+| actor | mesh nodes | skins | skinned nodes | joints | clips | IBM basis-column norms | joints with non-identity rest |
+|---|---|---|---|---|---|---|---|
+| `scout` | 9 | 1 | 9 | 24 | 11 | 1.0000–1.0000 | 13 / 24 |
+| `guard` | 9 | 1 | 9 | 24 | 11 | 1.0000–1.0000 | 13 / 24 |
+| `lantern-reaver` | 9 | 1 | 9 | 24 | 11 | 1.0000–1.0000 | 13 / 24 |
+| `ember-cohort` | 9 | 1 | 9 | 24 | 11 | — | — |
+| `possessed` | 9 | 1 | 9 | 24 | 11 | — | — |
+
+All five are structurally identical. `scout` is 12510880 bytes, `lantern-reaver` 12510868 — a
+12-byte difference. There was never a rig-shape split to find, which is consistent with §1.1:
+the failure is universal, so nothing needed to discriminate it.
+
+No hypothesis about per-part `inverseBindMatrices` mismatch is asserted. A previous revision named
+one; it was inference dressed as a finding, and the structural measurement above removed its only
+support.
+
+### 1.1b Camera framing hid the failure on one actor `[OBSERVED]`
+
+Worth recording as a measurement hazard, because it produced a wrong committed claim.
+
+`current-scout-attack-mid.png` frames the figure small. At that distance scout's shards read as
+authored cloak tatters — the actor's rest pose genuinely has a ragged hem — and the render looks
+intact. `reframed-scout-attack-mid.png` frames the same pose closer and shows the torso split into
+floating fragments, the same failure as the other two.
+
+This is a fourth entry in the running list of ways to misjudge a rig, alongside the three in
+`joint-repair-runtime-verification.md` (sanitized bone names, `setTime` without `update`,
+`Box3.setFromObject` on a SkinnedMesh reading bind pose): **a wide camera on an actor with authored
+raggedness makes shredding look like art direction.** Judge deformation on tight framing, or better,
+on per-joint world displacement rather than by eye.
 
 ### 1.2 What must NOT be done about it
 
@@ -69,17 +106,25 @@ not applied to the rest-correction mechanism.
 So the images were taken 87 minutes before the assets they depict were replaced, and four days
 before the importer bug that produced them was fixed.
 
-## 3. Two things the images say on their own
+## 3. What the old images do and do not say
 
-Worth recording because both were misread as animation problems:
+Holds:
 
 - `lantern-reaver-attack-rest.png` is shredded **at rest**. A rest pose has no animation applied,
-  so the clips were never the cause. This alone points at bind/rest handling.
-- `lantern-reaver-attack-mid.png` and `-torso-reassigned.png` are visually indistinguishable. An
-  earlier "torso reassigned" repair attempt therefore changed nothing, which is consistent with
-  the fault living in the importer rather than in weights.
+  so for those old bytes the clips were not the cause. (Rest is intact in the current bytes — §1.1.)
+- `lantern-reaver-attack-mid.png` and `-torso-reassigned.png` are visually indistinguishable, so an
+  earlier "torso reassigned" repair attempt changed nothing.
 - `guard-attack-mid.png` is a different actor with the same failure, so it was never
   character-specific.
+
+**Retracted — "the legs and boots stay intact while the torso shreds"** `[MEASURED — FALSE]`.
+That was stated early in this investigation from the original PNGs and it is a camera-angle
+artifact. `current-bytes/reframed-guard-attack-mid-side.png` shows guard disintegrated completely,
+legs included; the front view hid it. There is no per-bone-group localisation to reason from, and
+any diagnosis that leaned on "the fault is confined to the upper body" is unsupported.
+
+Both retractions in this document (§1.1a and this one) came from believing a render at the framing
+it happened to be taken at. The lesson is recorded in §1.1b.
 
 ## 4. Current asset state `[OBSERVED]`
 
