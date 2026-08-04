@@ -7,6 +7,12 @@ const ARENA_X = 768;
 const ARENA_Y = 604;
 const ARENA_HALF_WIDTH = 520;
 const ARENA_HALF_HEIGHT = 270;
+const ARENA_RING = [
+  [ARENA_X, ARENA_Y - ARENA_HALF_HEIGHT],
+  [ARENA_X + ARENA_HALF_WIDTH, ARENA_Y],
+  [ARENA_X, ARENA_Y + ARENA_HALF_HEIGHT],
+  [ARENA_X - ARENA_HALF_WIDTH, ARENA_Y],
+];
 const FAR_DEPTH_SCALE = 0.62;
 const NEAR_DEPTH_SCALE = 1;
 const PLAYER_MAX_HEALTH = 100;
@@ -19,6 +25,11 @@ const ENEMY_BASE_HEALTH = 58;
 const ENEMY_ATTACK_RANGE = 76;
 const ENEMY_ATTACK_COOLDOWN = 1.22;
 const ENEMY_CAP = 20;
+const TARGET_WAVE = 10;
+const ENCIRCLE_RADIUS = 140;
+const ENCIRCLE_THRESHOLD = 3;
+const SPAWN_CUE_LEAD = 0.35;
+const BRIEFING_SKIP_KEY = "abyssal-lantern:cinder-court:skip-briefing";
 const LANTERN_MAX_CHARGE = 100;
 const LANTERN_REGEN_PER_SECOND = 7;
 const LANTERN_CHARGE_PER_KILL = 6;
@@ -102,6 +113,12 @@ const loreNode = document.querySelector("#sprite-2-5d-lore");
 const audioToggle = document.querySelector("#sprite-2-5d-audio-toggle");
 const novaCooldownNode = document.querySelector("#sprite-2-5d-skill-nova-cooldown");
 const wardCooldownNode = document.querySelector("#sprite-2-5d-skill-ward-cooldown");
+const gameOverEyebrow = document.querySelector("#sprite-2-5d-game-over-eyebrow");
+const gameOverTitle = document.querySelector("#game-over-title");
+const briefingPanel = document.querySelector("#sprite-2-5d-briefing");
+const briefingStart = document.querySelector("#sprite-2-5d-briefing-start");
+const briefingSkip = document.querySelector("#sprite-2-5d-briefing-skip");
+const helpButton = document.querySelector("#sprite-2-5d-help");
 
 const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -221,6 +238,8 @@ const state = {
   muted: false,
   continueTimerId: 0,
   continueRemaining: 0,
+  encircled: false,
+  spawnCue: null,
 };
 
 
@@ -286,6 +305,7 @@ const SPAWN_POINTS = [
 let attackQueued = false;
 let animationFrameId = 0;
 let loopRunning = false;
+let gameStarted = false;
 
 function setControlsEnabled(enabled) {
   for (let index = 0; index < controlButtons.length; index += 1) {
@@ -638,6 +658,9 @@ function castNova() {
       struck += 1;
     }
   }
+  triggerShake(SHAKE_NOVA);
+  triggerHitStop(HITSTOP_HEAVY_TICKS);
+  spawnSparks(player.x, player.y - 40, 26, 2.2, 240);
   playCue("nova");
   announce(`잿불 노바 작렬. 고리 안의 적 ${struck}기가 휩쓸렸다.`);
   return struck;
@@ -701,10 +724,11 @@ function updateSkills(deltaTime) {
 }
 
 // --- Run closure -------------------------------------------------------------
-function writeRunDigest(reason) {
+function writeRunDigest(reason, outcome = "defeat") {
   const digest = {
     route: "cinder-court",
     reason,
+    outcome,
     wave: state.wave,
     score: state.score,
     kills: state.kills,
@@ -743,14 +767,20 @@ function startContinueCountdown() {
   }, 1000);
 }
 
-function endRun(reason) {
+function endRun(reason, outcome = "defeat") {
   setMode("gameover");
   clearInput();
-  const digest = writeRunDigest(reason);
-  finalScoreNode.textContent = `점수 ${state.score.toLocaleString()} · 웨이브 ${state.wave}`;
+  const digest = writeRunDigest(reason, outcome);
+  const victory = outcome === "victory";
+  gameOverPanel.dataset.outcome = outcome;
+  gameOverEyebrow.textContent = victory ? "랜턴이 끝까지 타올랐다" : "랜턴이 꺼져간다";
+  gameOverTitle.textContent = victory ? "잿불 법정을 사수했다" : "법정이 함락되었다";
+  finalScoreNode.textContent = victory
+    ? `점수 ${state.score.toLocaleString()} · 웨이브 ${TARGET_WAVE} 완주`
+    : `점수 ${state.score.toLocaleString()} · 웨이브 ${state.wave}`;
   runSummaryNode.textContent = `유물 ${state.relics} · 처치 ${state.kills}`;
   gameOverPanel.hidden = false;
-  playCue("gameover");
+  playCue(victory ? "wave" : "gameover");
   startContinueCountdown();
   restartButton.focus({ preventScroll: true });
   return digest;
@@ -777,6 +807,7 @@ function startWave(waveNumber) {
 }
 
 function restartGame() {
+  gameStarted = true;
   cancelContinueCountdown();
   state.enemies.length = 0;
   state.pickups.length = 0;
@@ -788,6 +819,14 @@ function restartGame() {
   state.novaCooldown = 0;
   state.wardCooldown = 0;
   state.novaFlash = 0;
+  vfx.hitStopTicks = 0;
+  vfx.shakeTime = 0;
+  vfx.shakeAmp = 0;
+  vfx.shakeDur = 0;
+  vfx.particles.length = 0;
+  vfx.damageNumbers.length = 0;
+  state.encircled = false;
+  state.spawnCue = null;
   state.nextEnemyId = 1;
   state.nextPickupId = 1;
   state.accumulator = 0;
@@ -804,9 +843,63 @@ function restartGame() {
   setClip(player, "idle", true);
   clearInput();
   gameOverPanel.hidden = true;
+  gameOverPanel.removeAttribute("data-outcome");
   startWave(1);
   updateHud();
   startLoop();
+}
+
+let resumeMode = "running";
+
+function readSkipBriefing() {
+  try {
+    return window.localStorage.getItem(BRIEFING_SKIP_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function persistSkipBriefing(skip) {
+  try {
+    window.localStorage.setItem(BRIEFING_SKIP_KEY, skip ? "1" : "0");
+  } catch {
+    // A blocked storage quota must never stop the briefing from closing.
+  }
+}
+
+// A reload (F5 / Cmd-R / Cmd-Shift-R) always re-shows the briefing, even when the
+// "다시 보지 않기" skip flag is set: a refresh is an explicit "show me again" intent.
+// The platform cannot tell a hard refresh from a soft one -- both report navigation
+// type "reload" -- so every reload qualifies, while a fresh visit (typed URL, link,
+// bfcache restore) still honours the saved skip.
+function isReloadNavigation() {
+  try {
+    const entry = performance.getEntriesByType?.("navigation")?.[0];
+    if (entry && typeof entry.type === "string") {
+      return entry.type === "reload";
+    }
+    return performance.navigation?.type === 1;
+  } catch {
+    return false;
+  }
+}
+
+function showBriefing() {
+  setMode("briefing");
+  briefingPanel.hidden = false;
+  briefingSkip.checked = readSkipBriefing();
+  briefingStart.focus({ preventScroll: true });
+}
+
+function dismissBriefing() {
+  persistSkipBriefing(briefingSkip.checked);
+  briefingPanel.hidden = true;
+  if (!gameStarted) {
+    restartGame();
+  } else {
+    setMode(resumeMode === "wave-clear" ? "wave-clear" : "running");
+    startLoop();
+  }
 }
 
 
@@ -849,6 +942,15 @@ function damageEnemy(enemy, amount) {
   enemy.hitFlash = state.reducedMotion ? 0.04 : 0.13;
   state.hudDirty = true;
   playCue("hit");
+  const hitDepth = depthScaleForY(enemy.y);
+  const hitX = enemy.x;
+  const hitY = enemy.y - 70 * hitDepth;
+  const heavy = amount >= 90;
+  spawnSparks(hitX, hitY, heavy ? 12 : 8, 1, 120);
+  spawnDamageNumber(hitX, hitY - 30 * hitDepth, amount, heavy);
+  triggerHitStop(heavy ? HITSTOP_HEAVY_TICKS : HITSTOP_LIGHT_TICKS);
+  triggerShake(heavy ? SHAKE_HEAVY : SHAKE_LIGHT);
+  applyKnockback(enemy, heavy ? KNOCK_HEAVY : KNOCK_LIGHT);
 
   if (enemy.health === 0) {
     enemy.dead = true;
@@ -861,6 +963,9 @@ function damageEnemy(enemy, amount) {
     spawnPickup(enemy);
     state.hudDirty = true;
     playCue("kill");
+    spawnSparks(hitX, hitY, 16, 1.4, 170);
+    triggerShake(SHAKE_HEAVY);
+    triggerHitStop(HITSTOP_HEAVY_TICKS);
   }
 }
 
@@ -880,9 +985,11 @@ function damagePlayer(amount) {
   player.health = Math.max(0, player.health - amount);
   player.hitFlash = state.reducedMotion ? 0.04 : 0.16;
   state.hudDirty = true;
+  triggerShake(SHAKE_LIGHT);
+  spawnSparks(player.x, player.y - 74 * depthScaleForY(player.y), 6, 0.8, 90);
 
   if (player.health === 0) {
-    endRun("overrun");
+    endRun("overrun", "defeat");
     announce(`웨이브 ${state.wave}에서 잿불 법정이 함락됐다. 최종 점수 ${state.score}. R을 누르거나 재점화를 선택하라.`);
   } else if (player.health <= 30) {
     announce(`랜턴 내구도 위험: ${player.health}. 멈추지 마라.`);
@@ -1067,19 +1174,57 @@ function updateWave(deltaTime) {
 
   if (state.pendingSpawns > 0 && state.enemies.length < ENEMY_CAP) {
     state.spawnTimer -= deltaTime;
+    if (state.spawnTimer <= SPAWN_CUE_LEAD) {
+      const cuePoint = SPAWN_POINTS[(state.waveSeed + state.nextEnemyId * 3) % SPAWN_POINTS.length];
+      if (!state.spawnCue || state.spawnCue.x !== cuePoint[0] || state.spawnCue.y !== cuePoint[1]) {
+        state.spawnCue = { x: cuePoint[0], y: cuePoint[1], t: 0 };
+      } else {
+        state.spawnCue.t += deltaTime;
+      }
+    }
     if (state.spawnTimer <= 0) {
       spawnEnemy();
       state.pendingSpawns -= 1;
       state.spawnTimer = Math.max(0.28, 0.62 - state.wave * 0.018);
+      state.spawnCue = null;
       state.hudDirty = true;
     }
+  } else if (state.spawnCue) {
+    state.spawnCue = null;
   }
 
   if (state.pendingSpawns === 0 && state.livingEnemies === 0) {
+    if (state.wave >= TARGET_WAVE) {
+      endRun("cleared", "victory");
+      announce(`웨이브 ${TARGET_WAVE} 완주. 잿불 법정을 사수했다.`);
+      return;
+    }
     state.intermission = 2.15;
     setMode("wave-clear");
     state.hudDirty = true;
     announce(`웨이브 ${state.wave} 확보. 다음 군단이 모이고 있다.`);
+  }
+}
+
+function updateEncircle() {
+  let near = 0;
+  for (let index = 0; index < state.enemies.length; index += 1) {
+    const enemy = state.enemies[index];
+    if (enemy.dead) {
+      continue;
+    }
+    const deltaX = enemy.x - player.x;
+    const deltaY = (enemy.y - player.y) * 1.42;
+    if (deltaX * deltaX + deltaY * deltaY <= ENCIRCLE_RADIUS * ENCIRCLE_RADIUS) {
+      near += 1;
+    }
+  }
+  const encircled = near >= ENCIRCLE_THRESHOLD;
+  if (encircled !== state.encircled) {
+    state.encircled = encircled;
+    if (encircled) {
+      announce("포위됐다 — 뚫고 나가라.");
+    }
   }
 }
 
@@ -1093,6 +1238,7 @@ function fixedUpdate(deltaTime) {
     updateSkills(deltaTime);
     updatePickups(deltaTime);
     updateWave(deltaTime);
+    updateEncircle();
   }
 
   if (state.hudDirty) {
@@ -1202,6 +1348,213 @@ function drawShadow(actor, depthScale, anchor) {
   context.restore();
 }
 
+// --- VFX system (presentation-only; never touches simulation/digest) ----------
+const HITSTOP_LIGHT_TICKS = 2;
+const HITSTOP_HEAVY_TICKS = 5;
+const SHAKE_LIGHT = { amp: 3, dur: 0.12 };
+const SHAKE_HEAVY = { amp: 6, dur: 0.16 };
+const SHAKE_NOVA = { amp: 11, dur: 0.26 };
+const SHAKE_FREQ = 46;
+const MAX_PARTICLES = 96;
+const MAX_DAMAGE_NUMBERS = 24;
+const KNOCK_LIGHT = 9;
+const KNOCK_HEAVY = 16;
+const KNOCK_LAMBDA = 15;
+const SPARK_WARM = "#ff8a3c";
+const SPARK_HOT = "#fff0c0";
+
+const vfx = {
+  hitStopTicks: 0,
+  shakeTime: 0,
+  shakeDur: 0,
+  shakeAmp: 0,
+  shakeSeed: 0,
+  particles: [],
+  damageNumbers: [],
+};
+
+const flashCanvas = document.createElement("canvas");
+flashCanvas.width = 256;
+flashCanvas.height = 256;
+const flashCtx = flashCanvas.getContext("2d");
+flashCtx.imageSmoothingEnabled = false;
+
+function drawSilhouetteFlash(image, rect, spriteDest, color, alpha) {
+  if (flashCanvas.width !== rect.w || flashCanvas.height !== rect.h) {
+    flashCanvas.width = rect.w;
+    flashCanvas.height = rect.h;
+    flashCtx.imageSmoothingEnabled = false;
+  }
+  flashCtx.globalCompositeOperation = "source-over";
+  flashCtx.globalAlpha = 1;
+  flashCtx.clearRect(0, 0, rect.w, rect.h);
+  flashCtx.drawImage(image, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);
+  flashCtx.globalCompositeOperation = "source-atop";
+  flashCtx.fillStyle = color;
+  flashCtx.fillRect(0, 0, rect.w, rect.h);
+  flashCtx.globalCompositeOperation = "source-over";
+  context.globalAlpha = alpha;
+  // 5-arg blit: scales the whole offscreen buffer to the sprite destination.
+  // Intentionally not the 9-arg form so the render-probe actor-draw count is untouched.
+  context.drawImage(flashCanvas, spriteDest.x, spriteDest.y, spriteDest.width, spriteDest.height);
+  context.globalAlpha = 1;
+}
+
+function triggerHitStop(ticks) {
+  if (state.reducedMotion) {
+    return;
+  }
+  vfx.hitStopTicks = Math.max(vfx.hitStopTicks, ticks);
+}
+
+function triggerShake(profile) {
+  if (state.reducedMotion) {
+    return;
+  }
+  if (profile.amp * (profile.dur) >= vfx.shakeAmp * Math.max(0.0001, vfx.shakeTime)) {
+    vfx.shakeAmp = profile.amp;
+    vfx.shakeDur = profile.dur;
+    vfx.shakeTime = profile.dur;
+    vfx.shakeSeed = (vfx.shakeSeed + 1) % 1000;
+  }
+}
+
+function currentShake() {
+  if (vfx.shakeTime <= 0 || vfx.shakeDur <= 0) {
+    return { x: 0, y: 0 };
+  }
+  const decay = vfx.shakeTime / vfx.shakeDur;
+  const amp = vfx.shakeAmp * decay * decay;
+  const t = (vfx.shakeDur - vfx.shakeTime) * SHAKE_FREQ + vfx.shakeSeed;
+  return { x: Math.sin(t) * amp, y: Math.cos(t * 1.37) * amp };
+}
+
+function pushParticle(p) {
+  if (vfx.particles.length >= MAX_PARTICLES) {
+    vfx.particles.shift();
+  }
+  vfx.particles.push(p);
+}
+
+function spawnSparks(x, y, count, spread, speed) {
+  if (state.reducedMotion) {
+    return;
+  }
+  for (let i = 0; i < count; i += 1) {
+    const angle = Math.random() * Math.PI * 2;
+    const velocity = speed * (0.4 + Math.random() * 0.6);
+    pushParticle({
+      x,
+      y,
+      vx: Math.cos(angle) * velocity * spread,
+      vy: Math.sin(angle) * velocity * 0.7 - 30,
+      gravity: 210,
+      life: 0.28 + Math.random() * 0.24,
+      maxLife: 0.52,
+      size: 2 + Math.floor(Math.random() * 3),
+      color: Math.random() < 0.4 ? SPARK_HOT : SPARK_WARM,
+    });
+  }
+}
+
+function spawnDamageNumber(x, y, amount, heavy) {
+  if (vfx.damageNumbers.length >= MAX_DAMAGE_NUMBERS) {
+    vfx.damageNumbers.shift();
+  }
+  vfx.damageNumbers.push({
+    x: x + (state.reducedMotion ? 0 : (Math.random() - 0.5) * 18),
+    y,
+    vy: state.reducedMotion ? 0 : -70,
+    life: 0.7,
+    maxLife: 0.7,
+    text: String(amount),
+    heavy,
+  });
+}
+
+function applyKnockback(enemy, dist) {
+  if (state.reducedMotion) {
+    return;
+  }
+  const dx = enemy.x - player.x;
+  const dy = enemy.y - player.y;
+  const len = Math.hypot(dx, dy) || 1;
+  enemy.knockX = (dx / len) * dist;
+  enemy.knockY = (dy / len) * dist * 0.6;
+}
+
+function updatePresentation(dt) {
+  if (dt <= 0) {
+    return;
+  }
+  if (vfx.shakeTime > 0) {
+    vfx.shakeTime = Math.max(0, vfx.shakeTime - dt);
+  }
+  for (let i = vfx.particles.length - 1; i >= 0; i -= 1) {
+    const p = vfx.particles[i];
+    p.life -= dt;
+    if (p.life <= 0) {
+      vfx.particles.splice(i, 1);
+      continue;
+    }
+    p.vy += p.gravity * dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+  }
+  for (let i = vfx.damageNumbers.length - 1; i >= 0; i -= 1) {
+    const d = vfx.damageNumbers[i];
+    d.life -= dt;
+    if (d.life <= 0) {
+      vfx.damageNumbers.splice(i, 1);
+      continue;
+    }
+    d.y += d.vy * dt;
+  }
+  const lerp = Math.min(1, dt * KNOCK_LAMBDA);
+  for (let i = 0; i < state.enemies.length; i += 1) {
+    const e = state.enemies[i];
+    if (e.knockX) e.knockX += (0 - e.knockX) * lerp;
+    if (e.knockY) e.knockY += (0 - e.knockY) * lerp;
+  }
+}
+
+function drawParticles() {
+  if (vfx.particles.length === 0) {
+    return;
+  }
+  context.save();
+  context.globalCompositeOperation = "lighter";
+  for (let i = 0; i < vfx.particles.length; i += 1) {
+    const p = vfx.particles[i];
+    context.globalAlpha = Math.max(0, Math.min(1, p.life / p.maxLife));
+    context.fillStyle = p.color;
+    const s = p.size;
+    context.fillRect(Math.round(p.x - s / 2), Math.round(p.y - s / 2), s, s);
+  }
+  context.restore();
+}
+
+function drawDamageNumbers() {
+  if (vfx.damageNumbers.length === 0) {
+    return;
+  }
+  context.save();
+  context.textAlign = "center";
+  for (let i = 0; i < vfx.damageNumbers.length; i += 1) {
+    const d = vfx.damageNumbers[i];
+    const fade = Math.max(0, Math.min(1, d.life / d.maxLife));
+    context.globalAlpha = fade;
+    context.font = d.heavy ? "900 40px ui-monospace, monospace" : "800 30px ui-monospace, monospace";
+    context.lineWidth = 5;
+    context.strokeStyle = "rgba(4, 6, 10, 0.9)";
+    context.strokeText(d.text, d.x, d.y);
+    context.fillStyle = d.heavy ? "#ffd27a" : "#ffe9a8";
+    context.fillText(d.text, d.x, d.y);
+  }
+  context.restore();
+}
+
+
 function drawActor(actor) {
   const clip = actor.asset.manifest.animations[actor.clipName];
   const rect = clip.rects[actor.clipFrame];
@@ -1212,9 +1565,11 @@ function drawActor(actor) {
   const fadeAlpha = actor.dead ? Math.max(0, actor.fadeTime / (state.reducedMotion ? 0.08 : 0.34)) : 1;
 
   drawShadow(actor, depthScale, anchor);
+  const knockX = actor.knockX || 0;
+  const knockY = actor.knockY || 0;
   context.save();
   context.globalAlpha = fadeAlpha;
-  context.translate(anchor.x, anchor.y);
+  context.translate(anchor.x + knockX, anchor.y + knockY);
   context.scale(actor.facing, 1);
   context.drawImage(
     actor.asset.image,
@@ -1227,33 +1582,16 @@ function drawActor(actor) {
     spriteDest.width,
     spriteDest.height,
   );
-  context.restore();
-
-  const hitFlash = writeHitFlashGeometry(
-    actor,
-    depthScale,
-    anchor,
-    state.reducedMotion,
-    renderScratch.hitFlash,
-  );
-  if (hitFlash.visible) {
-    context.save();
-    context.globalAlpha = Math.min(0.8, actor.hitFlash * 6);
-    context.strokeStyle = actor.kind === "player" ? "#7ff6ff" : "#ff8a4c";
-    context.lineWidth = hitFlash.lineWidth;
-    context.beginPath();
-    context.ellipse(
-      hitFlash.centerX,
-      hitFlash.centerY,
-      hitFlash.radiusX,
-      hitFlash.radiusY,
-      0,
-      0,
-      Math.PI * 2,
+  if (actor.hitFlash > 0 && !state.reducedMotion) {
+    drawSilhouetteFlash(
+      actor.asset.image,
+      rect,
+      spriteDest,
+      actor.kind === "player" ? "#c8ffff" : "#ffffff",
+      Math.min(0.9, actor.hitFlash * 6.5),
     );
-    context.stroke();
-    context.restore();
   }
+  context.restore();
 
   if (actor.kind === "enemy") {
     const healthBar = writeHealthBarGeometry(actor, depthScale, anchor, renderScratch.healthBar);
@@ -1282,6 +1620,25 @@ function drawCombatFeedback() {
   );
   if (!attackArc.visible) {
     return;
+  }
+
+  if (!state.reducedMotion) {
+    context.save();
+    context.globalCompositeOperation = "lighter";
+    const dir = player.facing;
+    for (let layer = 0; layer < 5; layer += 1) {
+      const t = layer / 4;
+      context.globalAlpha = 0.10 + 0.5 * (1 - t);
+      context.strokeStyle = layer < 2 ? "#fff2c8" : "#ff9a3c";
+      context.lineWidth = 3 + 15 * (1 - t);
+      context.beginPath();
+      const spread = 0.22 * t;
+      const start = dir > 0 ? attackArc.startAngle - 0.2 + spread : attackArc.startAngle + 0.2 - spread;
+      const end = dir > 0 ? attackArc.endAngle - spread : attackArc.endAngle + spread;
+      context.arc(attackArc.centerX, attackArc.centerY, attackArc.radius - layer * 6, start, end, attackArc.anticlockwise);
+      context.stroke();
+    }
+    context.restore();
   }
 
   context.save();
@@ -1357,13 +1714,37 @@ function drawWardAura() {
   }
   const depthScale = depthScaleForY(player.y);
   const anchor = spriteAnchorForActor(player, renderScratch.anchor);
+  const cy = anchor.y - 74 * depthScale;
+  const rx = 62 * depthScale;
+  const ry = 96 * depthScale;
+  const pulse = state.reducedMotion ? 1 : 1 + Math.sin(player.wardTime * 12) * 0.06;
   context.save();
-  context.globalAlpha = Math.min(0.55, 0.2 + (player.wardTime / WARD_DURATION) * 0.4);
-  context.strokeStyle = "#9af4ef";
-  context.lineWidth = 4 * depthScale;
+  context.globalAlpha = Math.min(0.28, 0.1 + (player.wardTime / WARD_DURATION) * 0.22);
+  context.fillStyle = "#173f45";
   context.beginPath();
-  context.ellipse(anchor.x, anchor.y - 74 * depthScale, 62 * depthScale, 96 * depthScale, 0, 0, Math.PI * 2);
+  context.ellipse(anchor.x, cy, rx * pulse, ry * pulse, 0, 0, Math.PI * 2);
+  context.fill();
+  context.globalAlpha = Math.min(0.7, 0.3 + (player.wardTime / WARD_DURATION) * 0.4);
+  context.strokeStyle = "#9af4ef";
+  context.lineWidth = 3 * depthScale;
+  context.beginPath();
+  context.ellipse(anchor.x, cy, rx * pulse, ry * pulse, 0, 0, Math.PI * 2);
   context.stroke();
+  if (!state.reducedMotion) {
+    const spin = player.wardTime * 2.4;
+    context.strokeStyle = "#d8fffb";
+    context.lineWidth = 2 * depthScale;
+    context.globalAlpha = 0.5;
+    for (let i = 0; i < 8; i += 1) {
+      const a = spin + (i / 8) * Math.PI * 2;
+      const ox = Math.cos(a) * rx * pulse;
+      const oy = Math.sin(a) * ry * pulse;
+      context.beginPath();
+      context.moveTo(anchor.x + ox * 0.86, cy + oy * 0.86);
+      context.lineTo(anchor.x + ox, cy + oy);
+      context.stroke();
+    }
+  }
   context.restore();
 }
 
@@ -1371,23 +1752,50 @@ function drawNovaBurst() {
   if (state.novaFlash <= 0) {
     return;
   }
-  const progress = 1 - state.novaFlash / (state.reducedMotion ? 0.08 : 0.42);
+  const span = state.reducedMotion ? 0.08 : 0.42;
+  const progress = 1 - state.novaFlash / span;
   const anchor = spriteAnchorForActor(player, renderScratch.anchor);
+  const cx = anchor.x;
+  const cy = anchor.y - 40;
+  const scale = 0.35 + progress * 0.65;
+  const rx = NOVA_RADIUS * scale;
+  const ry = NOVA_RADIUS * 0.7 * scale;
   context.save();
-  context.globalAlpha = Math.max(0, 0.55 * (1 - progress));
-  context.strokeStyle = "#ffb161";
-  context.lineWidth = 10;
-  context.beginPath();
-  context.ellipse(
-    anchor.x,
-    anchor.y - 40,
-    NOVA_RADIUS * (0.35 + progress * 0.65),
-    NOVA_RADIUS * 0.7 * (0.35 + progress * 0.65),
-    0,
-    0,
-    Math.PI * 2,
-  );
-  context.stroke();
+  if (!state.reducedMotion) {
+    context.globalCompositeOperation = "lighter";
+    const fade = Math.max(0, 1 - progress);
+    const grad = context.createRadialGradient(cx, cy, 0, cx, cy, Math.max(1, rx));
+    grad.addColorStop(0, `rgba(255,255,255,${0.85 * fade})`);
+    grad.addColorStop(0.25, `rgba(255,210,130,${0.5 * fade})`);
+    grad.addColorStop(0.7, `rgba(255,130,50,${0.2 * fade})`);
+    grad.addColorStop(1, "rgba(255,90,40,0)");
+    context.fillStyle = grad;
+    context.beginPath();
+    context.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    context.fill();
+    const embers = 24;
+    for (let i = 0; i < embers; i += 1) {
+      const a = (i / embers) * Math.PI * 2;
+      const dist = scale * (0.55 + (i % 5) * 0.09);
+      const px = cx + Math.cos(a) * NOVA_RADIUS * dist;
+      const py = cy + Math.sin(a) * NOVA_RADIUS * 0.7 * dist;
+      context.globalAlpha = Math.max(0, (0.8 - (i % 5) * 0.12) * fade);
+      context.fillStyle = i % 3 === 0 ? "#fff0c0" : "#ff8a3c";
+      const r = 2 + (i % 3);
+      context.fillRect(Math.round(px - r), Math.round(py - r), r * 2, r * 2);
+    }
+    context.globalCompositeOperation = "source-over";
+  }
+  const rings = [[0.62, 0.9, 12, "#fff2cc"], [0.82, 0.55, 9, "#ffb161"], [1.0, 0.32, 6, "#ff7a3c"]];
+  for (let i = 0; i < rings.length; i += 1) {
+    const ring = rings[i];
+    context.globalAlpha = Math.max(0, ring[1] * (1 - progress));
+    context.strokeStyle = ring[3];
+    context.lineWidth = ring[2];
+    context.beginPath();
+    context.ellipse(cx, cy, rx * ring[0], ry * ring[0], 0, 0, Math.PI * 2);
+    context.stroke();
+  }
   context.restore();
 }
 
@@ -1468,6 +1876,73 @@ Object.defineProperty(window, "__SPRITE_2_5D_TEST__", {
 });
 
 
+function drawArenaBoundary() {
+  const tracePath = () => {
+    context.beginPath();
+    context.moveTo(ARENA_RING[0][0], ARENA_RING[0][1]);
+    for (let index = 1; index < ARENA_RING.length; index += 1) {
+      context.lineTo(ARENA_RING[index][0], ARENA_RING[index][1]);
+    }
+    context.closePath();
+  };
+  context.save();
+  // Soft glow underlay so the wall reads against the busy diorama backdrop.
+  context.strokeStyle = "rgba(88, 227, 242, 0.28)";
+  context.lineWidth = 7;
+  context.shadowColor = "rgba(88, 227, 242, 0.55)";
+  context.shadowBlur = state.reducedMotion ? 0 : 14;
+  tracePath();
+  context.stroke();
+  // Crisp dashed edge on top marks the exact limit the movement clamp enforces.
+  context.shadowBlur = 0;
+  context.strokeStyle = "rgba(178, 245, 249, 0.85)";
+  context.lineWidth = 2;
+  context.setLineDash([16, 12]);
+  tracePath();
+  context.stroke();
+  context.restore();
+}
+
+function drawSpawnCue() {
+  const cue = state.spawnCue;
+  if (!cue) {
+    return;
+  }
+  const pulse = state.reducedMotion ? 0.62 : 0.35 + Math.abs(Math.sin(cue.t * 8)) * 0.55;
+  const dirX = ARENA_X - cue.x;
+  const dirY = ARENA_Y - cue.y;
+  const length = Math.hypot(dirX, dirY) || 1;
+  const angle = Math.atan2(dirY / length, dirX / length);
+  context.save();
+  context.translate(cue.x, cue.y);
+  context.rotate(angle);
+  context.globalAlpha = pulse;
+  context.fillStyle = "#ff7a52";
+  context.beginPath();
+  context.moveTo(24, 0);
+  context.lineTo(-10, -14);
+  context.lineTo(-10, 14);
+  context.closePath();
+  context.fill();
+  context.restore();
+}
+
+function drawEncircleVignette() {
+  if (!state.encircled || state.mode !== "running") {
+    return;
+  }
+  const gradient = context.createRadialGradient(
+    ARENA_X, ARENA_Y, ARENA_HALF_WIDTH * 0.55,
+    ARENA_X, ARENA_Y, ARENA_HALF_WIDTH * 1.15,
+  );
+  gradient.addColorStop(0, "rgba(182, 32, 24, 0)");
+  gradient.addColorStop(1, "rgba(182, 32, 24, 0.42)");
+  context.save();
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+  context.restore();
+}
+
 function render() {
   if (!assets.backdrop) {
     context.fillStyle = "#070b11";
@@ -1479,6 +1954,10 @@ function render() {
   context.drawImage(assets.backdrop, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
   context.fillStyle = "rgba(2, 7, 12, 0.06)";
   context.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+
+  context.save();
+  const shake = currentShake();
+  context.translate(shake.x, shake.y);
 
   const playerDepthScale = depthScaleForY(player.y);
   const playerAnchor = spriteAnchorForActor(player, renderScratch.anchor);
@@ -1503,6 +1982,8 @@ function render() {
   context.stroke();
   context.restore();
 
+  drawArenaBoundary();
+  drawSpawnCue();
   drawPickups();
 
 
@@ -1520,7 +2001,12 @@ function render() {
   drawCombatFeedback();
   drawWardAura();
   drawNovaBurst();
+  drawParticles();
+  drawDamageNumbers();
+  context.restore();
+
   drawWaveMarker();
+  drawEncircleVignette();
 
 }
 
@@ -1530,7 +2016,7 @@ function updateHud() {
   healthFill.style.width = `${healthRatio * 100}%`;
   healthMeter.classList.toggle("is-critical", healthRatio <= 0.3);
   healthMeter.setAttribute("aria-valuenow", String(player.health));
-  waveValue.textContent = String(state.wave);
+  waveValue.textContent = `${state.wave} / ${TARGET_WAVE}`;
   scoreValue.textContent = state.score.toLocaleString();
   enemiesValue.textContent = String(state.livingEnemies + state.pendingSpawns);
   canvas.dataset.wave = String(state.wave);
@@ -1590,6 +2076,12 @@ function frame(timestamp) {
 
   let steps = 0;
   while (state.accumulator >= FIXED_STEP && steps < MAX_CATCH_UP_STEPS) {
+    if (vfx.hitStopTicks > 0) {
+      vfx.hitStopTicks -= 1;
+      state.accumulator -= FIXED_STEP;
+      steps += 1;
+      continue;
+    }
     fixedUpdate(FIXED_STEP);
     state.accumulator -= FIXED_STEP;
     steps += 1;
@@ -1598,6 +2090,7 @@ function frame(timestamp) {
     state.accumulator = 0;
   }
 
+  updatePresentation(elapsed);
   render();
   if (loopRunning && isActiveMode() && !document.hidden) {
     animationFrameId = requestAnimationFrame(frame);
@@ -1615,6 +2108,14 @@ function controlNameForCode(code) {
 }
 
 function handleKeyDown(event) {
+  if (state.mode === "briefing") {
+    if (event.code === "Space" || event.code === "Enter" || event.code === "Escape") {
+      event.preventDefault();
+      dismissBriefing();
+    }
+    return;
+  }
+
   const controlName = controlNameForCode(event.code);
   if (controlName) {
     if (state.mode === "running" || state.mode === "wave-clear") {
@@ -1733,6 +2234,14 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 restartButton.addEventListener("click", restartGame);
+briefingStart.addEventListener("click", dismissBriefing);
+helpButton.addEventListener("click", () => {
+  if (state.mode === "running" || state.mode === "wave-clear") {
+    resumeMode = state.mode;
+    stopLoop();
+    showBriefing();
+  }
+});
 reducedMotionQuery.addEventListener("change", (event) => {
   state.reducedMotion = event.matches;
 });
@@ -1745,7 +2254,11 @@ async function boot() {
     await loadAssets();
     player.asset = assets.warden;
     loadingPanel.hidden = true;
-    restartGame();
+    if (readSkipBriefing() && !isReloadNavigation()) {
+      restartGame();
+    } else {
+      showBriefing();
+    }
   } catch (error) {
     setMode("error");
     loadingPanel.classList.add("is-error");

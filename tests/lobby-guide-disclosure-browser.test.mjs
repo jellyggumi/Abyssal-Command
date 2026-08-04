@@ -334,6 +334,13 @@ test("battle controls, companion, extraction, and skill guides are labelled, dis
       const text = normalized(await section.textContent() ?? "");
       for (const phrase of contract.required) assert.match(text, phrase, `${contract.id} guide must explain ${phrase}`);
     }
+    // The guide must state how the run is won and lost, not only how it is controlled.
+    assert.match(guideText, /승리/, "guide must state the victory condition");
+    assert.match(guideText, /(?:보스).{0,20}(?:처치|쓰러)|(?:처치|쓰러).{0,20}(?:보스)/, "victory condition must reference defeating the boss");
+    assert.match(guideText, /(?:정예).{0,12}추출|추출.{0,12}(?:정예|완료)/, "victory condition must reference completing elite extraction");
+    assert.match(guideText, /패배|함락|꺼진다/, "guide must state the defeat condition");
+    assert.match(guideText, /(?:관문|등불).{0,20}(?:0|내구)|내구.{0,12}0/, "defeat condition must reference the gate/lantern integrity reaching zero");
+    assert.match(guideText, /(?:지휘관).{0,20}(?:쓰러|0|내구)/, "defeat condition must reference the commander falling");
 
     const close = dialog.locator('[data-guide-close]');
     assert.equal(await close.evaluate((node) => node.matches("button")), true, "guide close action must be a native keyboard button");
@@ -438,5 +445,56 @@ test("guide controls remain touch operable without horizontal overflow in portra
     } finally {
       await context.close();
     }
+  }
+});
+
+test("field-manual guide auto-shows for a real visitor, honours the skip opt-out on a fresh visit, and re-shows on reload", async () => {
+  const viewport = VIEWPORTS[0];
+  const context = await browser.newContext({
+    baseURL,
+    viewport: { width: viewport.width, height: viewport.height },
+  });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
+  page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
+  // Real visitors are not automation: override navigator.webdriver so the auto-show gate opens.
+  // The other guide tests keep webdriver=true (raw Playwright default) and so keep the
+  // hidden-by-default baseline the sortie/lobby contracts depend on.
+  await page.addInitScript(({ campaign, now, storageKey }) => {
+    Object.defineProperty(navigator, "webdriver", { configurable: true, get: () => false });
+    Object.defineProperty(window, "indexedDB", { configurable: true, value: undefined });
+    Date.now = () => now;
+    localStorage.setItem(storageKey, campaign);
+  }, { campaign: unlockedCampaign, now: NOW, storageKey: STORAGE_KEY });
+  try {
+    // First visit: the guide opens itself.
+    await page.goto("/campaign.html", { waitUntil: "networkidle" });
+    const dialog = page.getByRole("dialog", { name: /가이드|도움|안내/i });
+    await dialog.waitFor({ state: "visible" });
+    assert.equal(await page.evaluate(() => document.querySelector("#defense-battle-surface")?.dataset.defenseStarted), "false", "auto-show must not start a run");
+    assert.equal(await dialog.locator("[data-guide-skip]").count(), 1, "the auto-shown guide must expose a skip opt-out");
+
+    // Opt out, then close.
+    await dialog.locator("[data-guide-skip]").check();
+    await page.keyboard.press("Escape");
+    await dialog.waitFor({ state: "hidden" });
+    assert.equal(await page.evaluate(() => localStorage.getItem("abyssal-lantern:campaign:skip-guide")), "1", "checking the box must persist the skip opt-out");
+
+    // Fresh visit with the opt-out set: the guide stays closed.
+    await page.goto("/campaign.html", { waitUntil: "networkidle" });
+    await page.locator('#defense-battle-surface[data-defense-ready="true"]').waitFor();
+    assert.equal(await page.evaluate(() => performance.getEntriesByType("navigation")[0]?.type), "navigate", "the second visit must be a fresh navigation");
+    await page.waitForTimeout(400);
+    assert.equal(await page.evaluate(() => document.querySelector("#lobby-guide-dialog")?.open ?? false), false, "the skip opt-out must suppress auto-show on a fresh visit");
+
+    // Reload: an explicit refresh re-shows the guide even with the opt-out set.
+    await page.reload({ waitUntil: "networkidle" });
+    assert.equal(await page.evaluate(() => performance.getEntriesByType("navigation")[0]?.type), "reload", "the third visit must be a reload");
+    await dialog.waitFor({ state: "visible" });
+    assert.equal(await page.evaluate(() => localStorage.getItem("abyssal-lantern:campaign:skip-guide")), "1", "re-showing on reload must not clear the persisted opt-out");
+    assert.deepEqual(errors, [], "guide auto-show flow emitted browser errors");
+  } finally {
+    await context.close();
   }
 });

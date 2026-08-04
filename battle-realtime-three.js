@@ -507,7 +507,7 @@ const VFX_LIFETIME_TICKS = Object.freeze({
   // Previously fell through to the implicit 30-tick default. Named here so a
   // skill without a per-skill entry below has a documented duration rather
   // than an accidental one.
-  SKILL_CAST: 30,
+  SKILL_CAST: 48,
   TERMINAL: 90,
   // Cycle-10 defaults (vfx-drop-spawn-terrain-spec.md §8). Every value is a positive
   // integer tick count; ENEMY_SPAWNED and GIMMICK_ARMED prefer event.telegraphTicks at
@@ -1138,6 +1138,27 @@ const IMPACT_SHAKE_AMPLITUDE = 0.07;
 const IMPACT_SHAKE_BOSS_AMPLITUDE = 0.13;
 const IMPACT_SHAKE_MAX_AMPLITUDE = 0.13;
 const IMPACT_SHAKE_FREQUENCY = 38;
+// --- Contact spark burst (presentation-only, pooled THREE.Points) ----------
+// World-unit tuning: actors are fitted around 1.7u tall, so sparks are small,
+// short-lived embers thrown from the contact point. Capacity bounds the whole
+// pool; per-burst counts and speed scale with hit weight in spawnImpactSparks.
+const IMPACT_SPARK_CAPACITY = 192;
+const IMPACT_SPARK_SIZE = 0.34;
+const IMPACT_SPARK_SPEED = 3.4;
+const IMPACT_SPARK_LIFE_MS = 360;
+const IMPACT_SPARK_GRAVITY = -5.5;
+// Skill cast signature (presentation-only). Element -> spark/ring colour so each
+// cast reads as a distinct player action, tinted by the skill's authored element
+// (defense-catalog SKILLS[].element). Ring shows even under reduced motion.
+const SKILL_ELEMENT_COLORS = Object.freeze({
+  void: [0.63, 0.42, 1.0],   // #a06bff
+  veil: [0.83, 0.74, 1.0],   // #d4bcff
+  ember: [1.0, 0.64, 0.23],  // #ffa43a
+  frost: [0.42, 0.83, 1.0],  // #6bd4ff
+  default: [0.62, 0.91, 1.0],
+});
+const CAST_FLASH_RING_RADIUS = 2.4;
+const CAST_FLASH_RING_MS = 420;
 // Each entry maps an emitted contact event to its presentation participants.
 // Windup/fire events are deliberately absent: they are not authoritative hits.
 const IMPACT_FEEDBACK_SOURCES = Object.freeze({
@@ -3501,6 +3522,8 @@ export class RealtimeBattle {
     this.cameraShakeOffset = new THREE.Vector3();
     this.rendererSize = new THREE.Vector2();
     this.impactShakeSeed = 0;
+    // Contact spark cloud (presentation-only, lazily built on first hit).
+    this.impactSparks = null; // { points, geometry, material, positions, colors, particles }
     // Area combat presentation (광역). Rings are procedural ground decals pooled
     // in one array; `areaFieldRings` indexes the persistent ones by simulation
     // field id so a field is drawn exactly once for its authored lifetime.
@@ -5252,6 +5275,7 @@ export class RealtimeBattle {
     this.arrivalEntries.clear();
     this.clearCameraShakeOffset();
     this.cameraShake = null;
+    this.clearImpactSparks();
     // Area presentation is transient by contract: a reset leaves no ring and no
     // half-played entrance behind.
     this.clearAreaRings();
@@ -5755,6 +5779,9 @@ export class RealtimeBattle {
           this.registerAoeCameraImpulse(record.aoeBurst.density, performance.now());
         }
       }
+      const element = SKILLS[semanticVfxId]?.element;
+      const castColor = SKILL_ELEMENT_COLORS[element] ?? SKILL_ELEMENT_COLORS.default;
+      this.spawnCastFlash(p.x, p.y + 0.6, p.z, castColor, performance.now(), CAST_FLASH_RING_RADIUS);
     }
     const loadRequest = instantiateVfxModel(
       relPath,
@@ -6267,6 +6294,16 @@ export class RealtimeBattle {
     });
     if (this.reducedMotion) return;
 
+    const sparkKind = critical ? "critical" : (heavy || bossContact) ? "heavy" : "normal";
+    const contactHeight = (targetRecord.targetHeight ?? 1.7) * 0.5;
+    this.spawnImpactSparks(
+      targetRecord.root.position.x,
+      targetRecord.root.position.y + contactHeight,
+      targetRecord.root.position.z,
+      sparkKind,
+      startMs,
+    );
+
     let dx = 0;
     let dz = 0;
     if (attacker?.root) {
@@ -6488,6 +6525,136 @@ export class RealtimeBattle {
     this.camera.position.add(this.cameraShakeOffset);
   }
 
+  // --- Contact spark burst (create-game-vfx: a hit throws debris) -----------
+  // Pure presentation: a pooled THREE.Points cloud advanced on wall-clock time,
+  // spawned at the struck body's contact point. Never read back into the
+  // snapshot, so getRunDigest() is untouched (same contract as hitFlashes).
+  // Capacity-bounded, additive, and downgraded under software render / reduced
+  // motion exactly like every other impulse in this class.
+  ensureImpactSparks() {
+    if (this.impactSparks || !this.vfxGroup || this.disposed) return this.impactSparks ?? null;
+    const cap = IMPACT_SPARK_CAPACITY;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(cap * 3);
+    const colors = new Float32Array(cap * 3);
+    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    geometry.setDrawRange(0, 0);
+    const material = new THREE.PointsMaterial({
+      size: IMPACT_SPARK_SIZE,
+      sizeAttenuation: true,
+      vertexColors: true,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const points = new THREE.Points(geometry, material);
+    points.frustumCulled = false;
+    points.renderOrder = 8;
+    this.vfxGroup.add(points);
+    this.impactSparks = { points, geometry, material, positions, colors, particles: [] };
+    return this.impactSparks;
+  }
+
+  spawnImpactSparks(x, y, z, kind, startMs, opts = {}) {
+    if (this.reducedMotion) return;
+    const pool = this.ensureImpactSparks();
+    if (!pool) return;
+    const countScale = opts.countScale ?? 1;
+    let count = Math.round((kind === "critical" ? 14 : kind === "heavy" ? 9 : kind === "cast" ? 10 : 5) * countScale);
+    if (this.softwareRenderer) count = Math.max(2, Math.ceil(count / 2));
+    const [cr, cg, cb] = opts.colorOverride
+      ? opts.colorOverride
+      : kind === "critical" ? [1.0, 0.84, 0.42]
+      : kind === "heavy" ? [1.0, 0.64, 0.23]
+      : [0.62, 0.91, 1.0];
+    const particles = pool.particles;
+    const overflow = particles.length + count - IMPACT_SPARK_CAPACITY;
+    if (overflow > 0) particles.splice(0, overflow);
+    const speedScale = kind === "critical" ? 1.35 : kind === "heavy" ? 1.15 : kind === "cast" ? 1.25 : 1;
+    for (let i = 0; i < count; i += 1) {
+      const theta = Math.random() * Math.PI * 2;
+      const upBias = 0.35 + Math.random() * 0.65;
+      const horiz = Math.sqrt(Math.max(0, 1 - upBias * upBias));
+      const speed = IMPACT_SPARK_SPEED * (0.5 + Math.random() * 0.9) * speedScale;
+      particles.push({
+        x0: x, y0: y, z0: z,
+        vx: Math.cos(theta) * horiz * speed,
+        vy: upBias * speed,
+        vz: Math.sin(theta) * horiz * speed,
+        bornMs: startMs,
+        lifeMs: IMPACT_SPARK_LIFE_MS * (0.7 + Math.random() * 0.6),
+        r: cr, g: cg, b: cb,
+      });
+    }
+  }
+
+  applyImpactSparks(nowMs) {
+    const pool = this.impactSparks;
+    if (!pool) return;
+    const particles = pool.particles;
+    if (particles.length === 0) {
+      if (pool.geometry.drawRange.count !== 0) pool.geometry.setDrawRange(0, 0);
+      return;
+    }
+    const positions = pool.positions;
+    const colors = pool.colors;
+    let live = 0;
+    for (let i = 0; i < particles.length; i += 1) {
+      const p = particles[i];
+      const age = nowMs - p.bornMs;
+      if (age >= p.lifeMs) continue;
+      const t = Math.max(0, age) / 1000;
+      const fade = age <= 0 ? 1 : Math.max(0, 1 - age / p.lifeMs);
+      const base = live * 3;
+      positions[base] = p.x0 + p.vx * t;
+      positions[base + 1] = p.y0 + p.vy * t + IMPACT_SPARK_GRAVITY * t * t;
+      positions[base + 2] = p.z0 + p.vz * t;
+      colors[base] = p.r * fade;
+      colors[base + 1] = p.g * fade;
+      colors[base + 2] = p.b * fade;
+      if (live !== i) particles[live] = p;
+      live += 1;
+    }
+    particles.length = live;
+    pool.geometry.setDrawRange(0, live);
+    pool.geometry.attributes.position.needsUpdate = true;
+    pool.geometry.attributes.color.needsUpdate = true;
+  }
+
+  clearImpactSparks() {
+    const pool = this.impactSparks;
+    if (!pool) return;
+    pool.particles.length = 0;
+    pool.geometry.setDrawRange(0, 0);
+  }
+
+  disposeImpactSparks() {
+    const pool = this.impactSparks;
+    if (!pool) return;
+    this.vfxGroup?.remove(pool.points);
+    pool.geometry.dispose();
+    pool.material.dispose();
+    this.impactSparks = null;
+  }
+
+  // Element-coloured cast signature: an expanding ring + an origin spark burst at
+  // the commander, so a skill cast reads as a distinct player action instead of
+  // ambient stage VFX. Presentation-only; nothing here reaches getRunDigest().
+  spawnCastFlash(x, y, z, color, startMs, worldRadius) {
+    const [r, g, b] = color;
+    const hex = (Math.round(r * 255) << 16) | (Math.round(g * 255) << 8) | Math.round(b * 255);
+    this.spawnAreaRing({
+      x, z,
+      radius: worldRadius,
+      color: hex,
+      mode: "impact",
+      startMs,
+      untilMs: startMs + CAST_FLASH_RING_MS,
+    });
+    this.spawnImpactSparks(x, y, z, "cast", startMs, { colorOverride: color, countScale: 1.6 });
+  }
+
   updateImpactFeedback(nowMs) {
     try {
       this.applyHitFlashes(nowMs);
@@ -6496,10 +6663,12 @@ export class RealtimeBattle {
         this.knockbacks.clear();
         this.arrivalEntries.clear();
         this.cameraShake = null;
+        this.clearImpactSparks();
         return;
       }
       this.applyKnockbacks(nowMs);
       this.applyCameraShake(nowMs);
+      this.applyImpactSparks(nowMs);
     } catch {
       // Impact feel is cosmetic; never let it break the render loop.
       this.hitFlashes.clear();
@@ -6507,6 +6676,7 @@ export class RealtimeBattle {
       this.arrivalEntries.clear();
       this.cameraShake = null;
       this.clearAreaRings();
+      this.clearImpactSparks();
       this.bossIntro = null;
     }
   }
@@ -6737,6 +6907,7 @@ export class RealtimeBattle {
     this.clearAreaRings();
     this.areaRingGeometry?.dispose();
     this.areaRingGeometry = null;
+    this.disposeImpactSparks();
     this.bossIntro = null;
     for (const record of this.vfxInstances) {
       record.mixer?.stopAllAction();

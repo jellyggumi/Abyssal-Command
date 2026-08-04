@@ -82,6 +82,13 @@ const telemetry = new DefenseTelemetry();
 const thumbnailService = new MeshThumbnailService();
 
 const STEP_MS = 1000 / TICK_RATE;
+// Selective hit-stop (swarm-safe): a short freeze on critical/boss contact only.
+// ~5 frames of weight, then a cooldown so a dense wave cannot chain freezes.
+const HITSTOP_MS = 75;
+const HITSTOP_COOLDOWN_MS = 140;
+const HITSTOP_CONTACT_TYPES = new Set([
+  "MELEE_IMPACT", "SKILL_RESOLVED_DAMAGE", "PROJECTILE_IMPACT", "ENEMY_ATTACK",
+]);
 const CINDER_STARTER_SKILL_ID = stageStoryFor("cinder-span")?.extractionReward?.skillId ?? null;
 const CAMERA_ORBIT_YAW_SENSITIVITY = 0.00372; // rad per logical px; full landscape width ~= 180deg
 const CAMERA_ORBIT_PITCH_SENSITIVITY = 0.00246; // rad per logical px; drag up = look down (steeper pitch)
@@ -255,6 +262,46 @@ const LOBBY_STRATEGY_CUSTOM = "CUSTOM";
 
 let campaign = null;
 let selectedStageId = STAGES[0].id;
+// Field-manual auto-surface (parity with the sprite arena's start briefing): a first-time
+// visitor gets the 조작·전투 가이드 opened for them once per page load, unless they opted out
+// via "다시 보지 않기". A reload always re-shows it (an explicit "show me again"), and raw
+// automation (navigator.webdriver) never triggers it so the lobby/sortie contract tests keep
+// their zero-interaction, guide-hidden-by-default baseline.
+const GUIDE_SKIP_KEY = "abyssal-lantern:campaign:skip-guide";
+let guideDismissedThisLoad = false;
+function readSkipGuide() {
+  try {
+    return globalThis.localStorage?.getItem(GUIDE_SKIP_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+function persistSkipGuide(skip) {
+  try {
+    globalThis.localStorage?.setItem(GUIDE_SKIP_KEY, skip ? "1" : "0");
+  } catch {
+    // A blocked storage quota must never stop the guide from closing.
+  }
+}
+function isReloadNavigation() {
+  try {
+    const entry = performance.getEntriesByType?.("navigation")?.[0];
+    if (entry && typeof entry.type === "string") return entry.type === "reload";
+    return performance.navigation?.type === 1;
+  } catch {
+    return false;
+  }
+}
+function automationLike() {
+  return Boolean(globalThis.navigator?.webdriver);
+}
+/** True when the lobby should auto-open the field-manual guide this render. */
+function shouldAutoShowGuide() {
+  if (automationLike()) return false;
+  if (session?.started) return false;
+  if (guideDismissedThisLoad) return false;
+  return isReloadNavigation() || !readSkipGuide();
+}
 let selectedAbyssDepth = 0; // Abyss Depth (wiki 2026-07-30 GAP-A): run-scoped difficulty ladder, NOT persisted; clamped to cleared-stage count each build.
 /** Max Abyss Depth unlocked = cleared-stage count, capped at ABYSS_DEPTH_MAX (clear-to-unlock, GAP-A). depth 0 always available. */
 function maxUnlockedAbyssDepth() { return campaign ? Math.min(ABYSS_DEPTH_MAX, campaign.resolvedIds?.length ?? 0) : 0; }
@@ -1430,7 +1477,11 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
     <div class="lobby-guide-launch"><button type="button" data-guide-open aria-label="전투 작전 가이드 열기" aria-haspopup="dialog" aria-controls="lobby-guide-dialog"><span class="guide-launch-mark" aria-hidden="true">?</span><span>조작·전투 가이드</span></button></div>
     <dialog id="lobby-guide-dialog" class="lobby-guide-dialog" aria-labelledby="lobby-guide-title">
       <div class="lobby-guide-shell">
-        <div class="panel-heading"><div><p class="eyebrow">ABYSSAL LANTERN · FIELD MANUAL</p><h2 id="lobby-guide-title">전투 작전 가이드</h2></div><button type="button" data-guide-close aria-label="전투 작전 가이드 닫기">닫기</button></div>
+        <div class="panel-heading"><div><p class="eyebrow">ABYSSAL LANTERN · FIELD MANUAL</p><h2 id="lobby-guide-title">전투 작전 가이드</h2></div><div class="lobby-guide-head-actions"><label class="lobby-guide-skip"><input type="checkbox" data-guide-skip /> 다시 보지 않기</label><button type="button" data-guide-close aria-label="전투 작전 가이드 닫기">닫기</button></div></div>
+        <div class="lobby-guide-objective" role="group" aria-label="승리와 패배 조건">
+          <p class="lobby-guide-win"><b>승리</b> · 보스를 처치하고 정예 추출을 완료하면 스테이지를 봉쇄한다.</p>
+          <p class="lobby-guide-lose"><b>패배</b> · 관문(등불) 내구도가 0이 되거나, 지휘관이 쓰러지거나, 정예 추출에 실패하면 등불이 꺼진다.</p>
+        </div>
 
         <div class="modality-selectors" role="tablist" aria-label="기기별 조작법">
           <button type="button" id="modality-tab-keyboard" role="tab" class="modality-tab" aria-selected="${activeModality === "keyboard"}" aria-controls="modality-panel-keyboard" tabindex="${activeModality === "keyboard" ? "0" : "-1"}" data-modality-select="keyboard">키보드</button>
@@ -1571,12 +1622,22 @@ function renderCommandDeckRight() {
   });
   const guideDialog = deck.querySelector("#lobby-guide-dialog");
   const guideTrigger = deck.querySelector("[data-guide-open]");
+  const guideSkip = guideDialog?.querySelector("[data-guide-skip]");
+  if (guideSkip) guideSkip.checked = readSkipGuide();
   guideTrigger?.addEventListener("click", () => {
     if (!guideDialog?.open) guideDialog?.showModal();
     guideDialog?.querySelector("[data-guide-close]")?.focus();
   });
   guideDialog?.querySelector("[data-guide-close]")?.addEventListener("click", () => guideDialog.close());
-  guideDialog?.addEventListener("close", () => guideTrigger?.focus());
+  guideDialog?.addEventListener("close", () => {
+    guideDismissedThisLoad = true;
+    persistSkipGuide(Boolean(guideSkip?.checked));
+    guideTrigger?.focus();
+  });
+  if (guideDialog && !guideDialog.open && shouldAutoShowGuide()) {
+    guideDialog.showModal();
+    guideDialog.querySelector("[data-guide-close]")?.focus();
+  }
   const modalityTabs = [...deck.querySelectorAll("[data-modality-select]")];
   const activateModalityTab = (button, { focus = false } = {}) => {
     session?.updateInputModality(button.dataset.modalitySelect);
@@ -1961,6 +2022,11 @@ export class BattleSession {
     this.onGlobalPointerDown = this.onGlobalPointerDown.bind(this);
     this.accumulator = 0;
     this.inputSeq = 0;
+    // Selective hit-stop (presentation-only wall-clock freeze; digest-safe).
+    this.hitStopUntilMs = 0;
+    this.hitStopCooldownUntilMs = 0;
+    this.bossIdsCache = null;
+    this.bossIdsTick = -1;
     // Direct controls begin visually pending, then resolve only when their own
     // inputId returns from the deterministic simulation event stream.
     this.pendingCombatControls = new Map();
@@ -2749,6 +2815,24 @@ export class BattleSession {
       }
       return;
     }
+    // Skill hotkeys 1-7: cast the Nth active skill by driving its real HUD button,
+    // so the cast path, cooldown gating, and on-screen feedback stay single-sourced.
+    const skillDigit = /^Digit([1-7])$/.exec(event.code)?.[1] ?? (/^[1-7]$/.test(key) ? key : null);
+    if (skillDigit) {
+      event.preventDefault();
+      if (event.type === "keydown" && !event.repeat) {
+        if (this.inLobby()) this.suppressLobbyShowcase();
+        const buttons = [...root.querySelectorAll("#skill-actions [data-cast]")];
+        const btn = buttons[Number(skillDigit) - 1];
+        if (btn && btn.getAttribute("aria-disabled") !== "true") {
+          btn.click();
+          const priorShadow = btn.style.boxShadow;
+          btn.style.boxShadow = "0 0 0 3px rgba(255, 236, 170, 0.9), 0 0 14px 4px rgba(255, 200, 120, 0.7)";
+          setTimeout(() => { btn.style.boxShadow = priorShadow; }, 240);
+        }
+      }
+      return;
+    }
     if (!KEY_DIRECTIONS[key]) return;
     event.preventDefault();
     if (event.type === "keydown" && this.inLobby()) this.suppressLobbyShowcase();
@@ -2817,7 +2901,7 @@ export class BattleSession {
     // immediately after each call is exactly that one tick's events --
     // collecting them here recovers every tick's events for this frame.
     const frameEvents = [];
-    if (this.started && !document.hidden && !this.userPaused && !this.cutsceneActive && !isTerminalRun(this.run)) {
+    if (this.started && !document.hidden && !this.userPaused && !this.cutsceneActive && !isTerminalRun(this.run) && frameNow >= this.hitStopUntilMs) {
       this.accumulator += elapsed;
       while (this.accumulator >= STEP_MS) {
         this.run = advanceDefenseRun(this.run, 1);
@@ -2825,6 +2909,7 @@ export class BattleSession {
         this.accumulateQuestEvents(this.run.events);
         this.accumulator -= STEP_MS;
       }
+      this.maybeTriggerHitStop(frameEvents, frameNow);
     } else {
       this.accumulator = 0;
       // The simulation is frozen (pause, blocking cutscene, hidden tab, terminal
@@ -2840,6 +2925,52 @@ export class BattleSession {
       atMs: frameNow,
     });
     this.frame = requestAnimationFrame(this.loop);
+  }
+
+  /** Boss actor ids for the current tick, memoized so at most one snapshot read
+   * happens per tick and only on frames that already carry combat events. */
+  bossActorIds() {
+    if (this.bossIdsTick === this.run.tick && this.bossIdsCache) return this.bossIdsCache;
+    const snapshot = getRunSnapshot(this.run);
+    const ids = new Set();
+    for (const enemy of snapshot.enemies ?? []) {
+      if (enemy.class === "boss") ids.add(enemy.id);
+    }
+    this.bossIdsCache = ids;
+    this.bossIdsTick = this.run.tick;
+    return ids;
+  }
+
+  /** Selective hit-stop: a short simulation freeze on high-signal contacts only
+   * (critical hits and any contact involving a boss). Per the swarm design, a
+   * per-hit freeze would stutter, so this gates on weight and holds a cooldown.
+   * Purely a wall-clock pause of the SAME stepping path pause/cutscene already
+   * freeze -- it delays ticks, never reorders or drops them, so getRunDigest()
+   * is untouched. Disabled entirely under reduced motion. */
+  maybeTriggerHitStop(frameEvents, nowMs) {
+    if (this.motionQuery?.matches) return;
+    if (!frameEvents.length || nowMs < this.hitStopCooldownUntilMs) return;
+    let trigger = false;
+    for (const event of frameEvents) {
+      if (event.type === "CRITICAL_HIT") { trigger = true; break; }
+    }
+    if (!trigger) {
+      const bossIds = this.bossActorIds();
+      if (bossIds.size) {
+        for (const event of frameEvents) {
+          if (!HITSTOP_CONTACT_TYPES.has(event.type)) continue;
+          const attackerId = event.sourceId ?? event.entityId;
+          const targetId = event.targetId;
+          if ((attackerId && bossIds.has(attackerId)) || (targetId && bossIds.has(targetId))) {
+            trigger = true;
+            break;
+          }
+        }
+      }
+    }
+    if (!trigger) return;
+    this.hitStopUntilMs = nowMs + HITSTOP_MS;
+    this.hitStopCooldownUntilMs = this.hitStopUntilMs + HITSTOP_COOLDOWN_MS;
   }
 
   projected(snapshot) {
