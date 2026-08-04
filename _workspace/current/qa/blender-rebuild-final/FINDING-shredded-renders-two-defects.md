@@ -227,10 +227,124 @@ Note the ordering: `28016a40` is 01:55 and the PNGs in this directory are 01:30�
 images predate even this regression. They show a third state, earlier than both the regression and
 the importer fix.
 
-**Not attempted in this pass.** A fix means changing `WEIGHTS_0`/`JOINTS_0` so coincident twins
-share influence, which is asset-data surgery on 11 actors with 110 baked clips downstream. It needs
-its own pass, with the pre-regression bytes at `6e2ab06d` measured as a target rather than assumed
-to be correct.
+### 1.1i Fix feasibility — measured, and more tractable than it looks `[MEASURED]`
+
+**Not attempted in this pass.** A fix means rewriting `WEIGHTS_0`/`JOINTS_0` so coincident twins
+share influence, on the **7 defective actors only**. The 4 clean actors measure exactly 0.00000 and
+are the reference target — rewriting their weights would be a regression, so scope must not widen
+to the whole cohort.
+
+Three measurements make the change mechanical rather than risky.
+
+**All 9 mesh nodes share skin 0**, so joint slot indices are directly comparable across primitives
+— no remapping needed. **Zero mesh nodes carry `translation`/`rotation`/`scale`/`matrix`**, so raw
+`POSITION` values already live in one space and position keying needs no transform. Verified on
+`guard`, `lantern-reaver` and `scout`.
+
+**The VEC4 ceiling does not bind, because the union is the wrong construction.** An earlier
+revision of this section framed the fix as unioning each twin's influence set, which runs into
+`JOINTS_0` holding only 4 slots and forces influences to be dropped — trading this defect for the
+rigidity defect the original repair existed to avoid.
+
+The correct construction gives the whole coincident group **one shared weight vector**: sum the
+group's weights per bone, **average** them, take the top 4 of that single averaged vector,
+renormalize, and write identical `WEIGHTS_0`/`JOINTS_0` to every member. Each twin then carries ≤4
+influences by construction, and the L1 difference between twins is **exactly 0** rather than merely
+reduced.
+
+**Average, not dominant-pick.** Measured on the clean actor `broken-court-monarch-boss`: of its 7925
+shared seam vectors, **6895 carry 2 influences** and only 1030 carry 1, and the 2-influence vectors
+are genuine blends across a parent/child pair — e.g. `DEF-hand.L 0.505 / DEF-forearm.L 0.495`,
+`DEF-hand.L 0.502 / DEF-forearm.L 0.498`. Picking a group's dominant bone instead would collapse
+twins toward a single influence and reproduce that 1030-group rigid minority, which is the rigidity
+defect the original repair existed to prevent. Averaging lands on the ~50/50 two-bone shape the
+healthy asset actually has.
+
+Simulated on the real bytes, grouping by position rounded to 1e-5:
+
+| actor | coincident groups | max L1 before | max L1 after | groups needing top-4 trim |
+|---|---|---|---|---|
+| `lantern-reaver` | 1299 | 2.0000 | **0.0000** | 9 |
+| `scout` | 1419 | 2.0000 | **0.0000** | 9 |
+| `guard` | 1031 | 2.0000 | **0.0000** | 3 |
+
+0.0000 is what the four clean actors measure, so this construction reaches the reference state
+rather than approximating it. Only 9 / 9 / 3 groups per actor have more than 4 distinct bones in the
+averaged vector and need a top-4 trim; that trim discards a genuinely low-weight influence from an
+average, not one twin's binding to satisfy another's.
+
+Note what does **not** suffice: masking both twins to a shared neighbourhood leaves them with
+different weight *values*, so L1 drops without reaching zero and the seam still opens, just less.
+The shared-vector write is what gets the hard zero.
+
+**Shape of the change**: build a `position → [(primitive, vertex)]` map across all primitives before
+Stage 1, then apply the shared vector per group. Both existing safety properties survive — rest
+stays bit-stable because the sums still reach 1.0, and byte length is unchanged because it remains
+float32/VEC4 written in place. The new invariant to assert is the one that was missing: coincident
+twins must carry identical weight vectors.
+
+The pass also needs the pre-regression bytes at `6e2ab06d` measured as a target rather than assumed
+correct, and a seam-separation gate field, since §1.1h shows the existing gate cannot see this.
+
+### 1.1j Acceptance criterion — statically checkable, no runtime needed `[MEASURED]`
+
+The invariant to restore has an exact static form: **every vertex in a coincident position group
+must carry a byte-identical `(JOINTS_0, WEIGHTS_0)` tuple.** Read straight from the GLB with no
+epsilon, no browser, no Blender, no render:
+
+| actor | coincident groups | groups with identical tuples | share | class |
+|---|---|---|---|---|
+| `broken-court-monarch-boss` | 7925 | 7925 | **100.0%** | clean |
+| `shadow-commander-boss` | 5202 | 5202 | **100.0%** | clean |
+| `shadow-soldier-v04` | 3878 | 3878 | **100.0%** | clean |
+| `broken-court-monarch-v04` | 1745 | 1745 | **100.0%** | clean |
+| `possessed` | 1525 | 693 | 45.4% | torn |
+| `guard` | 1031 | 408 | 39.6% | torn |
+| `scout` | 1419 | 303 | 21.4% | torn |
+| `lantern-reaver` | 1299 | 225 | 17.3% | torn |
+| `ember-cohort` | 1241 | 214 | 17.2% | torn |
+
+**Zero overlap.** All four clean actors sit at exactly 100.0%; all five torn actors measured sit
+between 17.2% and 45.4%. `broken-court-monarch-boss` holds 7925 coincident groups and every single
+one is byte-identical, so this is the state a healthy asset from this pipeline actually reaches —
+not an aspiration.
+
+This is the gate to build, in preference to the seam-separation probe:
+
+- **statically checkable** — parses the GLB and compares tuples; no runtime, no Blender, no render
+- **fails closed** — a malformed or unreadable asset cannot accidentally pass
+- **exact** — 100% or not, no threshold to tune, so it cannot be defeated by the coincidence that
+  makes `seamEdgesDisjoint` look usable on this cohort (§1.1h)
+- **cheap enough for CI**, unlike the browser probe that produced the seam-separation numbers
+
+Seam separation stays useful as the *physical* confirmation that a repair worked, since it measures
+what the player sees. But acceptance should be gated on the tuple identity, which is the property
+the repair either establishes or does not.
+
+**The criterion needs a second clause, or it is gameable.** Tuple identity alone is necessary but
+not sufficient: writing the same *single-bone* vector to every member of a group scores 100.0% and
+reintroduces the rigidity defect the original repair existed to prevent. A rigid repair would pass.
+
+The clean actor supplies the missing half. `broken-court-monarch-boss`, per shared seam vector:
+
+| influences | groups | share |
+|---|---|---|
+| 2 | 6895 | **87.0%** |
+| 1 | 1030 | 13.0% |
+
+and its 2-influence vectors are blends across a parent/child pair, not token second weights:
+`DEF-hand.L 0.505 / DEF-forearm.L 0.495`, `DEF-hand.L 0.502 / DEF-forearm.L 0.498`.
+
+So gate on both clauses:
+
+1. **identity** — every member of a coincident group carries a byte-identical
+   `(JOINTS_0, WEIGHTS_0)` tuple. Exact, 100% or fail.
+2. **articulation** — the group influence-count distribution stays near the clean shape, ~87%
+   two-influence, and the two bones are adjacent in the joint hierarchy.
+
+Clause 1 alone accepts a rigid repair. Clause 2 alone accepts the current torn state, since the torn
+actors already carry multi-influence weights per vertex (§1.1c). Both together describe what a
+healthy asset in this pipeline actually is.
 
 ### 1.1a Retracted: "rig shape is the discriminator" `[MEASURED — FALSE]`
 
