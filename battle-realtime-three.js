@@ -295,6 +295,11 @@ const PLAYER_RUNTIME_MOTION_MESH = MOTION_MODELS["lantern-reaver"];
 const PLAYER_MESH = PLAYER_RUNTIME_MOTION_MESH;
 const PROP_BLADE_MESH = "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb";
 const PROP_RELIC_MESH = "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb";
+// Unified item drop image (matches the sprite-arena route). Both games now render the drop
+// from this one prop sprite-sheet crop rather than the 3D prop GLB, so an item reads the same
+// in campaign and arena. A per-drop, per-kind mesh split is a deliberate follow-up — the
+// `pickupModelPathFor` / PICKUP_MODEL_KEYS mapping below is retained for exactly that.
+const PICKUP_IMAGE_PATH = "assets/images/sprite-2-5d/items/relic-crystal.png";
 
 // `bossId` is emitted directly by the simulation. Stage bosses without an
 // explicit motionAssetId retain their supplied static campaign mesh.
@@ -2245,6 +2250,50 @@ async function instantiatePickupModel(relPath) {
   return instance;
 }
 
+// Item-drop image (unified with the sprite arena). Loaded once and shared across drops; the
+// texture is owned by the module cache, never disposed per-drop, so a collected drop tearing
+// down its Sprite cannot dispose the shared texture out from under a live one.
+const pickupTextureLoader = new THREE.TextureLoader();
+let pickupTexturePromise = null;
+function loadPickupTexture() {
+  const url = modelUrl(PICKUP_IMAGE_PATH);
+  if (!url) return Promise.reject(new TypeError("Missing pickup image path"));
+  if (!pickupTexturePromise) {
+    pickupTexturePromise = new Promise((resolve, reject) => {
+      pickupTextureLoader.load(url, resolve, undefined, reject);
+    }).then((texture) => {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return texture;
+    }).catch((error) => {
+      pickupTexturePromise = null;
+      throw error;
+    });
+  }
+  return pickupTexturePromise;
+}
+
+// Build the item drop as a camera-facing billboard (THREE.Sprite) carrying the shared texture.
+// A Sprite always faces the camera, so the flat image reads the same from every orbit angle,
+// and it never goes edge-on the way a fixed plane would. It bypasses inspectMeshIntegrity /
+// groundObjectOnPlane (those require a THREE.Mesh with geometry, which a Sprite is not) and
+// instead publishes an equivalent userData contract so ensurePickup() consumes it unchanged.
+async function instantiatePickupSprite() {
+  const texture = await loadPickupTexture();
+  const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
+  const sprite = new THREE.Sprite(material);
+  const height = TARGET_HEIGHT.pickup;
+  const aspect = (texture.image && texture.image.width && texture.image.height)
+    ? texture.image.width / texture.image.height
+    : 0.6;
+  sprite.scale.set(height * aspect, height, 1);
+  // Sprite center defaults to (0.5,0.5): lift it so its base sits on the ground plane (y=0),
+  // matching how a grounded pickup mesh rests.
+  sprite.position.set(0, height / 2, 0);
+  sprite.userData.meshIntegrity = Object.freeze({ meshCount: 1, vertexCount: 4, triangleCount: 2, invalidVertexCount: 0, invalidIndexCount: 0, finiteBounds: true });
+  sprite.userData.groundedMinY = 0;
+  return sprite;
+}
+
 async function instantiatePresentationModel(relPath, targetHeight) {
   const gltf = await loadGltf(relPath);
   const instance = SkeletonUtils.clone(gltf.scene);
@@ -3220,6 +3269,13 @@ function disposeObject3D(root) {
   const skeletons = new Set();
   root.traverse((node) => {
     if (node.skeleton) skeletons.add(node.skeleton);
+    // Sprites (item-drop billboards) carry a SpriteMaterial but are not `isMesh`. Dispose the
+    // material WITHOUT touching its `.map`: that texture is the shared, module-cached pickup
+    // image, and disposing it here would blank every other live drop.
+    if (node.isSprite) {
+      node.material?.dispose?.();
+      return;
+    }
     if (!node.isMesh) return;
     node.geometry?.dispose();
     const materials = Array.isArray(node.material) ? node.material : [node.material];
@@ -4161,6 +4217,10 @@ export class RealtimeBattle {
     if (!pickup?.id || this.disposed) return;
     const existing = this.actors.get(pickup.id);
     if (existing) return existing;
+    // `modelPath` stays the per-kind prop GLB path (pickupModelPathFor): it is the mesh this drop
+    // WOULD use once campaign/arena split, and debugPresentationState()/the model-selection
+    // contract still report it. The rendered body, however, is the UNIFIED item image (a
+    // camera-facing Sprite), so a drop looks identical in campaign and arena today.
     const modelPath = pickupModelPathFor(pickup);
     const root = new THREE.Group();
     const fallback = new THREE.Mesh(
@@ -4186,7 +4246,7 @@ export class RealtimeBattle {
     };
     this.actors.set(pickup.id, record);
     this.actorGroup.add(root);
-    instantiatePickupModel(modelPath)
+    instantiatePickupSprite()
       .then((instance) => {
         if (this.disposed || this.actors.get(pickup.id) !== record) {
           disposeObject3D(instance);
@@ -4202,7 +4262,7 @@ export class RealtimeBattle {
       .catch((error) => {
         record.loading = false;
         if (this.disposed || this.actors.get(pickup.id) !== record) return;
-        console.warn(`Failed to load pickup model ${modelPath}:`, error);
+        console.warn(`Failed to load pickup image ${PICKUP_IMAGE_PATH}:`, error);
       });
     return record;
   }
