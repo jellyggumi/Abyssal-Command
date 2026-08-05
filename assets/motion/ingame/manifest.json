@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "scripts/retarget-ingame-motion-blender.py",
-  "generatedAt": "2026-07-30T18:59:38.357040+00:00",
+  "generatedAt": "2026-08-05T14:28:52.500203+00:00",
   "sourceBoneNames": [
     "mixamorig:Head",
     "mixamorig:HeadTop_End",
@@ -410,7 +410,7 @@
   "pack": {
     "id": "unarmed-core",
     "path": "assets/motion/ingame/unarmed-core.glb",
-    "sha256": "c642c139c6649cb8d909e40c62becc2c15a0e4eeef0e09ff45abeb17647db91c",
+    "sha256": "70164a14165ecf647b2e2696d6ddc2be026d94d31d5715a51e248a7faada6373",
     "sourceRig": "mixamo-37",
     "targetRig": "def-humanoid-v1",
     "sourceFps": 24,
@@ -1236,6 +1236,69 @@
         "sourceSha256": "16ba3828644cbda198ba8b70e5bd7a3f9b95f2050ba12cc9a79bcb0cf1e16926"
       },
       {
+        "action": "attack2",
+        "source": "Hook Punch.fbx",
+        "sourceFile": "Hook Punch.fbx",
+        "clipName": "unarmed-core::attack2::v01",
+        "frameStart": 1,
+        "frameEnd": 53,
+        "sourceFps": 24,
+        "durationSeconds": 2.1666666666666665,
+        "sourceRootTravel": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "dab584c943a0695669c7c2455371debbadd851cd42df959604731dc0efe61bc8"
+      },
+      {
+        "action": "attack3",
+        "source": "Standing Melee Combo Attack Ver. 2.fbx",
+        "sourceFile": "Standing Melee Combo Attack Ver. 2.fbx",
+        "clipName": "unarmed-core::attack3::v01",
+        "frameStart": 1,
+        "frameEnd": 102,
+        "sourceFps": 24,
+        "durationSeconds": 4.208333333333333,
+        "sourceRootTravel": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "630fc27ccc736fa7455c758b36970ca2743d57303a58b28433ff64bdcff8cc70"
+      },
+      {
+        "action": "cast",
+        "source": "Standing 2H Magic Attack 01.fbx",
+        "sourceFile": "Standing 2H Magic Attack 01.fbx",
+        "clipName": "unarmed-core::cast::v01",
+        "frameStart": 1,
+        "frameEnd": 66,
+        "sourceFps": 24,
+        "durationSeconds": 2.7083333333333335,
+        "sourceRootTravel": {
+          "x": 1e-05,
+          "y": 0.000305,
+          "z": 8e-06
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "4d094e4272a11643c442c4de1be171819f5c2393e98b53898bf8ca10dce74e3d"
+      },
+      {
         "action": "die",
         "source": "Dying.fbx",
         "sourceFile": "Dying.fbx",
@@ -1678,6 +1741,69 @@
       },
       "loop": false,
       "sourceSha256": "16ba3828644cbda198ba8b70e5bd7a3f9b95f2050ba12cc9a79bcb0cf1e16926"
+    },
+    {
+      "action": "attack2",
+      "source": "Hook Punch.fbx",
+      "sourceFile": "Hook Punch.fbx",
+      "clipName": "unarmed-core::attack2::v01",
+      "frameStart": 1,
+      "frameEnd": 53,
+      "sourceFps": 24,
+      "durationSeconds": 2.1666666666666665,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "dab584c943a0695669c7c2455371debbadd851cd42df959604731dc0efe61bc8"
+    },
+    {
+      "action": "attack3",
+      "source": "Standing Melee Combo Attack Ver. 2.fbx",
+      "sourceFile": "Standing Melee Combo Attack Ver. 2.fbx",
+      "clipName": "unarmed-core::attack3::v01",
+      "frameStart": 1,
+      "frameEnd": 102,
+      "sourceFps": 24,
+      "durationSeconds": 4.208333333333333,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "630fc27ccc736fa7455c758b36970ca2743d57303a58b28433ff64bdcff8cc70"
+    },
+    {
+      "action": "cast",
+      "source": "Standing 2H Magic Attack 01.fbx",
+      "sourceFile": "Standing 2H Magic Attack 01.fbx",
+      "clipName": "unarmed-core::cast::v01",
+      "frameStart": 1,
+      "frameEnd": 66,
+      "sourceFps": 24,
+      "durationSeconds": 2.7083333333333335,
+      "sourceRootTravel": {
+        "x": 1e-05,
+        "y": 0.000305,
+        "z": 8e-06
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "4d094e4272a11643c442c4de1be171819f5c2393e98b53898bf8ca10dce74e3d"
     },
     {
       "action": "die",

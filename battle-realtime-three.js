@@ -785,6 +785,10 @@ const RIG_ACTION_KEYS = Object.freeze([
   // flat "hit" / "bighit" key, so registration here is additive only.
   "hit_front", "hit_back", "hit_left", "hit_right",
   "bighit_front", "bighit_back", "bighit_left", "bighit_right",
+  // Combo-tier melee and a caster beat (HongT CinderActor parity: attack2/attack3/cast).
+  // Additive: a rig without these clips falls back to the flat "attack" / "critical" key via
+  // the resolvers below, so registration here only unlocks the richer beat where it exists.
+  "attack2", "attack3", "cast",
 ]);
 const STAGE_NPC_STORY_ACTIONS = Object.freeze({
   questAcquisition: Object.freeze(["show"]),
@@ -1002,6 +1006,25 @@ export function hitReactionKey(actions, direction, heavy = false) {
   if (!HIT_REACTION_DIRECTIONS.includes(direction)) return base;
   const directional = `${base}_${direction}`;
   return actions?.[directional] ? directional : base;
+}
+
+// --- Combo-tier and caster beat routing (HongT CinderActor parity) ---------
+// The sim's light-attack chain advances comboStep 1 → 2 → 3 (defense-catalog.js
+// DIRECT_COMBAT.light). A rig that received the retargeted combo clips escalates
+// its swing per step; every other rig falls back to the flat "attack" it always
+// had, so this is additive and never strands a beat.
+export function comboAttackKey(actions, comboStep) {
+  const step = Number.isFinite(comboStep) ? comboStep : 0;
+  const candidate = step >= 3 ? "attack3" : step === 2 ? "attack2" : "attack";
+  return actions?.[candidate] ? candidate : "attack";
+}
+
+// Skill casts prefer the dedicated caster beat when the rig carries it, then the
+// sim-authored motion hint, and finally the flat "critical" the runtime shipped.
+export function castActionKey(actions, motionHint) {
+  if (actions?.cast) return "cast";
+  if (typeof motionHint === "string" && actions?.[motionHint]) return motionHint;
+  return "critical";
 }
 const AMBIENT_BREATH_CYCLE_SECONDS = 4.2;
 const AMBIENT_WEIGHT_CYCLE_SECONDS = 6.4;
@@ -6787,9 +6810,16 @@ export class RealtimeBattle {
         this.triggerAttackDelivery(actor(event.entityId), target(event.targetId), nowMs, event.critical === true);
         this.triggerAction(actor(event.entityId), "attack", nowMs);
         break;
-      case "SKILL_CAST":
-        this.triggerAction(actor("commander"), event.motion || "critical", nowMs);
+      case "SKILL_CAST": {
+        const commander = actor("commander");
+        this.triggerAction(commander, castActionKey(commander?.actions, event.motion), nowMs);
         break;
+      }
+      case "COMBO_ADVANCED": {
+        const comboActor = actor(event.entityId);
+        this.triggerAction(comboActor, comboAttackKey(comboActor?.actions, event.comboStep), nowMs);
+        break;
+      }
       case "SKILL_RESOLVED_DAMAGE":
         this.triggerAttackDelivery(actor(event.sourceId), target(event.targetId), nowMs, event.critical === true);
         this.triggerHitReaction(actor(event.targetId), actor(event.sourceId), event.critical === true, nowMs);

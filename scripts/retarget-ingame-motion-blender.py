@@ -31,7 +31,7 @@ class MappingRow:
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_TARGET_RIG = REPO_ROOT / "assets/images/battle/glb/commander/dusk-warden.glb"
+DEFAULT_TARGET_RIG = REPO_ROOT / "assets/motion/ingame/characters/human-command-boss/model.glb"
 DEFAULT_FBX_DIR = REPO_ROOT / "assets/motion/bench"
 DEFAULT_AUDIT_REPORT = (
     REPO_ROOT
@@ -107,6 +107,13 @@ CLIPS = [
     # generic punch.
     ClipSpec("attack_melee", "Standing Melee Attack Horizontal.fbx", False),
     ClipSpec("attack_ranged", "Shooting Arrow.fbx", False),
+
+    # Combo-tier melee and a caster beat, retargeted from the same source library HongT's
+    # CinderActor.controller drives (attack2/attack3/cast). One-shots: they layer onto the
+    # existing light-combo chain and skill-cast routing the sim already emits.
+    ClipSpec("attack2", "Hook Punch.fbx", False),
+    ClipSpec("attack3", "Standing Melee Combo Attack Ver. 2.fbx", False),
+    ClipSpec("cast", "Standing 2H Magic Attack 01.fbx", False),
 
     # Terminal and entrance beats, so death and boss entry stop borrowing a combat clip.
     ClipSpec("die", "Dying.fbx", False),

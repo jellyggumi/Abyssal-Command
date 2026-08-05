@@ -65,6 +65,9 @@ const OVERLAY_CLIP_SOURCES = new Map([
   ["bighit_right", "Standing React Large Gut.fbx"],
   ["attack_melee", "Standing Melee Attack Horizontal.fbx"],
   ["attack_ranged", "Shooting Arrow.fbx"],
+  ["attack2", "Hook Punch.fbx"],
+  ["attack3", "Standing Melee Combo Attack Ver. 2.fbx"],
+  ["cast", "Standing 2H Magic Attack 01.fbx"],
   ["die", "Dying.fbx"],
   ["show", "Mutant Roaring.fbx"],
 ]);

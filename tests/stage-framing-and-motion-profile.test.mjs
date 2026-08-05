@@ -16,6 +16,8 @@ import {
   cameraTierTarget,
   hitReactionDirection,
   hitReactionKey,
+  comboAttackKey,
+  castActionKey,
   motionPlaybackRate,
   motionProfileFor,
   stageFinaleLookOffset,
@@ -183,6 +185,36 @@ test("hit reactions resolve direction in the target frame and fall back to the f
   assert.equal(hitReactionKey(directionalRig, "up", false), "hit");
 });
 
+test("combo and cast beats resolve to the richer clip only when the rig carries it", () => {
+  // HongT CinderActor parity: attack2/attack3 escalate the light-combo chain, cast is the
+  // caster beat. A rig without the retargeted clips falls back to what it always had.
+  const flatRig = { attack: {}, critical: {} };
+  assert.equal(comboAttackKey(flatRig, 1), "attack");
+  assert.equal(comboAttackKey(flatRig, 2), "attack");
+  assert.equal(comboAttackKey(flatRig, 3), "attack");
+
+  const comboRig = { attack: {}, attack2: {}, attack3: {}, critical: {} };
+  assert.equal(comboAttackKey(comboRig, 1), "attack");
+  assert.equal(comboAttackKey(comboRig, 2), "attack2");
+  assert.equal(comboAttackKey(comboRig, 3), "attack3");
+  // Steps beyond the authored chain clamp to the top tier, never off the end.
+  assert.equal(comboAttackKey(comboRig, 4), "attack3");
+  // Malformed step never invents a beat: it opens the chain.
+  assert.equal(comboAttackKey(comboRig, Number.NaN), "attack");
+  assert.equal(comboAttackKey(comboRig, undefined), "attack");
+
+  // A rig with attack2 but no attack3 escalates only as far as it can.
+  const partialRig = { attack: {}, attack2: {}, critical: {} };
+  assert.equal(comboAttackKey(partialRig, 3), "attack");
+
+  // Cast prefers the dedicated beat, then the sim-authored hint, then flat critical.
+  assert.equal(castActionKey({ cast: {}, critical: {} }, "attack"), "cast");
+  assert.equal(castActionKey({ critical: {}, attack: {} }, "attack"), "attack");
+  assert.equal(castActionKey({ critical: {} }, "attack"), "critical");
+  assert.equal(castActionKey({ critical: {} }, undefined), "critical");
+  assert.equal(castActionKey(null, "attack"), "critical");
+});
+
 test("triggerHitReaction picks the directional clip for a blow from behind", () => {
   const adapter = cameraHarness();
   const played = [];
@@ -210,7 +242,7 @@ test("triggerHitReaction picks the directional clip for a blow from behind", () 
 });
 
 // The combination neither side of the cycle-10 merge tested. Upstream authored the eight
-// directional clips into `unarmed-core.glb` (21 clips, so `hitReactionKey` now genuinely
+// directional clips into `unarmed-core.glb` (24 clips, so `hitReactionKey` now genuinely
 // resolves `hit_left` instead of always falling back to flat `hit`), while the facing change
 // redefined `record.yaw` from LAST-MOVEMENT heading to AIM heading. Directional routing reads
 // that same `yaw` as its second operand, so the resolved clip now depends on where the target
