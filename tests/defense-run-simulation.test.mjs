@@ -1884,11 +1884,27 @@ const sha256 = (value) => crypto.createHash("sha256").update(value).digest("hex"
  * tape. Preconditions remain zero DROP_SPAWNED, zero BUFF_APPLIED, completed
  * window, advanced dropRng, and SNAPSHOT_VERSION 7.
  */
+/*
+ * REBASELINED 2026-08-05, ALL FOUR WINDOWS, and the windows themselves moved -- not just their
+ * bytes. `DROP_CHANCE_BP` BASIC went 600/800/1400 -> 4500/5000/5500 (PR #41, drop visibility),
+ * so every previously drop-free window now spawns: cinder-span/71/500 drops 2, abyss-chancel/71/1000
+ * drops 4, echo-throne/12/500 drops 1. A drop adds a `pickups` entry, so those digests could not
+ * be re-pinned -- the window has to be one where the layer runs and NOTHING drops, or check 1
+ * stops testing what it claims.
+ *
+ * The PR recorded "드랍률은 상수 변경이라 기존 계약 스위트가 커버(값 비의존)" -- that was wrong and
+ * unmeasured: three tests here read the rate as a measurement instrument, not as data. This is the
+ * correction.
+ *
+ * New windows were SEARCHED for, not guessed: every (stage, seed, steps, loadout) below was swept
+ * until all four preconditions held -- zero DROP_SPAWNED, zero BUFF_APPLIED, run to completion, and
+ * an ADVANCED dropRng so the roll demonstrably executed. Bytes measured on this build.
+ */
 const PRE_FEATURE_DIGEST_SHA256 = Object.freeze([
-  { label: "cinder-span/71/500 +ember-cohort", options: { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] }, steps: 500, sha: "f50f0817b493f018f60ff2d890c56544e1b5b492fe0f5daa8878e5a99afe6c58" },
-  { label: "cinder-span/71/500 bare", options: { stageId: "cinder-span", seed: 71, companionLoadout: [] }, steps: 500, sha: "5462eec2f933c5e2674382e795661d575b6f4940ed5a15deeabe4cee7d35f587" },
-  { label: "abyss-chancel/71/1000 bare", options: { stageId: "abyss-chancel", seed: 71, companionLoadout: [] }, steps: 1000, sha: "4665856b346c971a710afff046a191091a9992733070558cb262827d5ded8110" },
-  { label: "echo-throne/12/500 bare", options: { stageId: "echo-throne", seed: 12, companionLoadout: [] }, steps: 500, sha: "63439954c8a1f085443b8d06af36225e4ea6ebb8213f47826a9fc7d05ec87337" },
+  { label: "cinder-span/1/500 +ember-cohort", options: { stageId: "cinder-span", seed: 1, companionLoadout: ["ember-cohort"] }, steps: 500, sha: "92363ffdd3124e42b8bd6604946cadf02bfa6ad3fe1726db4a8b359a20e77b10" },
+  { label: "cinder-span/1/500 bare", options: { stageId: "cinder-span", seed: 1, companionLoadout: [] }, steps: 500, sha: "1a8d10eb65857316d1fb00c6e2ca13716955b5192ed851b3acf3b972f68012ea" },
+  { label: "abyss-chancel/29/800 bare", options: { stageId: "abyss-chancel", seed: 29, companionLoadout: [] }, steps: 800, sha: "383e8339bf4fcd2b35eb58965b0d4b4e3859675ebaf894389ea20cd65ba21a7e" },
+  { label: "echo-throne/3/400 bare", options: { stageId: "echo-throne", seed: 3, companionLoadout: [] }, steps: 400, sha: "822b66242cfb9192e0124f638e88a39f0c92dc3eb5296e693594e4a4e60c333c" },
 ]);
 
 // ---------------------------------------------------------------------------------------------
@@ -1928,7 +1944,10 @@ test("gate check 1: direct-input runs with no buff drop keep their pinned digest
 });
 
 test("gate check 1: two runs at one seed ticked identically with no buff produce string-equal digests, and a buffed run does not", () => {
-  const options = { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] };
+  // Seed 1, not 71: at the raised BASIC rate seed 71 spawns two drops in this window and one is
+  // collected, so `BUFF_APPLIED` is 1 and the buff-free precondition below is false. Seed 1 is a
+  // swept drop-free window (see the 2026-08-05 rebaseline note above).
+  const options = { stageId: "cinder-span", seed: 1, companionLoadout: ["ember-cohort"] };
   const left = driveAdversarialTape(createDefenseRun(options), 500);
   const right = driveAdversarialTape(createDefenseRun(options), 500);
   assert.equal(left.count("BUFF_APPLIED"), 0);
@@ -2050,11 +2069,17 @@ test("draw protocol: a denied drop advances dropRng exactly as far as a spawned 
 test("draw protocol: draw 1 is unconditional, so a failed roll advances dropRng as far as a successful roll's first draw", () => {
   // §6.3 invariant 1. Draw 1 fires for every death outside a measurement profile, whatever the
   // chance table says. The measurement exploits stream arithmetic instead of re-implementing
-  // `rngNext`: three cinder-span BASIC deaths (600bp — every roll fails, one draw each) must land
-  // the stream on the SAME position as one BOSS death (10000bp — roll succeeds, three draws).
+  // `rngNext`: three cinder-span BASIC deaths whose rolls all FAIL (one draw each) must land the
+  // stream on the SAME position as one BOSS death (10000bp — roll succeeds, three draws).
   // Three advances either way. Make draw 1 conditional and the failing rolls consume nothing,
   // so the two positions diverge.
-  const seeded = advanceDefenseRun(createDefenseRun({ stageId: "cinder-span", seed: 71 }), 1);
+  //
+  // The failing rolls are now a SWEPT seed, not a free consequence of the rate. This read
+  // "600bp — every roll fails" until 2026-08-05, when BASIC went to 4500bp and two of the three
+  // rolls started succeeding: the instrument, not the invariant, depended on the table. Seed 1
+  // is the lowest cinder-span seed where all three fail; the positive pair below is what proves
+  // it, so a future rate change fails loudly here instead of silently measuring nothing.
+  const seeded = advanceDefenseRun(createDefenseRun({ stageId: "cinder-span", seed: 1 }), 1);
   const threeFailures = advanceDefenseRun(withDeadEnemies(seeded, 3), 1);
   const oneSuccess = advanceDefenseRun(withDeadBosses(seeded, 1), 1);
 
