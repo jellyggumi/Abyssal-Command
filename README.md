@@ -195,3 +195,10 @@ Abyssal-Lantern/
 ├── docs/                      # 현재 제품·제작 문서
 └── tests/                     # 자동화된 테스트 소스
 ```
+
+## 역할
+
+| 이름 | 핸들 | 역할 | 담당 |
+|---|---|---|---|
+| 정장영 | [@jellyggumi](https://github.com/jellyggumi) | 기획·개발·제작 (저장소 생성자) | 게임 기획, 시스템 설계, 구현, 에셋 파이프라인, 배포 |
+| 정우영 | [@JeongWooyoung](https://github.com/JeongWooyoung) | 리뷰어 | 게임 완성도·게임성 향상 의견 제시, 개발 방향 의견 제시, 에이전틱 게임 개발 프로세스 완성도 향상 의견 제시 |
