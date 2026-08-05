@@ -5,6 +5,7 @@ This is the content-oriented map of the wiki. Read this file first before broad 
 ## Overview
 
 - Current release evidence covers the three-stage mesh-first runtime and the 11-asset natural rest-pose motion library.
+- Pages 루트가 2.5D 스프라이트 아레나(`sprite-2-5d.js`, `index.html`)로 피벗했고 기존 Three.js 캠페인은 `campaign.html`로 이동해 보존된다; 서사는 월드 말풍선(`defense-speech-bubble.js`)으로 전환됐다 (`wiki/reports/2026-08-04-post-merge-system-state.md`).
 - Combat is an always-area model: every contact resolves as a disc weighted by distance, source weight, element matchup and duration (`wiki/concepts/attack-pattern-presets-and-ai-response.md`).
 - Stage maps are authored code under a load-bearing validator, not editor scenes; the composition pipeline and its prompts live in `wiki/concepts/stage-map-composition-pipeline.md` and `prompts/approved/`.
 - Presentation is budget-bound: a 40-slot transient VFX pool with per-family caps, silhouette-derived motion speed, per-stage camera clamps, and render-space-only knockback (`wiki/concepts/runtime-presentation-and-arrival-choreography.md`).
@@ -38,5 +39,6 @@ This is the content-oriented map of the wiki. Read this file first before broad 
 
 ## Reports
 <!-- REPORTS:START -->
+- [2026-08-04 병합 후 시스템 상태 — cycle 9·10 통합 + 진입 라우팅 피벗](wiki/reports/2026-08-04-post-merge-system-state.md) — sprite-2-5d 루트 피벗, 신규 모듈 3종, 게이트 상태
 - [2026-07-29 natural rest-pose motion library](wiki/reports/2026-07-29-natural-rest-pose-motion-library.md)
 <!-- REPORTS:END -->

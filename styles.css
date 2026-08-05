@@ -1332,6 +1332,13 @@ body {
 .lobby-guide-shell { padding: clamp(.75rem, 2vw, 1.2rem); }
 .lobby-guide-shell > .panel-heading { position: sticky; top: 0; z-index: 1; margin: -.25rem -.25rem .8rem; padding: .25rem; background: rgb(8 13 25 / .96); }
 .lobby-guide-shell [data-guide-close] { min-width: 44px; min-height: 44px; }
+.lobby-guide-head-actions { display: flex; align-items: center; gap: .6rem; flex: 0 0 auto; }
+.lobby-guide-skip { display: inline-flex; align-items: center; gap: .35rem; color: #a8c8d9; font-size: .72rem; white-space: nowrap; cursor: pointer; }
+.lobby-guide-skip input { min-width: 18px; min-height: 18px; accent-color: var(--canon-cyan-rift, #5cc8ff); cursor: pointer; }
+.lobby-guide-objective { display: grid; gap: .4rem; margin: 0 0 .85rem; padding: .65rem .8rem; border-radius: .55rem; border: 1px solid rgb(115 121 144 / .3); background: linear-gradient(155deg, rgb(18 22 40 / .95), rgb(8 11 22 / .96)); }
+.lobby-guide-objective p { margin: 0; font-size: .78rem; line-height: 1.45; color: #c7d6e4; }
+.lobby-guide-win b { color: var(--canon-cyan-rift, #5cc8ff); }
+.lobby-guide-lose b { color: #ff9a7a; }
 .lobby-guide-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem; }
 .lobby-guide-grid section { min-width: 0; padding: .8rem; border: 1px solid rgb(115 121 144 / .24); border-radius: .55rem; background: linear-gradient(155deg, rgb(18 20 36 / .94), rgb(8 10 20 / .96)); }
 .lobby-guide-grid section > span { color: var(--canon-cyan-rift); font-size: .68rem; font-weight: 800; letter-spacing: .08em; }

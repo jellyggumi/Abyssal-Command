@@ -1,0 +1,20 @@
+{
+  "artifacts": [
+    "melee-before.png",
+    "melee-after.png",
+    "nova-before.png",
+    "nova-after.png"
+  ],
+  "tool": "canvas2d render + headless browser capture (not an AI image generator)",
+  "source_html": "mockup.html",
+  "reference_inputs": [
+    "assets/images/sprite-2-5d/cinder-court-backdrop.png",
+    "assets/images/sprite-2-5d/warden/sprite-sheet.png",
+    "assets/images/sprite-2-5d/ember-cohort/sprite-sheet.png"
+  ],
+  "method": "Replicated sprite-2-5d.js render logic (depthScale, pivot, shadow geometry) at real arena coordinates; drew current thin-stroke feedback (BEFORE) and proposed layered juice (AFTER); captured each panel via headless Chromium.",
+  "tool_deviation": "CLAUDE.md §3 designates god-tibo-imagen (gti) for concept imagery. In this session gti's private-codex backend rejected every model (gpt-5.4/gpt-5.1/gpt-5) with HTTP 400 'model not supported when using Codex with a ChatGPT account', and the built-in image tool returned HTTP 404. Substituted real-asset canvas rendering, which is more faithful to actual coordinates/palette and is a discussion mockup, not a runtime asset.",
+  "runtimeEligible": false,
+  "purpose": "Proposal visualization for _workspace/current/design/vfx-combat-feel-proposal.md; awaiting approval before any code change.",
+  "createdAt": "2026-08-04"
+}

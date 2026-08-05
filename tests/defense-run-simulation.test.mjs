@@ -23,10 +23,12 @@ import {
 import { cutsceneFromEvent } from "../defense-cutscene.js";
 import {
   BUFF_ITEMS,
+  BUFF_PICKUP_RANGE,
   BUFF_STAT_OPS,
   COMMANDER,
   CUTSCENES,
   DROP_TTL_TICKS,
+  DROP_SETTLE_TICKS,
   DIRECT_COMBAT,
   ENEMIES,
   ITEMS,
@@ -2736,4 +2738,70 @@ test("same seed and direct input script replay to the identical digest and event
 
   assert.equal(left.digest, right.digest);
   assert.deepEqual(left.events, right.events);
+});
+
+test("walk-to buff collection: a drop beyond BUFF_PICKUP_RANGE is left on the field, one within it is collected", () => {
+  // The fix decoupled buff-drop collection from the commander's 12000 pickupRange vacuum: a buff
+  // drop is now a FIELD OBJECT collected only within BUFF_PICKUP_RANGE (900), after a
+  // DROP_SETTLE_TICKS settle delay. This test defends the DISCRIMINATING behavior — a drop the OLD
+  // 12000 vacuum WOULD have collected is now left on the field — so a regression that restores the
+  // vacuum (or re-widens buff collection to `pickupRange`) reddens it. Documenting the WHY inline:
+  assert.ok(BUFF_PICKUP_RANGE < 12000,
+    "the far drop only proves decoupling because BUFF_PICKUP_RANGE is far below the 12000 vacuum it replaced");
+
+  const seeded = advanceDefenseRun(createDefenseRun({ stageId: "cinder-span", seed: 71 }), 1);
+  const staged = thawRun(seeded);
+  const { x: commanderX, y: commanderY } = staged.commander;
+
+  // FAR: 1500 from the stationary commander — outside BUFF_PICKUP_RANGE (900) but far inside the
+  // old 12000 vacuum, so this drop is the decoupling witness. `buffDropAt` sets no
+  // `collectableAtTick`, so the settle gate is deliberately NOT the variable in this first block.
+  const farId = "zz-walkto-far";
+  staged.pickups.push({ ...buffDropAt(staged, "ember-edge", commanderX + 1500, commanderY), id: farId });
+  // NEAR: 500 from the commander — inside BUFF_PICKUP_RANGE, so it is walked onto and collected.
+  const nearId = "zz-walkto-near";
+  staged.pickups.push({ ...buffDropAt(staged, "reaver-fervor", commanderX + 500, commanderY), id: nearId });
+
+  // No MOVE queued: `commander.move` is "IDLE" (a zero vector) and `objectiveRoute` is false, so
+  // the commander does not drift and both distances are exactly as staged.
+  const collected = advanceDefenseRun(staged, 1);
+  const collectedIds = getRunSnapshot(collected).pickups.map((pickup) => pickup.id);
+
+  assert.equal(collectedIds.includes(nearId), false,
+    "a buff drop within BUFF_PICKUP_RANGE must be collected off the field");
+  assert.equal(collectedIds.includes(farId), true,
+    "a buff drop beyond BUFF_PICKUP_RANGE — but well inside the old 12000 vacuum — must be left on the field");
+
+  // SETTLE GATE: a spawned-shaped drop (with `collectableAtTick`) well within BUFF_PICKUP_RANGE is
+  // held on the field until `run.tick >= collectableAtTick`, THEN collected.
+  const settleStaged = thawRun(collected);
+  const settleId = "zz-walkto-settle";
+  const settleAtTick = settleStaged.tick + DROP_SETTLE_TICKS;
+  settleStaged.pickups.push({
+    ...buffDropAt(settleStaged, "cinder-haste", settleStaged.commander.x + 300, settleStaged.commander.y),
+    id: settleId,
+    collectableAtTick: settleAtTick,
+    // TTL far beyond the settle window (DROP_TTL_TICKS = 1800), so "gone from pickups" below can
+    // only mean collected, never TTL-expired.
+    expiresAtTick: settleStaged.tick + DROP_TTL_TICKS,
+  });
+
+  // One tick in: `run.tick < collectableAtTick`, so the drop stays on the field despite sitting at
+  // distance 300 < BUFF_PICKUP_RANGE.
+  const beforeSettle = advanceDefenseRun(settleStaged, 1);
+  assert.ok(beforeSettle.tick < settleAtTick, "precondition: still before the settle tick");
+  assert.equal(getRunSnapshot(beforeSettle).pickups.map((pickup) => pickup.id).includes(settleId), true,
+    "a drop with collectableAtTick in the future must be left on the field even inside BUFF_PICKUP_RANGE");
+
+  // Advance past the settle tick. `advanceWithOffers` keeps the commander stationary (no MOVE
+  // queued; any growth offer is resolved via SKILL_SELECTED, which does not move the commander), so
+  // the distance stays 300 while `run.tick` crosses `collectableAtTick`.
+  const afterSettle = advanceWithOffers(beforeSettle, DROP_SETTLE_TICKS);
+  assert.ok(afterSettle.tick >= settleAtTick, "must advance past the settle tick");
+  const afterSnapshot = getRunSnapshot(afterSettle);
+  assert.equal(afterSnapshot.pickups.map((pickup) => pickup.id).includes(settleId), false,
+    "once run.tick >= collectableAtTick, a drop within BUFF_PICKUP_RANGE must be collected");
+  // Prove real collection, not TTL expiry: the buff was actually applied.
+  assert.ok(afterSnapshot.buffs?.some((buff) => buff.itemId === "cinder-haste"),
+    "the settled drop must be collected (buff applied), not merely dropped from the field by TTL");
 });

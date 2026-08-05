@@ -654,6 +654,15 @@
     },
     {
       "disposition": "retain",
+      "currentPath": "assets/images/campaign/items/relic-crystal.png",
+      "replacementPath": "assets/images/campaign/items/relic-crystal.png",
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
       "currentPath": "assets/images/sprite-2-5d/cinder-court-backdrop.png",
       "replacementPath": "assets/images/sprite-2-5d/cinder-court-backdrop.png",
       "extension": ".png",
@@ -674,6 +683,15 @@
       "disposition": "retain",
       "currentPath": "assets/images/sprite-2-5d/ember-cohort/sprite-sheet.png",
       "replacementPath": "assets/images/sprite-2-5d/ember-cohort/sprite-sheet.png",
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/images/sprite-2-5d/items/relic-crystal.png",
+      "replacementPath": "assets/images/sprite-2-5d/items/relic-crystal.png",
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
       "runtimeReference": true,

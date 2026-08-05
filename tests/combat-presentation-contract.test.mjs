@@ -153,6 +153,31 @@ after(() => {
   GLTFLoader.prototype.load = originalGltfLoad;
 });
 
+// Node has no DOM, so THREE.TextureLoader.load reaches for `document.createElementNS`
+// and throws `document is not defined`. The unified pickup sprite path issues exactly one
+// TextureLoader request (for the shared relic-crystal image), so a synchronous fake that
+// mirrors the GLTF stub's microtask handoff lets the real Sprite/ensurePickup pipeline run
+// unchanged: the source sets `.colorSpace` and reads `.image.width`/`.image.height`.
+const textureFailuresRemaining = new Map();
+const originalTextureLoad = THREE.TextureLoader.prototype.load;
+THREE.TextureLoader.prototype.load = function loadSyntheticTexture(url, onLoad, _onProgress, onError) {
+  const requestUrl = String(url);
+  queueMicrotask(() => {
+    const failuresRemaining = textureFailuresRemaining.get(requestUrl) ?? 0;
+    if (failuresRemaining > 0) {
+      if (failuresRemaining === 1) textureFailuresRemaining.delete(requestUrl);
+      else textureFailuresRemaining.set(requestUrl, failuresRemaining - 1);
+      onError(new Error(`Synthetic texture load failure: ${requestUrl}`));
+      return;
+    }
+    onLoad({ colorSpace: null, image: { width: 150, height: 256 }, dispose() {} });
+  });
+  return this;
+};
+after(() => {
+  THREE.TextureLoader.prototype.load = originalTextureLoad;
+});
+
 
 const rendererModule = import(`../battle-realtime-three.js?combat-presentation-contract=${Date.now()}`);
 
@@ -996,9 +1021,12 @@ test("a retired enemy's death echo preserves its nonzero rendered elevation", as
   adapter.dispose();
 });
 
-test("3D pickup presentation consumes snapshot pickups, grounds both models, and retains its failure marker", async () => {
+test("3D pickup presentation consumes snapshot pickups as unified sprites, grounds them, and reloads a re-added drop", async () => {
   const { RealtimeBattle } = await rendererModule;
   const adapter = realtimeBattleHarness(RealtimeBattle);
+  // The rendered body is the unified relic-crystal Sprite, but the per-kind prop GLB path is
+  // RETAINED metadata: a drop still reports the mesh it WOULD use once campaign/arena split,
+  // so item->blade (.03) and echo->relic (.05) must survive retire and reload unchanged.
   const bladePath = "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb";
   const relicPath = "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb";
   const run = structuredClone(createDefenseRun({ stageId: "cinder-span", seed: 211 }));
@@ -1010,30 +1038,27 @@ test("3D pickup presentation consumes snapshot pickups, grounds both models, and
   const item = snapshot.pickups.find(({ kind }) => kind === "item");
   const echo = snapshot.pickups.find(({ kind }) => kind === "echo");
   const before = structuredClone(snapshot);
-  const failedUrl = `./${bladePath}`;
-  gltfFailuresRemaining.set(failedUrl, 1);
 
   try {
     adapter.reconcileActors(snapshot);
     await waitFor(
-      () => adapter.actors.get(item.id)?.loading === false && adapter.actors.get(echo.id)?.loading === false,
-      "snapshot pickup model requests did not settle",
+      () => snapshot.pickups.every(({ id }) => adapter.debugPresentationState(id)?.meshIntegrity),
+      "snapshot pickup sprite requests did not settle",
+    );
+    // Both drops resolve their distinct retained per-kind GLB metadata even before any lifecycle churn.
+    assert.deepEqual(
+      { item: adapter.debugPresentationState(item.id).modelPath, echo: adapter.debugPresentationState(echo.id).modelPath },
+      { item: bladePath, echo: relicPath },
+      "item and echo pickups must resolve their distinct authored per-kind GLB metadata paths",
     );
 
-    const failedRecord = adapter.actors.get(item.id);
-    assert.equal(
-      failedRecord.root.children.some((child) => child.isMesh && child.visible),
-      true,
-      "a rejected pickup GLB must leave its visible marker attached",
-    );
-    assert.equal(adapter.debugPresentationState(item.id).meshIntegrity, null, "a failed GLB must not publish fabricated model integrity");
-
+    // A pickup absent from the next snapshot retires; re-adding it re-creates and re-loads its sprite.
     adapter.reconcileActors({ ...snapshot, pickups: [echo] });
     assert.equal(adapter.debugPresentationState(item.id), null, "a pickup absent from the next snapshot must retire");
     adapter.reconcileActors(snapshot);
     await waitFor(
       () => snapshot.pickups.every(({ id }) => adapter.debugPresentationState(id)?.meshIntegrity),
-      "the evicted pickup GLB did not load on the next authoritative snapshot appearance",
+      "the evicted pickup sprite did not reload on the next authoritative snapshot appearance",
     );
 
     const pickupStates = adapter.debugPresentationState().pickups.sort((left, right) => left.id.localeCompare(right.id));
@@ -1042,21 +1067,58 @@ test("3D pickup presentation consumes snapshot pickups, grounds both models, and
       snapshot.pickups.map(({ id }) => id).sort(),
       "the renderer must publish exactly the pickups present in the simulation snapshot",
     );
-    assert.deepEqual(
-      Object.fromEntries(pickupStates.map(({ id, modelPath }) => [id, modelPath])),
-      { "snapshot-echo": relicPath, "snapshot-item": bladePath },
-      "item and echo pickups must resolve their distinct authored 3D models",
-    );
     for (const pickup of pickupStates) {
-      assertMeshIntegrity(pickup.meshIntegrity, pickup.id);
-      assertNear(pickup.groundedMinY, 0, `${pickup.id} model rests on its local support plane`);
       const source = snapshot.pickups.find(({ id }) => id === pickup.id);
+      assert.equal(
+        pickup.modelPath,
+        source.kind === "item" ? bladePath : relicPath,
+        `${pickup.id} retains its per-kind GLB metadata path across retire and reload`,
+      );
+      assertMeshIntegrity(pickup.meshIntegrity, pickup.id);
+      assert.equal(pickup.meshIntegrity.meshCount, 1, `${pickup.id} renders as a single unified sprite body`);
+      assertNear(pickup.groundedMinY, 0, `${pickup.id} sprite base rests on its local support plane`);
       assertNear(pickup.position.x, worldX(source.x), `${pickup.id} consumes snapshot x`);
       assertNear(pickup.position.z, worldZ(source.y), `${pickup.id} consumes snapshot y`);
     }
     assert.deepEqual(snapshot, before, "pickup reconciliation must not mutate the authoritative snapshot");
   } finally {
-    gltfFailuresRemaining.delete(failedUrl);
+    adapter.dispose();
+  }
+});
+
+test("a pickup whose sprite texture fails to load keeps its fallback beacon and publishes no fabricated integrity", async () => {
+  // A cold renderer instance: the shared pickup texture promise caches the first success
+  // module-wide, so a fresh module keeps this failure leg order-independent from every other
+  // pickup test and drives a genuine first (rejected) TextureLoader request.
+  const { RealtimeBattle } = await import(`../battle-realtime-three.js?combat-presentation-contract-texture-failure=${Date.now()}`);
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  const run = structuredClone(createDefenseRun({ stageId: "cinder-span", seed: 211 }));
+  run.pickups = [
+    { id: "doomed-drop", kind: "item", itemId: "ward-splinter", x: 8400, y: 4100, elevation: 0, hp: 1, maxHp: 1 },
+  ];
+  const snapshot = getRunSnapshot(run);
+  const failedTextureUrl = "./assets/images/sprite-2-5d/items/relic-crystal.png";
+  textureFailuresRemaining.set(failedTextureUrl, 1);
+
+  try {
+    adapter.reconcileActors(snapshot);
+    await waitFor(
+      () => adapter.actors.get("doomed-drop")?.loading === false,
+      "the failed pickup texture request did not settle",
+    );
+    const record = adapter.actors.get("doomed-drop");
+    assert.equal(
+      record.root.children.some((child) => child.isMesh && child.visible),
+      true,
+      "a failed sprite load must leave the fallback octahedron beacon visible",
+    );
+    assert.equal(
+      adapter.debugPresentationState("doomed-drop").meshIntegrity,
+      null,
+      "a failed sprite load must not publish fabricated model integrity",
+    );
+  } finally {
+    textureFailuresRemaining.delete(failedTextureUrl);
     adapter.dispose();
   }
 });

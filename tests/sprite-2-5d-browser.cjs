@@ -372,9 +372,20 @@ async function verifyViewport(browser, hosting, viewport) {
   try {
     const routeResponse = await page.goto("/index.html", { waitUntil: "load" });
     assert(routeResponse?.ok(), `${viewport.width}x${viewport.height} sprite route response must succeed`);
-    const body = page.locator("body:not([data-game-state=\"loading\"])");
+    const settled = page.locator("body:not([data-game-state=\"loading\"])");
+    await settled.waitFor({ state: "attached" });
+    assert.equal(await settled.getAttribute("data-game-state"), "briefing", `sprite route must open the start briefing after asset validation (${failures.join("; ")})`);
+    const briefing = page.locator("#sprite-2-5d-briefing");
+    assert.equal(await briefing.isVisible(), true, "the start briefing must be visible before the first wave");
+    const briefingText = (await briefing.textContent() ?? "").replace(/\s+/g, " ");
+    for (const label of ["목표", "이동", "공격", "사수", "패배"]) {
+      assert.match(briefingText, new RegExp(label), `the start briefing must teach the ${label} navigation block`);
+    }
+    assert.match(briefingText, /내구도.*0|0.*함락|함락/, "the start briefing must state the defeat condition (lantern integrity reaching zero)");
+    await page.locator("#sprite-2-5d-briefing-start").click();
+    const body = page.locator("body[data-game-state=\"running\"]");
     await body.waitFor({ state: "attached" });
-    assert.equal(await body.getAttribute("data-game-state"), "running", `sprite route must finish asset validation (${failures.join("; ")})`);
+    assert.equal(await body.getAttribute("data-game-state"), "running", "dismissing the briefing must start the running route");
 
     for (const pathname of EXPECTED_REQUESTS) {
       assert.equal(responses.get(pathname), 200, `${viewport.width}x${viewport.height} must load ${pathname}`);
@@ -408,9 +419,12 @@ async function verifyViewport(browser, hosting, viewport) {
     assert.equal(contract.runtime, "running", "the public game root must expose the running runtime state");
     const statusMatch = /^웨이브 (\d+)\. 잿불 군단 반응 (\d+)기가 법정에 진입한다\.$/.exec(contract.status ?? "");
     assert.ok(statusMatch, "the live status must announce the started wave and hostile count");
+    const hudWaveNumber = /^(\d+) \/ (\d+)$/.exec(contract.hud.wave ?? "");
+    assert.ok(hudWaveNumber, "the wave HUD must show the current and target wave as 'N / M'");
+    assert.equal(hudWaveNumber[2], "10", "the wave HUD must expose the authored target wave");
     assert.deepEqual(
       {
-        wave: contract.hud.wave,
+        wave: hudWaveNumber[1],
         score: contract.hud.score,
         enemies: contract.hud.enemies,
         health: contract.hud.health,
@@ -423,7 +437,7 @@ async function verifyViewport(browser, hosting, viewport) {
       },
       "the visible HUD and canvas state hooks must agree",
     );
-    assert.equal(statusMatch[1], contract.hud.wave, "the status announcement and wave HUD must agree");
+    assert.equal(statusMatch[1], hudWaveNumber[1], "the status announcement and wave HUD must agree");
     assert.equal(statusMatch[2], contract.hud.enemies, "the status announcement and hostile HUD must agree");
     assert.equal(contract.hud.healthText, `${contract.hud.health} / ${contract.hud.healthMax}`, "the health meter and visible health output must agree");
     assert.deepEqual(contract.canvas, { width: 1536, height: 1024 }, "the arena canvas must expose its authored render resolution");
@@ -580,6 +594,14 @@ async function verifyViewport(browser, hosting, viewport) {
   }
 }
 
+function installBriefingSkip() {
+  try {
+    window.localStorage.setItem("abyssal-lantern:cinder-court:skip-briefing", "1");
+  } catch {
+    // A blocked storage quota leaves the briefing in place; the caller tolerates it.
+  }
+}
+
 async function openRunningPage(context) {
   const page = await context.newPage();
   const failures = [];
@@ -589,6 +611,7 @@ async function openRunningPage(context) {
   });
   await page.addInitScript(installDeterministicAnimationClock);
   await page.addInitScript(installCanvas2DRenderProbe);
+  await page.addInitScript(installBriefingSkip);
   const response = await page.goto("/index.html", { waitUntil: "load" });
   assert(response?.ok(), "instrumented sprite route response must succeed");
   const body = page.locator("body:not([data-game-state=\"loading\"])");
@@ -1036,6 +1059,7 @@ async function verifyLiveDprMediaQueryRebind(browser, hosting) {
     await page.addInitScript(installLiveDprMediaQueryFake);
     await page.addInitScript(installDeterministicAnimationClock);
     await page.addInitScript(installCanvas2DRenderProbe);
+    await page.addInitScript(installBriefingSkip);
     const response = await page.goto("/index.html", { waitUntil: "load" });
     assert(response?.ok(), "live-DPR sprite route response must succeed");
     const body = page.locator("body:not([data-game-state=\"loading\"])");
@@ -1217,6 +1241,43 @@ async function verifyAssetErrorStopsLoop(browser) {
   }
 }
 
+async function verifyBriefingSkipAndReload(browser, hosting) {
+  const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
+  const page = await context.newPage();
+  const failures = [];
+  page.on("pageerror", (error) => failures.push(`page: ${error.message}`));
+  page.on("console", (message) => { if (message.type() === "error") failures.push(`console: ${message.text()}`); });
+  await page.addInitScript(installDeterministicAnimationClock);
+  try {
+    // Fresh visitor (no skip flag) sees the briefing.
+    await page.goto("/index.html", { waitUntil: "load" });
+    await page.locator("body:not([data-game-state=\"loading\"])").waitFor({ state: "attached" });
+    assert.equal(await page.evaluate(() => document.body.dataset.gameState), "briefing", "a fresh visitor must see the briefing");
+
+    // Opt out via the "다시 보지 않기" checkbox, then start.
+    await page.locator("#sprite-2-5d-briefing-skip").check();
+    await page.locator("#sprite-2-5d-briefing-start").click();
+    await page.locator("body[data-game-state=\"running\"]").waitFor({ state: "attached" });
+    assert.equal(await page.evaluate(() => localStorage.getItem("abyssal-lantern:cinder-court:skip-briefing")), "1", "checking the box must persist the skip flag");
+
+    // A fresh navigation with the skip flag set goes straight to running (returning-player opt-out honoured).
+    await page.goto("/index.html", { waitUntil: "load" });
+    await page.locator("body:not([data-game-state=\"loading\"])").waitFor({ state: "attached" });
+    assert.equal(await page.evaluate(() => performance.getEntriesByType("navigation")[0]?.type), "navigate", "the second visit must be a fresh navigation");
+    assert.equal(await page.evaluate(() => document.body.dataset.gameState), "running", "skip flag must bypass the briefing on a fresh navigation");
+
+    // A reload re-shows the briefing even with the skip flag set (explicit refresh = show me again).
+    await page.reload({ waitUntil: "load" });
+    await page.locator("body:not([data-game-state=\"loading\"])").waitFor({ state: "attached" });
+    assert.equal(await page.evaluate(() => performance.getEntriesByType("navigation")[0]?.type), "reload", "the third visit must be a reload");
+    assert.equal(await page.evaluate(() => document.body.dataset.gameState), "briefing", "a reload must re-show the briefing even when the skip flag is set");
+    assert.equal(await page.evaluate(() => localStorage.getItem("abyssal-lantern:cinder-court:skip-briefing")), "1", "re-showing on reload must not clear the persisted skip preference");
+    assert.deepEqual(failures, [], "briefing skip/reload verification must not emit page or console errors");
+  } finally {
+    await context.close();
+  }
+}
+
 async function run() {
   const hosting = await startServer();
   let browser;
@@ -1231,6 +1292,7 @@ async function run() {
     await verifyLifecycleResume(browser, hosting);
     await verifyTerminalLoopStates(browser, hosting);
     await verifyReducedMotionTiming(browser, hosting);
+    await verifyBriefingSkipAndReload(browser, hosting);
     await verifyAssetErrorStopsLoop(browser);
     console.log("SPRITE_2_5D_BROWSER_OK 390x844 844x390");
   } finally {

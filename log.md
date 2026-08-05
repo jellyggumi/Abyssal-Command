@@ -342,3 +342,25 @@ Each entry should list the files touched, the reason for the change, and any fol
 - AC-12(고비용 exporters) 미실행: `git log -1 -- defense-run-simulation.js` = `9ba2aa39` ≠ HEAD `c139b508`,
   상대 세션 변경이 아직 미커밋이라 트리거 미충족.
 - 푸시하지 않음. Phase D 미완 상태이며 체인지로그·푸시는 계획상 브라우저 증명 이후 단계다.
+
+## [2026-08-04] report | 병합 후 시스템 상태 — cycle 9·10 통합 + 진입 라우팅 피벗
+
+- `origin/main`(176 커밋)을 `feature/first_lee`로 fast-forward 병합(685파일, 충돌 0). 로컬
+  `main`은 stale(244 behind)이라 대상이 아니었다. 병합이 cycle 9(코어 루프)·cycle 10(스테이지
+  던전)과 회고에 없던 진입 라우팅 피벗을 현재 브랜치로 가져왔다.
+- 코드에서 재분석해 `wiki/reports/2026-08-04-post-merge-system-state.md`를 추가하고 `index.md`
+  Overview·Reports를 갱신했다.
+- **가장 큰 구조 변화 [OBSERVED]**: Pages 루트(`index.html`)가 Three.js 캠페인에서 2.5D 스프라이트
+  아레나(`sprite-2-5d.js`)로 피벗. 기존 캠페인은 `campaign.html`(`app.js`)로 이동해 보존. 오타본
+  `abbysal-oneline.html`은 정본으로 리다이렉트. 시드 `intake/seed-sprite25d-entry-routing.md`.
+- **신규 런타임 모듈 3종 [OBSERVED]**: `sprite-2-5d.js`(무자산 2D 캔버스 아레나, 절차적 오디오,
+  종료 시 `abyssal-oneline.html`로 전환), `defense-speech-bubble.js`(캠페인 서사를 음성→월드
+  말풍선으로 교체, `defense-audio.js` 이벤트 집합과 동일 불변식), `sealbound.js`(독립 프로토타입
+  라우트 `sealbound.html`).
+- **게이트 [carried]**: 두 회고 모두 어떤 게이트도 PASS로 만들지 않았다 — 설계·자산은 측정이
+  아니며 G4/G7/G8은 사람 플레이 판정 대기. drop/buff 스펙 §9 결정성 7체크 종결 여부는 이 세션이
+  재측정하지 않았다.
+- **이 세션 실측 [OBSERVED]**: 정적 서버(127.0.0.1:8000)에서 `/`·`/campaign.html`·`/sprite-2-5d.js`·
+  `/sealbound.html` 모두 200; 서빙된 루트가 `src="sprite-2-5d.js"` 참조; 루트 브라우저 부팅 시
+  console/page 에러 0, `<canvas>` 1개, `hasThree:false`. 이 절 밖의 수치는 모두 [carried]다.
+- 커밋·푸시하지 않음. 볼트 문서(reports/index/log)만 갱신했다.

@@ -316,3 +316,43 @@ evidence_state: "[OBSERVED] gjc v0.12.5 --help 확인; 아직 이 규칙으로 �
 - `--tmux`는 interactive launcher이므로 parent가 반환값을 기다리는 subagent API가 아니다. 실행 세션의 확인·재접속은 `gjc session`으로 한다.
 - 비대화형 분석/짧은 결과만 필요한 경우에만 `gjc -p`를 사용한다. 탐색·리뷰·증거 수집은 이 규칙과 충돌하지 않는 별도 read-only worker로 둘 수 있다.
 - [TARGET] 이 결정은 다음 사용자 인터뷰에서 Stage 1–3 범위와 acceptance criteria가 동결된 뒤의 구현에 적용한다. 이 기록 자체는 코드·밸런스·Pages 배포를 완료했다는 뜻이 아니다.
+
+---
+
+## D-20260804-NAV-01 — 시작 네비게이션·승패 판독성 슬라이스 스펙 승인
+
+```yaml
+decision_id: D-20260804-NAV-01
+date: 2026-08-04
+status: SPEC_APPROVED_FOR_IMPLEMENTATION
+scope: index.html → sprite-2-5d.js "어비스 랜턴 · 잿불 법정" 아레나의 시작 안내·승패 상태·경계 가시화
+source_packet: 사용자 요청 — "승리/실패를 알 수 없다, 시작 네비게이션(이동·공격·진입금지) 필요"
+evidence_state: "[OBSERVED] 코드 결함 3종 확인(F1 승리조건 부재/F2 시작안내 부재/F3 금지구역 불실재). [TARGET] 스펙 승인이지 구현·게이트 통과 아님"
+```
+
+### 결정
+
+**GO — 대상 게임을 `sprite-2-5d.js`(단일 화면 2.5D 아레나)로 확정하고, UX 판독성 슬라이스 1사이클을 승인한다.** 컨셉 시프트가 아니라 기존 메커니즘을 가르치고 승패를 명시하는 얇은 상태기계+UI 추가다.
+
+### 확인된 결함 [OBSERVED]
+
+| # | 결함 | 근거 |
+|---|---|---|
+| F1 | 승리 조건 부재 — `updateWave` 무한 `startWave(wave+1)`, 종료는 사망뿐, 패널 항상 패배 카피 | `sprite-2-5d.js:1072-1077`, `:740-751`, `index.html:44-59` |
+| F2 | 시작 안내 부재 — `boot()`가 즉시 웨이브1 진입, 온스크린 오버레이 없음 | `sprite-2-5d.js:1734-1755`, `:773-804` |
+| F3 | 진입 금지 구역 불실재 — 별도 랜턴/게이트 액터 없음(HUD 내구도=`player.health`), 경계 미렌더 | `clampToArena:446-459`, `render:1465-1519`, `updateEnemy:956-1030` |
+
+### 확정 사항
+
+| 사안 | 결정 | 근거 |
+|---|---|---|
+| 승리 정의 | `TARGET_WAVE=10` 확보 시 승리(`endRun` outcome 분기) | `design/navigation-onboarding-spec.md#2` |
+| 진입 금지 구역 | 2-tier — Tier 1(당신=랜턴 교육 + 경계 링·스폰 예고·포위 경보 가시화) 즉시 채택 / Tier 2(중앙 코어 실물 방어) 옵션·후행 | `design/navigation-onboarding-spec.md#4` |
+| 시작 안내 | `briefing` 모드 + 5블록 오버레이(이동·공격·스킬·목표·사수), skip 지속 | `ui/navigation-overlay-ia.md#2`, `#3` |
+| 자산·결정성 | 신규 파일 0(DOM/Canvas 프리미티브), `RUN_DIGEST_KEY`는 additive `outcome`만 | `engineering/navigation-onboarding-implementation.md#6` |
+
+### 산출물
+
+intake `production-brief-navigation-onboarding.md` · design `navigation-onboarding-spec.md` · ui `navigation-overlay-ia.md` · engineering `navigation-onboarding-implementation.md` · qa `navigation-onboarding-gates.md`(게이트 N1–N16).
+
+- [TARGET] 이 결정은 스펙 승인이다. 구현·N1–N16 게이트 측정·사람 플레이 판정은 후행이다.

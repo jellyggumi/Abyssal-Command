@@ -6,7 +6,7 @@ import * as Catalog from "./defense-catalog.js";
 import {
   ARENA, AUDIO_CUES, BOSSES, COLLISION, COMBAT_TARGETING, COMMANDER, COMPANION_AUTONOMY, COMPANIONS,
   CUTSCENES, ENEMIES, CARRY_OVER_MAX_ITEMS, CARRY_OVER_MAX_RANK, CARRY_OVER_RANK_DECAY,
-  DIRECT_COMBAT, BUFF_ITEMS, BUFF_RARITIES, BUFF_STAT_OPS, DROP_CHANCE_BP, DROP_OFFSET_X, DROP_TTL_TICKS,
+  DIRECT_COMBAT, BUFF_ITEMS, BUFF_PICKUP_RANGE, BUFF_RARITIES, BUFF_STAT_OPS, DROP_CHANCE_BP, DROP_OFFSET_X, DROP_SETTLE_TICKS, DROP_TTL_TICKS,
   MAX_ACTIVE_BUFFS, MAX_FIELD_DROPS, RARITY_WEIGHTS_BP, slabAt,
 
   MAX_SKILL_RANK, SKILL_RANK_COOLDOWN_FLOOR, SKILL_RANK_COOLDOWN_STEP, SKILL_RANK_DAMAGE_STEP,
@@ -2171,6 +2171,10 @@ function rollBuffDrop(run, entry) {
     grade,
     slabId: null,
     expiresAtTick: run.tick + DROP_TTL_TICKS,
+    // Settle delay (design/buff-drop-collection-model.md): uncollectable until this tick, so the
+    // drop is guaranteed to exist on the field long enough for the renderer to show its mesh and
+    // the spec §4.2 beacon before the 12000 pickupRange vacuum reclaims it.
+    collectableAtTick: run.tick + DROP_SETTLE_TICKS,
     elevation: entry.elevation || 0,
   });
   placeOnTerrain(run, drop, drop);
@@ -3495,7 +3499,17 @@ function collectPickups(run) {
     // Commander-only by design: companions cannot claim buff drops (they require
     // `kind === "item"` AND `ITEMS[itemId]`), so there is no claimant to consult.
     if (pickup.kind === "buff") {
-      if (!commanderInRange) return true;
+      // Settle gate (design/buff-drop-collection-model.md): a freshly spawned drop is held on the
+      // field until `collectableAtTick` so its mesh + spec §4.2 beacon are visible before it can
+      // be collected. Drops without the field (test-authored via buffDropAt, or pre-settle saves)
+      // are collectable immediately, so existing contract tests are unchanged.
+      if (Number.isInteger(pickup.collectableAtTick) && run.tick < pickup.collectableAtTick) return true;
+      // Walk-to collection: a buff drop is a FIELD OBJECT collected on a dedicated small radius,
+      // NOT the commander's 12000 pickupRange vacuum (that stays echo/XP + permanent-item only,
+      // via `commanderInRange` above). So a ranged/AoE kill leaves its drop on the field to be
+      // found by its beacon and walked onto. `effectivePickupRange`/`reclaimer-pulse` no longer
+      // widen buff collection (spec §10 risk 8 self-composition removed).
+      if (distanceSquared(pickup, run.commander) > BUFF_PICKUP_RANGE ** 2) return true;
       applyBuff(run, pickup);
       // DELIBERATE DEVIATION from spec §4.3, which had `run.progress.itemsCollected += 1` here.
       // That counter means PERMANENT stage items: it is rendered as "아이템 N" beside the kill

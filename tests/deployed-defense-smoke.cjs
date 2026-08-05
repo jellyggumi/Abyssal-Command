@@ -136,6 +136,8 @@ async function run() {
       assert.equal(invariant.overflow, true, "battle must not overflow viewport");
       const spriteResponse = await page.goto(absolute("index.html"), { waitUntil: "load" });
       assert(spriteResponse?.ok(), `${width}x${height} sprite route response must succeed`);
+      await page.locator('#sprite-2-5d-briefing[data-visible], #sprite-2-5d-briefing:not([hidden])').first().waitFor({ state: "visible", timeout: 15_000 });
+      await page.locator('#sprite-2-5d-briefing-start').click();
       await page.locator('body[data-game-state="running"]').waitFor({ state: "attached", timeout: 15_000 });
       const spriteInvariant = await page.evaluate(() => ({
         runtime: document.querySelector("#sprite-2-5d-game")?.dataset.runtime,

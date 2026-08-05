@@ -552,20 +552,37 @@ export const MAX_ACTIVE_BUFFS = 6;
 /** Matches the existing elite-item spawn offset in `resolveDeaths`. */
 export const DROP_OFFSET_X = 240;
 /**
+ * Field-drop settle delay: a buff drop is uncollectable for this many ticks after it spawns,
+ * so it always exists on the field for at least this long and the renderer can show its mesh
+ * and the spec §4.2 beacon before the commander's pickupRange vacuum reclaims it. 60 Hz, so
+ * 60 = 1.0 s. Without it, a drop spawned at `corpse + DROP_OFFSET_X` sits inside the 12000
+ * pickupRange and is collected the same tick it spawns — a dead feature. All [TARGET].
+ */
+export const DROP_SETTLE_TICKS = 60;
+/**
+ * Buff field-drop collection radius — DELIBERATELY DECOUPLED from the commander's 12000
+ * pickupRange (which stays the echo/XP + permanent-item vacuum). A buff drop is a field object
+ * the player walks onto, not something vacuumed from half the arena: 900 matches the in-game
+ * interaction scale (GATE.radius 900, guardian.radius 540) so a ranged/AoE kill leaves its drop
+ * on the field to be found by its spec §4.2 beacon, while a point-blank kill's drop is still
+ * reachable. `reclaimer-pulse` (pickupRange buff) therefore no longer self-composes the radius
+ * that collects the drop that granted it (spec §10 risk 8). All [TARGET].
+ */
+export const BUFF_PICKUP_RANGE = 900;
+/**
  * Drop chance per stage and enemy grade, integer basis points over a 10000 denominator —
  * the same denominator every existing bp roll uses.
  *
- * BASIC climbs 600 -> 1400 across the stages to compensate for BODY COUNT, not difficulty.
- * `buildDoctrineWavePlan` sizes each wave from a fixed HP budget and divides by
- * `enemyHp * stageScale / 100`, and stage scale is 100/115/130, so a later stage fields
- * FEWER, TOUGHER bodies for the same budget. A flat rate would make Echo Throne feel barren:
- * equal drop CADENCE is the goal, equal drop RATE would defeat it. Expected totals per full
- * stage converge at 4.87 / 5.10 / 5.83. All [TARGET].
+ * RAISED for visibility (was BASIC 600/800/1400): at 600bp a player saw ~1 drop per 17 basic
+ * kills — with the small pickup mesh + subtle beacon that read as "items never drop". BASIC is
+ * now ~45-55% so a drop lands every ~2 basic kills and the field feature is actually seen. The
+ * across-stage climb is preserved (equal-cadence intent). SHADOW/BOSS raised to match.
+ * All [TARGET] — unmeasured; tune down here if drops feel too frequent for balance (G2).
  */
 export const DROP_CHANCE_BP = freeze({
-  "cinder-span": freeze({ BASIC: 600, SHADOW: 2500, BOSS: 10000 }),
-  "abyss-chancel": freeze({ BASIC: 800, SHADOW: 3000, BOSS: 10000 }),
-  "echo-throne": freeze({ BASIC: 1400, SHADOW: 3500, BOSS: 10000 }),
+  "cinder-span": freeze({ BASIC: 4500, SHADOW: 6000, BOSS: 10000 }),
+  "abyss-chancel": freeze({ BASIC: 5000, SHADOW: 6500, BOSS: 10000 }),
+  "echo-throne": freeze({ BASIC: 5500, SHADOW: 7000, BOSS: 10000 }),
 });
 /** Rarity weights per grade, integer bp. Every row sums to 10000. All [TARGET]. */
 export const RARITY_WEIGHTS_BP = freeze({

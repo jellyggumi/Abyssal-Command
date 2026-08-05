@@ -295,6 +295,12 @@ const PLAYER_RUNTIME_MOTION_MESH = MOTION_MODELS["lantern-reaver"];
 const PLAYER_MESH = PLAYER_RUNTIME_MOTION_MESH;
 const PROP_BLADE_MESH = "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb";
 const PROP_RELIC_MESH = "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb";
+// Campaign item drop image. Lives in the CAMPAIGN's own asset folder so its art can diverge
+// from the 2.5D arena's (assets/images/sprite-2-5d/items/) by swapping this one file — the two
+// games no longer share a source image. Same crystal today; change this file (or this path) to
+// give the campaign a different item look. A per-drop, per-kind image split would additionally
+// wire the retained `pickupModelPathFor` / PICKUP_MODEL_KEYS mapping below.
+const PICKUP_IMAGE_PATH = "assets/images/campaign/items/relic-crystal.png";
 
 // `bossId` is emitted directly by the simulation. Stage bosses without an
 // explicit motionAssetId retain their supplied static campaign mesh.
@@ -507,7 +513,7 @@ const VFX_LIFETIME_TICKS = Object.freeze({
   // Previously fell through to the implicit 30-tick default. Named here so a
   // skill without a per-skill entry below has a documented duration rather
   // than an accidental one.
-  SKILL_CAST: 30,
+  SKILL_CAST: 48,
   TERMINAL: 90,
   // Cycle-10 defaults (vfx-drop-spawn-terrain-spec.md §8). Every value is a positive
   // integer tick count; ENEMY_SPAWNED and GIMMICK_ARMED prefer event.telegraphTicks at
@@ -1138,6 +1144,27 @@ const IMPACT_SHAKE_AMPLITUDE = 0.07;
 const IMPACT_SHAKE_BOSS_AMPLITUDE = 0.13;
 const IMPACT_SHAKE_MAX_AMPLITUDE = 0.13;
 const IMPACT_SHAKE_FREQUENCY = 38;
+// --- Contact spark burst (presentation-only, pooled THREE.Points) ----------
+// World-unit tuning: actors are fitted around 1.7u tall, so sparks are small,
+// short-lived embers thrown from the contact point. Capacity bounds the whole
+// pool; per-burst counts and speed scale with hit weight in spawnImpactSparks.
+const IMPACT_SPARK_CAPACITY = 192;
+const IMPACT_SPARK_SIZE = 0.34;
+const IMPACT_SPARK_SPEED = 3.4;
+const IMPACT_SPARK_LIFE_MS = 360;
+const IMPACT_SPARK_GRAVITY = -5.5;
+// Skill cast signature (presentation-only). Element -> spark/ring colour so each
+// cast reads as a distinct player action, tinted by the skill's authored element
+// (defense-catalog SKILLS[].element). Ring shows even under reduced motion.
+const SKILL_ELEMENT_COLORS = Object.freeze({
+  void: [0.63, 0.42, 1.0],   // #a06bff
+  veil: [0.83, 0.74, 1.0],   // #d4bcff
+  ember: [1.0, 0.64, 0.23],  // #ffa43a
+  frost: [0.42, 0.83, 1.0],  // #6bd4ff
+  default: [0.62, 0.91, 1.0],
+});
+const CAST_FLASH_RING_RADIUS = 2.4;
+const CAST_FLASH_RING_MS = 420;
 // Each entry maps an emitted contact event to its presentation participants.
 // Windup/fire events are deliberately absent: they are not authoritative hits.
 const IMPACT_FEEDBACK_SOURCES = Object.freeze({
@@ -2224,6 +2251,50 @@ async function instantiatePickupModel(relPath) {
   return instance;
 }
 
+// Item-drop image (unified with the sprite arena). Loaded once and shared across drops; the
+// texture is owned by the module cache, never disposed per-drop, so a collected drop tearing
+// down its Sprite cannot dispose the shared texture out from under a live one.
+const pickupTextureLoader = new THREE.TextureLoader();
+let pickupTexturePromise = null;
+function loadPickupTexture() {
+  const url = modelUrl(PICKUP_IMAGE_PATH);
+  if (!url) return Promise.reject(new TypeError("Missing pickup image path"));
+  if (!pickupTexturePromise) {
+    pickupTexturePromise = new Promise((resolve, reject) => {
+      pickupTextureLoader.load(url, resolve, undefined, reject);
+    }).then((texture) => {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return texture;
+    }).catch((error) => {
+      pickupTexturePromise = null;
+      throw error;
+    });
+  }
+  return pickupTexturePromise;
+}
+
+// Build the item drop as a camera-facing billboard (THREE.Sprite) carrying the shared texture.
+// A Sprite always faces the camera, so the flat image reads the same from every orbit angle,
+// and it never goes edge-on the way a fixed plane would. It bypasses inspectMeshIntegrity /
+// groundObjectOnPlane (those require a THREE.Mesh with geometry, which a Sprite is not) and
+// instead publishes an equivalent userData contract so ensurePickup() consumes it unchanged.
+async function instantiatePickupSprite() {
+  const texture = await loadPickupTexture();
+  const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
+  const sprite = new THREE.Sprite(material);
+  const height = TARGET_HEIGHT.pickup;
+  const aspect = (texture.image && texture.image.width && texture.image.height)
+    ? texture.image.width / texture.image.height
+    : 0.6;
+  sprite.scale.set(height * aspect, height, 1);
+  // Sprite center defaults to (0.5,0.5): lift it so its base sits on the ground plane (y=0),
+  // matching how a grounded pickup mesh rests.
+  sprite.position.set(0, height / 2, 0);
+  sprite.userData.meshIntegrity = Object.freeze({ meshCount: 1, vertexCount: 4, triangleCount: 2, invalidVertexCount: 0, invalidIndexCount: 0, finiteBounds: true });
+  sprite.userData.groundedMinY = 0;
+  return sprite;
+}
+
 async function instantiatePresentationModel(relPath, targetHeight) {
   const gltf = await loadGltf(relPath);
   const instance = SkeletonUtils.clone(gltf.scene);
@@ -3199,6 +3270,13 @@ function disposeObject3D(root) {
   const skeletons = new Set();
   root.traverse((node) => {
     if (node.skeleton) skeletons.add(node.skeleton);
+    // Sprites (item-drop billboards) carry a SpriteMaterial but are not `isMesh`. Dispose the
+    // material WITHOUT touching its `.map`: that texture is the shared, module-cached pickup
+    // image, and disposing it here would blank every other live drop.
+    if (node.isSprite) {
+      node.material?.dispose?.();
+      return;
+    }
     if (!node.isMesh) return;
     node.geometry?.dispose();
     const materials = Array.isArray(node.material) ? node.material : [node.material];
@@ -3501,6 +3579,8 @@ export class RealtimeBattle {
     this.cameraShakeOffset = new THREE.Vector3();
     this.rendererSize = new THREE.Vector2();
     this.impactShakeSeed = 0;
+    // Contact spark cloud (presentation-only, lazily built on first hit).
+    this.impactSparks = null; // { points, geometry, material, positions, colors, particles }
     // Area combat presentation (광역). Rings are procedural ground decals pooled
     // in one array; `areaFieldRings` indexes the persistent ones by simulation
     // field id so a field is drawn exactly once for its authored lifetime.
@@ -4138,6 +4218,10 @@ export class RealtimeBattle {
     if (!pickup?.id || this.disposed) return;
     const existing = this.actors.get(pickup.id);
     if (existing) return existing;
+    // `modelPath` stays the per-kind prop GLB path (pickupModelPathFor): it is the mesh this drop
+    // WOULD use once campaign/arena split, and debugPresentationState()/the model-selection
+    // contract still report it. The rendered body, however, is the UNIFIED item image (a
+    // camera-facing Sprite), so a drop looks identical in campaign and arena today.
     const modelPath = pickupModelPathFor(pickup);
     const root = new THREE.Group();
     const fallback = new THREE.Mesh(
@@ -4163,7 +4247,7 @@ export class RealtimeBattle {
     };
     this.actors.set(pickup.id, record);
     this.actorGroup.add(root);
-    instantiatePickupModel(modelPath)
+    instantiatePickupSprite()
       .then((instance) => {
         if (this.disposed || this.actors.get(pickup.id) !== record) {
           disposeObject3D(instance);
@@ -4179,7 +4263,7 @@ export class RealtimeBattle {
       .catch((error) => {
         record.loading = false;
         if (this.disposed || this.actors.get(pickup.id) !== record) return;
-        console.warn(`Failed to load pickup model ${modelPath}:`, error);
+        console.warn(`Failed to load pickup image ${PICKUP_IMAGE_PATH}:`, error);
       });
     return record;
   }
@@ -5252,6 +5336,7 @@ export class RealtimeBattle {
     this.arrivalEntries.clear();
     this.clearCameraShakeOffset();
     this.cameraShake = null;
+    this.clearImpactSparks();
     // Area presentation is transient by contract: a reset leaves no ring and no
     // half-played entrance behind.
     this.clearAreaRings();
@@ -5755,6 +5840,9 @@ export class RealtimeBattle {
           this.registerAoeCameraImpulse(record.aoeBurst.density, performance.now());
         }
       }
+      const element = SKILLS[semanticVfxId]?.element;
+      const castColor = SKILL_ELEMENT_COLORS[element] ?? SKILL_ELEMENT_COLORS.default;
+      this.spawnCastFlash(p.x, p.y + 0.6, p.z, castColor, performance.now(), CAST_FLASH_RING_RADIUS);
     }
     const loadRequest = instantiateVfxModel(
       relPath,
@@ -6267,6 +6355,16 @@ export class RealtimeBattle {
     });
     if (this.reducedMotion) return;
 
+    const sparkKind = critical ? "critical" : (heavy || bossContact) ? "heavy" : "normal";
+    const contactHeight = (targetRecord.targetHeight ?? 1.7) * 0.5;
+    this.spawnImpactSparks(
+      targetRecord.root.position.x,
+      targetRecord.root.position.y + contactHeight,
+      targetRecord.root.position.z,
+      sparkKind,
+      startMs,
+    );
+
     let dx = 0;
     let dz = 0;
     if (attacker?.root) {
@@ -6488,6 +6586,136 @@ export class RealtimeBattle {
     this.camera.position.add(this.cameraShakeOffset);
   }
 
+  // --- Contact spark burst (create-game-vfx: a hit throws debris) -----------
+  // Pure presentation: a pooled THREE.Points cloud advanced on wall-clock time,
+  // spawned at the struck body's contact point. Never read back into the
+  // snapshot, so getRunDigest() is untouched (same contract as hitFlashes).
+  // Capacity-bounded, additive, and downgraded under software render / reduced
+  // motion exactly like every other impulse in this class.
+  ensureImpactSparks() {
+    if (this.impactSparks || !this.vfxGroup || this.disposed) return this.impactSparks ?? null;
+    const cap = IMPACT_SPARK_CAPACITY;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(cap * 3);
+    const colors = new Float32Array(cap * 3);
+    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    geometry.setDrawRange(0, 0);
+    const material = new THREE.PointsMaterial({
+      size: IMPACT_SPARK_SIZE,
+      sizeAttenuation: true,
+      vertexColors: true,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const points = new THREE.Points(geometry, material);
+    points.frustumCulled = false;
+    points.renderOrder = 8;
+    this.vfxGroup.add(points);
+    this.impactSparks = { points, geometry, material, positions, colors, particles: [] };
+    return this.impactSparks;
+  }
+
+  spawnImpactSparks(x, y, z, kind, startMs, opts = {}) {
+    if (this.reducedMotion) return;
+    const pool = this.ensureImpactSparks();
+    if (!pool) return;
+    const countScale = opts.countScale ?? 1;
+    let count = Math.round((kind === "critical" ? 14 : kind === "heavy" ? 9 : kind === "cast" ? 10 : 5) * countScale);
+    if (this.softwareRenderer) count = Math.max(2, Math.ceil(count / 2));
+    const [cr, cg, cb] = opts.colorOverride
+      ? opts.colorOverride
+      : kind === "critical" ? [1.0, 0.84, 0.42]
+      : kind === "heavy" ? [1.0, 0.64, 0.23]
+      : [0.62, 0.91, 1.0];
+    const particles = pool.particles;
+    const overflow = particles.length + count - IMPACT_SPARK_CAPACITY;
+    if (overflow > 0) particles.splice(0, overflow);
+    const speedScale = kind === "critical" ? 1.35 : kind === "heavy" ? 1.15 : kind === "cast" ? 1.25 : 1;
+    for (let i = 0; i < count; i += 1) {
+      const theta = Math.random() * Math.PI * 2;
+      const upBias = 0.35 + Math.random() * 0.65;
+      const horiz = Math.sqrt(Math.max(0, 1 - upBias * upBias));
+      const speed = IMPACT_SPARK_SPEED * (0.5 + Math.random() * 0.9) * speedScale;
+      particles.push({
+        x0: x, y0: y, z0: z,
+        vx: Math.cos(theta) * horiz * speed,
+        vy: upBias * speed,
+        vz: Math.sin(theta) * horiz * speed,
+        bornMs: startMs,
+        lifeMs: IMPACT_SPARK_LIFE_MS * (0.7 + Math.random() * 0.6),
+        r: cr, g: cg, b: cb,
+      });
+    }
+  }
+
+  applyImpactSparks(nowMs) {
+    const pool = this.impactSparks;
+    if (!pool) return;
+    const particles = pool.particles;
+    if (particles.length === 0) {
+      if (pool.geometry.drawRange.count !== 0) pool.geometry.setDrawRange(0, 0);
+      return;
+    }
+    const positions = pool.positions;
+    const colors = pool.colors;
+    let live = 0;
+    for (let i = 0; i < particles.length; i += 1) {
+      const p = particles[i];
+      const age = nowMs - p.bornMs;
+      if (age >= p.lifeMs) continue;
+      const t = Math.max(0, age) / 1000;
+      const fade = age <= 0 ? 1 : Math.max(0, 1 - age / p.lifeMs);
+      const base = live * 3;
+      positions[base] = p.x0 + p.vx * t;
+      positions[base + 1] = p.y0 + p.vy * t + IMPACT_SPARK_GRAVITY * t * t;
+      positions[base + 2] = p.z0 + p.vz * t;
+      colors[base] = p.r * fade;
+      colors[base + 1] = p.g * fade;
+      colors[base + 2] = p.b * fade;
+      if (live !== i) particles[live] = p;
+      live += 1;
+    }
+    particles.length = live;
+    pool.geometry.setDrawRange(0, live);
+    pool.geometry.attributes.position.needsUpdate = true;
+    pool.geometry.attributes.color.needsUpdate = true;
+  }
+
+  clearImpactSparks() {
+    const pool = this.impactSparks;
+    if (!pool) return;
+    pool.particles.length = 0;
+    pool.geometry.setDrawRange(0, 0);
+  }
+
+  disposeImpactSparks() {
+    const pool = this.impactSparks;
+    if (!pool) return;
+    this.vfxGroup?.remove(pool.points);
+    pool.geometry.dispose();
+    pool.material.dispose();
+    this.impactSparks = null;
+  }
+
+  // Element-coloured cast signature: an expanding ring + an origin spark burst at
+  // the commander, so a skill cast reads as a distinct player action instead of
+  // ambient stage VFX. Presentation-only; nothing here reaches getRunDigest().
+  spawnCastFlash(x, y, z, color, startMs, worldRadius) {
+    const [r, g, b] = color;
+    const hex = (Math.round(r * 255) << 16) | (Math.round(g * 255) << 8) | Math.round(b * 255);
+    this.spawnAreaRing({
+      x, z,
+      radius: worldRadius,
+      color: hex,
+      mode: "impact",
+      startMs,
+      untilMs: startMs + CAST_FLASH_RING_MS,
+    });
+    this.spawnImpactSparks(x, y, z, "cast", startMs, { colorOverride: color, countScale: 1.6 });
+  }
+
   updateImpactFeedback(nowMs) {
     try {
       this.applyHitFlashes(nowMs);
@@ -6496,10 +6724,12 @@ export class RealtimeBattle {
         this.knockbacks.clear();
         this.arrivalEntries.clear();
         this.cameraShake = null;
+        this.clearImpactSparks();
         return;
       }
       this.applyKnockbacks(nowMs);
       this.applyCameraShake(nowMs);
+      this.applyImpactSparks(nowMs);
     } catch {
       // Impact feel is cosmetic; never let it break the render loop.
       this.hitFlashes.clear();
@@ -6507,6 +6737,7 @@ export class RealtimeBattle {
       this.arrivalEntries.clear();
       this.cameraShake = null;
       this.clearAreaRings();
+      this.clearImpactSparks();
       this.bossIntro = null;
     }
   }
@@ -6737,6 +6968,7 @@ export class RealtimeBattle {
     this.clearAreaRings();
     this.areaRingGeometry?.dispose();
     this.areaRingGeometry = null;
+    this.disposeImpactSparks();
     this.bossIntro = null;
     for (const record of this.vfxInstances) {
       record.mixer?.stopAllAction();

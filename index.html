@@ -51,8 +51,24 @@
               <span>스프라이트 매니페스트와 시트를 검증하는 중…</span>
             </div>
 
+            <section class="arena-briefing" id="sprite-2-5d-briefing" role="dialog" aria-modal="true" aria-labelledby="briefing-title" hidden>
+              <p class="eyebrow">작전 브리핑</p>
+              <h2 id="briefing-title">잿불 법정 방어</h2>
+              <ul class="briefing-list">
+                <li><span class="briefing-glyph" data-glyph="goal" aria-hidden="true"></span><span><b>목표</b> · 웨이브 <b>10</b>까지 버텨내면 승리한다.</span></li>
+                <li><span class="briefing-glyph" data-glyph="move" aria-hidden="true"></span><span><b>이동</b> · <kbd>WASD</kbd> · 방향키 · 화면 방향 패드. 세로 이동은 원근 때문에 느리게 보인다.</span></li>
+                <li><span class="briefing-glyph" data-glyph="attack" aria-hidden="true"></span><span><b>공격</b> · <kbd>Space</kbd> · 타격으로 전방을 벤다. <kbd>Q</kbd> 잿불 노바 · <kbd>E</kbd> 랜턴 결계(랜턴 기름 소모).</span></li>
+                <li><span class="briefing-glyph" data-glyph="hold" aria-hidden="true"></span><span><b>사수</b> · 당신이 곧 랜턴이다. 잿불 군단은 사방에서 몰려와 <b>포위</b>하려 한다. 계속 움직여 포위를 풀고, 빛의 경계 밖으론 나갈 수 없다.</span></li>
+                <li><span class="briefing-glyph" data-glyph="fail" aria-hidden="true"></span><span><b>패배</b> · 랜턴 내구도가 <b>0</b>이 되면 법정이 함락된다. 잿불 파편을 주워 내구도를 회복하라.</span></li>
+              </ul>
+              <div class="briefing-actions">
+                <button class="briefing-start" id="sprite-2-5d-briefing-start" type="button">시작 <kbd>Space</kbd></button>
+                <label class="briefing-skip"><input type="checkbox" id="sprite-2-5d-briefing-skip" /> 다시 보지 않기</label>
+              </div>
+            </section>
+
             <section class="game-over-panel" id="sprite-2-5d-game-over" aria-labelledby="game-over-title" hidden>
-              <p class="eyebrow">랜턴이 꺼져간다</p>
+              <p class="eyebrow" id="sprite-2-5d-game-over-eyebrow">랜턴이 꺼져간다</p>
               <h2 id="game-over-title">법정이 함락되었다</h2>
               <p id="sprite-2-5d-final-score">점수 0 · 웨이브 1</p>
               <p id="sprite-2-5d-run-summary" class="run-summary">유물 0 · 처치 0</p>
@@ -181,7 +197,7 @@
                 <p class="eyebrow">터치 조작</p>
                 <h2 id="controls-title">전투 조작</h2>
               </div>
-              <span class="ready-dot" aria-hidden="true"></span>
+              <button class="help-button" id="sprite-2-5d-help" type="button" aria-label="작전 브리핑 다시 보기">?</button>
             </div>
 
             <div class="touch-controls" id="sprite-2-5d-touch-controls" aria-label="화면 조작 버튼">
